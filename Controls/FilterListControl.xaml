@@ -1,0 +1,110 @@
+﻿<UserControl x:Class="PTR.FilterListControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:local="clr-namespace:PTR" 
+             x:Name="usercontrol1"                      
+             mc:Ignorable="d"  SnapsToDevicePixels="True"
+             d:DesignHeight="300" d:DesignWidth="250">
+    
+    <UserControl.Resources>
+
+        <Style x:Key="chkStyle" TargetType="CheckBox">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Margin" Value="1,2,2,0"/>
+        </Style>
+        
+        <DataTemplate x:Key="ListBoxItemTemplate" >
+            <StackPanel Orientation="Horizontal" Background="{Binding Colour}">
+                <CheckBox IsChecked="{Binding IsSelected}" Cursor="Hand" Style="{StaticResource chkStyle}" Background="{Binding Colour}" Content="{Binding Name}" Width="{Binding Width, RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBox}}" />
+            </StackPanel>
+        </DataTemplate>
+        
+        <Style x:Key="lblStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="HeadingStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>       
+
+    </UserControl.Resources>
+
+    <Grid DataContext="{Binding ElementName=usercontrol1}">
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Left" >
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="24"/>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Column="0" Grid.Row="0" x:Name="ChklistHeading" Text="{Binding Heading}" Style="{StaticResource HeadingStyle}" ToolTip="{Binding TTip}"/>
+                <Button Grid.Column="1" Grid.Row="0" Command="{Binding SelectAllButtonCommand}" CommandParameter="{Binding SelectAllButtonParameter}" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Right" Content="*" Width="16" Height="16" Background="AliceBlue" ToolTip="Select/Deselect All" Cursor="Hand"/>
+                <ListBox x:Name="myList" Grid.Row="1" ItemsSource="{Binding ListItems}" ItemTemplate="{DynamicResource ListBoxItemTemplate}"
+                         Width="{Binding Width}"
+                         MaxHeight="400"  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Vertical"/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="{x:Type ListBoxItem}">
+                            <Setter Property="Visibility" Value="{Binding VisibleState}"/>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                </ListBox>
+                <Button Grid.Column="0" Grid.Row="2" x:Name="btnclear" BorderThickness="0" Command="{Binding ExpandButtonCommand}" Height="30"  Cursor="Hand"
+                    Background="Transparent" Visibility="{Binding ToggleButtonVisibility}" 
+                        HorizontalAlignment="Right"
+                        HorizontalContentAlignment="Center" Margin="0,2"  >
+                    <Button.Resources>
+                        <DataTemplate x:Key="MoreTemplate" >
+                            <StackPanel Orientation="Vertical" Height="30" HorizontalAlignment="Center" >
+                                <TextBlock x:Name="moretext" Text="More" Style="{StaticResource lblStyle}" HorizontalAlignment="Center"/>
+                                <Border BorderBrush="Transparent" BorderThickness="1" ToolTip="Show More"  >
+                                    <Path HorizontalAlignment="Center" Fill="Red" Data="M 0 0 L 6 6 L 12 0 Z" />
+                                </Border>
+                            </StackPanel>
+                        </DataTemplate>
+
+                        <DataTemplate x:Key="LessTemplate" >
+                            <StackPanel Orientation="Vertical" Height="30" HorizontalAlignment="Center" >
+                                <TextBlock x:Name="lesstext" Text="Less"  Style="{StaticResource lblStyle}" HorizontalAlignment="Center"/>
+                                <Border BorderBrush="Transparent" BorderThickness="1" ToolTip="Show Less" >
+                                    <Path HorizontalAlignment="Center" Fill="DeepSkyBlue" Data="M 0 6 L 12 6 L 6 0 Z"/>
+                                </Border>
+                            </StackPanel>
+                        </DataTemplate>
+
+                        <Style TargetType="{x:Type Button}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=ShowAll}" Value="true">
+                                    <Setter Property="ContentTemplate" Value="{StaticResource LessTemplate}"/>
+                                </DataTrigger>
+
+                                <DataTrigger Binding="{Binding Path=ShowAll}" Value="false">
+                                    <Setter Property="ContentTemplate" Value="{StaticResource MoreTemplate}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+            </Grid>
+        </StackPanel>
+    </Grid>
+    
+</UserControl>

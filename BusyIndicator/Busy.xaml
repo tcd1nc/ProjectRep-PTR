@@ -1,0 +1,28 @@
+﻿<Window x:Class="PTR.Busy"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PTR" Topmost="True"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" 
+        ResizeMode="NoResize" WindowStartupLocation="CenterScreen" WindowStyle="None" AllowsTransparency="True" 
+        Title="Busy" Height="62" Width="172" x:Name="BusyWindow" >
+    <Window.Resources>
+        <Style TargetType="Window">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+
+        <Style TargetType="ProgressBar" x:Key="pg">
+            <Setter Property="IsIndeterminate" Value="True"/>
+            <Setter Property="Selector.Height" Value="12"/>
+            <Setter Property="Selector.Foreground" Value="LimeGreen"/>
+        </Style>
+        
+    </Window.Resources>
+    <Window.Background>
+        <SolidColorBrush Opacity="0.1" Color="Transparent"/>
+    </Window.Background>
+    <Grid>
+        <xctk:BusyIndicator x:Name="indicator" BusyContent="Please wait..." ProgressBarStyle="{StaticResource pg}"  Background="AliceBlue" IsBusy="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+    </Grid>
+</Window>

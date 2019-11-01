@@ -1,0 +1,38 @@
+﻿<Window x:Class="PTR.Views.CountriesView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PTR.Views"
+        xmlns:loc="clr-namespace:PTR"
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="SingleBorderWindow"
+        Title="Countries" Height="200" Width="340">
+    <Grid>
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Top" Height="2">
+            </Grid>
+
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Button Content="Cancel" Command="{Binding Close}" Margin="10,0,0,0" Width="50" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Left"/>
+                <Button Content="Add" Command="{Binding SaveAndClose}" Width="50" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Right"/>
+            </Grid>
+            <Grid VerticalAlignment="Top" Margin="10,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="154"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="New Country:" Style="{StaticResource textlabel}" Height="18" Width="94" />
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding CountryName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource textbox}"  />
+               
+            </Grid>
+
+        </DockPanel>
+    </Grid>
+</Window>

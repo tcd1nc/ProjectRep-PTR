@@ -1,0 +1,312 @@
+﻿<Window x:Class="PTR.Views.EvaluationPlansView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Icon="/PTR;component/Images/table.ico"
+        xmlns:loc="clr-namespace:PTR"
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}"
+        WindowStartupLocation="CenterScreen" ResizeMode="CanResize" WindowStyle="SingleBorderWindow" WindowState="Maximized" 
+        Title=" Evaluation Plans" >
+    <Window.Resources>
+        <Style x:Key="ttStyle" TargetType="ToolTip">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="HasDropShadow" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border BorderThickness="1" CornerRadius="4" BorderBrush="Blue" Padding="2,2,2,2" Background="LemonChiffon">
+                            <ContentPresenter>
+                                <ContentPresenter.Content>
+                                    <StackPanel Orientation="Vertical" Width="340" HorizontalAlignment="Left">
+                                        <TextBlock Text="{Binding ProjectID, StringFormat={}Project ID: {0}}" HorizontalAlignment="Left" Height="16" />
+                                        <TextBlock Text="{Binding UserName, StringFormat={}Associate: {0}}" HorizontalAlignment="Left" Height="16"/>
+                                        <TextBlock Text="{Binding ProjectName, StringFormat={}Project: {0}}" HorizontalAlignment="Left" Height="16"/>
+                                        <TextBlock Text="{Binding Title, StringFormat={}Title: {0}}" HorizontalAlignment="Left" Width="300" Height="16" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                                        <TextBlock Text="{Binding ActivatedDate, StringFormat={}Activated Date: {0:d MMM yyyy}}" HorizontalAlignment="Left" Height="16"/>
+                                        <TextBlock Text="{Binding CreatedDate, StringFormat={}Created Date: {0:d MMM yyyy}}" HorizontalAlignment="Left" Height="16"/>
+                                        <TextBlock Text="{Binding DiscussedDate, StringFormat={}Discussed: {0:d MMM yyyy}}" HorizontalAlignment="Left" Height="16"/>
+                                        <TextBlock Text="{Binding Customer, StringFormat={}Customer: {0}}" HorizontalAlignment="Left" Height="16"/>
+                                        <TextBlock Text="{Binding Objectives, StringFormat={}Objectives: {0}}" HorizontalAlignment="Left" Height="16" Width="300" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                                        <TextBlock Text="{Binding Strategy, StringFormat={}Strategy: {0}}" HorizontalAlignment="Left" Height="16" Width="300" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                                    </StackPanel>
+                                </ContentPresenter.Content>
+                            </ContentPresenter>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    
+    <Grid>
+        <DockPanel LastChildFill="True" >
+            <Grid DockPanel.Dock="Top" Height="2"/>
+
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Button Content="Close" Command="{Binding Close}" Margin="0,0,20,0" Width="50" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Right"/>
+                <Button x:Name="btnExcel" Width="180" Command="{Binding ExportToExcel}" Margin="10,0,0,0"  Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Left" >
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal" ToolTip="Export to Excel" VerticalAlignment="Center">
+                            <Image Source="/PTR;component/Images/export.ico"  Height="16" Width="20"/>
+                            <TextBlock Text="Export To Excel" FontSize="12" Height="24" Width="100" />
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+            </Grid>
+            <Grid DockPanel.Dock="Left" Width="210"  Margin="4,4,2,4">
+                <Border BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="32"/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="8,2,0,0">
+                            <Button x:Name="btnApplyFilter" Command="{Binding ApplyFilter}" Margin="6,0" Content="Apply Filters" Width="80" Style="{StaticResource filterButtonStyle}" />
+                            <Button x:Name="btnClearFilters" Command="{Binding ClearFilter}" Margin="2,0" Content="Clear Filters" Width="80" Style="{StaticResource filterButtonStyle}" />
+                        </StackPanel>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Margin="6,0,0,0" Background="WhiteSmoke" >
+                                <loc:FilterListControl x:Name="flCountries" Width="170" TTip="These are the countries that you have been given permission to see"
+							    ListItems="{Binding Countries}" 
+							    SelectedItems="{Binding CountriesSrchString}" 
+							    Margin="4,8,0,0" 
+							    ShowAll="{Binding ShowAllCountries}"
+                                VisibleCount="8"
+							    Heading="Current User's Countries" 
+							    ToggleButtonVisibility="Visible"
+							    HorizontalAlignment="Left" 
+                                SelectAll="{Binding AllCountries}"
+                                SelectAllButtonCommand="{Binding AllCountriesCommand}"
+                                ExpandButtonCommand ="{Binding ExpandCountriesCommand}"/>
+
+                                <loc:FilterListControl x:Name="flSalesDivisions" Width="150" TTip="These are the sales divisions that you have been given access to"
+							    ListItems="{Binding SalesDivisions}" 
+							    SelectedItems="{Binding SalesDivisionSrchString}" 
+							    Margin="4,0,4,4" 
+							    ShowAll="True"   
+                                VisibleCount="4"
+							    Heading="Sales Divisions" 
+							    ToggleButtonVisibility="Collapsed" 
+							    HorizontalAlignment="Left" 
+							    SelectAll="{Binding AllSalesDivisions}"                                                                                                 							    
+                                SelectAllButtonCommand="{Binding AllSalesDivisionsCommand}" />
+
+                                <loc:FilterListControl x:Name="flProjectStatusTypes" Width="150"
+							    ListItems="{Binding ProjectStatusTypes}" 
+							    SelectedItems="{Binding ProjectStatusTypesSrchString}" 
+							    Margin="4,0,0,0" 
+							    ShowAll="True"
+                                VisibleCount="4"
+							    Heading="Project Statuses" 
+							    ToggleButtonVisibility="Collapsed"
+							    HorizontalAlignment="Left" 
+                                SelectAll="{Binding AllProjectStatuses}"
+                                SelectAllButtonCommand="{Binding AllProjectStatusTypesCommand}"  />
+
+                                <loc:FilterListControl x:Name="flProjectTypes" Width="150"
+							    ListItems="{Binding ProjectTypes}" 
+							    SelectedItems="{Binding ProjectTypesSrchString}" 
+							    Margin="4,0,0,0" 
+							    ShowAll="True"                                
+							    Heading="Project Types" 
+							    ToggleButtonVisibility="Collapsed"
+							    HorizontalAlignment="Left" 
+                                SelectAll="{Binding AllProjectTypes}"
+                                SelectAllButtonCommand="{Binding AllProjectTypesCommand}" />
+
+                                <GroupBox Header="KPM" Margin="4,10,2,0" FontFamily="Arial" FontSize="12" HorizontalAlignment="Left" Width="180" FontWeight="Bold" >
+                                    <StackPanel Orientation="Horizontal">
+                                        <CheckBox IsChecked="{Binding KPM}" Content="KPM" Margin="2,6,2,0" Width="80" ToolTip="Show KPM projects"/>
+                                        <CheckBox IsChecked="{Binding NonKPM}" Content="Non-KPM" Margin="2,6,2,0" Width="80" ToolTip="Show non-KPM projects"/>
+                                    </StackPanel>
+                                </GroupBox>
+
+                                <GroupBox Header="CDP/CCP" Margin="4,10,2,0" FontFamily="Arial" FontSize="12" HorizontalAlignment="Left" Width="180" FontWeight="Bold" >
+                                    <StackPanel Orientation="Horizontal">
+                                        <CheckBox x:Name="allcdpccp" IsChecked="{Binding AllCDPCCP}" Content="All" Margin="2,6,2,0" Width="50" ToolTip="Show All projects"/>
+                                        <CheckBox x:Name="cdp" IsChecked="{Binding CDP}" Content="CDP" Margin="2,6,2,0" Width="50" ToolTip="Show CDP projects">
+                                            <CheckBox.Style>
+                                                <Style TargetType="CheckBox">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsChecked, ElementName=allcdpccp}" Value="True">
+                                                            <Setter Property="IsEnabled" Value="False"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </CheckBox.Style>
+                                        </CheckBox>
+
+                                        <CheckBox x:Name="ccp" IsChecked="{Binding CCP}" Content="CCP" Margin="2,6,2,0" Width="50" ToolTip="Show CCP projects">
+                                            <CheckBox.Style>
+                                                <Style TargetType="CheckBox">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsChecked, ElementName=allcdpccp}" Value="True">
+                                                            <Setter Property="IsEnabled" Value="False"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </CheckBox.Style>
+                                        </CheckBox>
+                                    </StackPanel>
+                                </GroupBox>
+                                
+                                
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
+            <Grid Margin="0,4,4,4">
+                <DataGrid x:Name="EPList"  
+                                Background="White"
+                                AutoGenerateColumns="False"  
+                                Width="Auto" 
+                                HorizontalAlignment="Left"
+                                SelectedItem="{Binding SelectedEP}"
+                                loc:MouseDoubleClick.Command="{Binding OpenEP}" 
+                                loc:MouseDoubleClick.CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" 
+                                ItemsSource="{Binding EPS}"                               
+                                FrozenColumnCount="1"
+                                AllowDrop="False"                                                          
+                                CanUserAddRows="False"
+                                CanUserDeleteRows="False"
+                                CanUserReorderColumns="True"
+                                CanUserResizeColumns="True"    
+                                SelectionMode="Single"
+                                SelectionUnit="FullRow"                          
+                                IsReadOnly="True"                          
+                                Focusable="False" >
+                    <DataGrid.Resources>
+                        <Style TargetType="{x:Type DataGridRow}">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="LightCyan" />
+                                    <Setter Property="Foreground" Value="Blue"/>
+                                    <Setter Property="FontWeight" Value="DemiBold" />
+                                </Trigger>
+                            </Style.Triggers>
+                            <Style.Setters>
+                                <Setter Property="Background" Value="{Binding ProjectTypeColour}"/>
+                                <Setter Property="ToolTip">
+                                    <Setter.Value>
+                                        <ToolTip Style="{StaticResource ttStyle}" Content="{Binding }" Background="LemonChiffon"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style.Setters>
+                        </Style>
+                    </DataGrid.Resources>
+                    <DataGrid.Columns>
+
+                        <DataGridTemplateColumn Width="80" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="ID" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding ID, Mode=OneTime}" Height="24" TextAlignment="Center" Padding="2,0,2,0" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+
+                        <DataGridTemplateColumn Width="80" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="Project ID" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding ProjectID, Mode=OneTime}" Height="24" TextAlignment="Center" Padding="2,0,2,0" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="120" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="Associate" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding UserName}" Height="24" Padding="2,0,2,0" TextAlignment="Left" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        
+                        <DataGridTemplateColumn Width="180" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="Project" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding ProjectName}" Padding="2,0,2,0" TextAlignment="Left" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        
+                        <DataGridTemplateColumn Width="200" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="EV Plan Title" ToolTip="Evaluation Plan Title" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Title}" Height="24" Padding="2,0,2,0" TextAlignment="Left" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="180" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="Customer" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Customer}" Padding="2,0,2,0" TextAlignment="Left" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        
+                        <DataGridTemplateColumn Width="100" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="Project Created" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding ActivatedDate, StringFormat={}{0:d MMM yyyy}}" Padding="2,0,2,0" TextAlignment="Left" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        
+                        <DataGridTemplateColumn Width="100" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="EP Created" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding CreatedDate, StringFormat={}{0:d MMM yyyy}}" Padding="2,0,2,0" TextAlignment="Left" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>

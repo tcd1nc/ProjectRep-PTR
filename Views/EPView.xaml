@@ -1,0 +1,92 @@
+﻿<Window x:Class="PTR.Views.EPView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:xceed="http://schemas.xceed.com/wpf/xaml/toolkit"
+        mc:Ignorable="d"
+        xmlns:loc="clr-namespace:PTR"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="SingleBorderWindow" 
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" KeyDown="Window_KeyDown"
+        loc:DialogCloser.ObjectDialogResult="{Binding ReturnObject}"
+        loc:DialogCloser.DialogResult="{Binding SaveFlag}"
+        
+        loc:WindowBehavior.WindowClosing="{Binding WindowClosing}"
+        Title="{Binding WindowTitle}" Height="554" Width="800">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+    
+    <Grid>
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Top" Height="0"/>
+
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Button Content="Close" Width="42" Command="{Binding CancelConfirmation}"  Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Right" ToolTip="Close"/>
+                <Button Grid.Column="0" Content="Save" Visibility="{Binding IsEnabled, Converter={StaticResource BoolToVis}}" Command="{Binding Save}" ToolTip="Save changes" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" Margin="20,0,0,0" HorizontalAlignment="Left"/>
+            </Grid>
+            <GroupBox Header="Evaluation Plan Details" Style="{StaticResource grpbox}" Margin="4,10,4,4" >
+                <Grid Margin="0,2,0,0" IsEnabled="{Binding IsEnabled}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="520"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="2" Margin="0,0,2,0" Content="Copy" Style="{StaticResource LinkButton}" 
+                            ToolTip="Copy to clipboard" VerticalAlignment="Center" Command="{Binding CopyEP}" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Proposal:" Style="{StaticResource gridtextlabel}" />
+                    <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EP.GOM.Description, UpdateSourceTrigger=PropertyChanged}"  
+                                                  Style="{StaticResource gridtextbox}" />
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Objectives:" VerticalAlignment="Top" Style="{StaticResource gridtextlabel}" />
+                    <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" MaxLength="2000"
+                                     VerticalAlignment="Top" 
+                                     VerticalContentAlignment="Top"
+                                     TextWrapping="Wrap" 
+                                     VerticalScrollBarVisibility="Auto"
+                                     AcceptsTab="True" 
+                                     AcceptsReturn="True" 
+                                     TextAlignment="Left"
+                                     Height="150"
+                                     Text="{Binding EP.Objectives, UpdateSourceTrigger=PropertyChanged}"  
+                                     Style="{StaticResource gridtextbox}"/>
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Strategy:" VerticalAlignment="Top" Style="{StaticResource gridtextlabel}" />
+                    <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" MaxLength="2000"
+                                     VerticalAlignment="Top" 
+                                     VerticalContentAlignment="Top"
+                                     TextWrapping="Wrap" 
+                                     VerticalScrollBarVisibility="Auto"
+                                     TextAlignment="Left"
+                                     AcceptsReturn="True"
+                                     AcceptsTab="True"
+                                     Height="150"
+                                     Text="{Binding EP.Strategy, UpdateSourceTrigger=PropertyChanged}"  
+                                     Style="{StaticResource gridtextbox}"/>
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Created:"  Style="{StaticResource gridtextlabel}"/>
+                    <xceed:DateTimePicker Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"  
+                                                  Value="{Binding EP.Created, UpdateSourceTrigger=PropertyChanged}" 
+                                                  Style="{StaticResource daypicker}"
+                                                  ToolTip="The date when this Evaluation Plan was created."/>
+                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Discussed:" Style="{StaticResource gridtextlabel}"/>
+                    <xceed:DateTimePicker Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2"  
+                                                  Value="{Binding EP.Discussed, UpdateSourceTrigger=PropertyChanged}" 
+                                          Text="{Binding SelectedDate, Mode=OneWayToSource}"
+                                                  Style="{StaticResource daypicker}"
+                                                  ToolTip="The date when this Evaluation Plan was discussed with customer."/>
+
+                    <Button Grid.Row="5" Grid.Column="2" Content="Clear" VerticalAlignment="Center" Style="{StaticResource LinkButton}" Command="{Binding ClearDate}"/>
+                
+                
+                </Grid>
+            </GroupBox>
+        </DockPanel>
+    </Grid>
+</Window>

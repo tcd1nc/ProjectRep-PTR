@@ -1,0 +1,41 @@
+﻿<Window x:Class="PTR.Views.ProjectCommentsView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:loc="clr-namespace:PTR"
+        xmlns:ctrl="clr-namespace:PTR.Controls"
+        mc:Ignorable="d"
+        Icon="/PTR;component/Images/calendar-day.ico"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="SingleBorderWindow"
+        Title="{Binding WindowTitle}" Height="430" Width="750"
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" KeyDown="Window_KeyDown"
+        loc:DialogCloser.DialogResult="{Binding SaveCommentsFlag}"
+        loc:WindowBehavior.WindowClosing="{Binding WindowClosing}">
+    <!--loc:MyDependencyProperty.Reference="{Binding Wref}"-->
+                     
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+    
+    <Grid>
+        <DockPanel LastChildFill="True" Margin="4,4,4,4">
+            <Grid DockPanel.Dock="Bottom" Height="32" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="100"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Save" IsEnabled="{Binding EnableActivities}" Visibility="{Binding EnableActivities, Converter={StaticResource BoolToVis}}" 
+                        Command="{Binding SaveComments}" ToolTip="Save changes and close form" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" Margin="20,0,0,0" HorizontalAlignment="Left"/>
+                <Button Grid.Column="2" Content="Close" Command="{Binding CancelUpdate}" ToolTip="Close form" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" Margin="0,0,20,0" HorizontalAlignment="Right"/>
+            </Grid>
+
+            <ctrl:ActivitiesControl x:Name="activities" Grid.Row="2" 
+                ClearActivities ="{Binding ClearActivities}"
+                UpdateMonthlyActivities ="{Binding UpdateActivities}"
+                SelectedProjectItem="{Binding SelectedProject}"/>
+
+        </DockPanel>
+    </Grid>
+</Window>

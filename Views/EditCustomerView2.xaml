@@ -1,0 +1,222 @@
+﻿<Window x:Class="PTR.Views.EditCustomerView2"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PTR.Views"
+        xmlns:models="clr-namespace:PTR.Models"
+        
+        mc:Ignorable="d"
+        
+        Icon="/PTR;component/Images/people.ico"
+        xmlns:loc="clr-namespace:PTR"
+        WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow" Width="950" Height="600"
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}"        
+        loc:WindowBehavior.WindowClosing="{Binding WindowClosing}"                     
+        x:Name="mainwindow"
+        Title="Customer Sites" >
+    
+    <Window.Resources>
+         <BooleanToVisibilityConverter x:Key="BoolToVis" /> 
+    </Window.Resources>
+ 
+    <Grid>
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Top" Height="28" Margin="0,4,0,0">
+                <StackPanel Orientation="Horizontal" Margin="2,0,0,0" >
+                    <Button x:Name="add" Template="{StaticResource CRUDButton}" Content="Add New Customer" Tag="Add" ToolTip="Add New Customer" Command="{Binding AddNew}" Margin="10,0,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility" Value="Hidden"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsAddMode}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button x:Name="cancel" Template="{StaticResource CRUDButton}" Tag="Delete" Content="Cancel New Customer" ToolTip="Cancel adding new Customer" Command="{Binding CancelNewCustomer}">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility" Value="Hidden"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsAddMode}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </Grid>
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="100"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Save" Command="{Binding Save}" Margin="20,0,0,0" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Left" ToolTip="Save changes"/>
+                <TextBlock Grid.Column="1" Text="{Binding DataMessageLabel}" Style="{StaticResource gridtextlabel}" TextAlignment="Center" VerticalAlignment="Center" Padding="0,2,0,0"
+                   HorizontalAlignment="Center" Foreground="GreenYellow" Width="400" Background="Gray" Visibility="{Binding ShowDataMessage, Converter={StaticResource BoolToVis}}" />
+                <Button Grid.Column="2" Content="Close" Command="{Binding Cancel}" Margin="0,0,20,0"  TextBlock.TextAlignment="Center" Style="{StaticResource filterButtonStyle}" 
+                        HorizontalAlignment="Right" ToolTip="Close"/>
+            </Grid>
+
+            <Grid Grid.Column="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="400" />
+                    <ColumnDefinition Width="400" />
+                    <ColumnDefinition Width="80" />
+                </Grid.ColumnDefinitions>
+
+                <Grid VerticalAlignment="Top" HorizontalAlignment="Left" >
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="200"/>
+                        <ColumnDefinition Width="10"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="18"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Selected Customer:"  >
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource gridtextlabel}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CustomerListEnabled}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <ComboBox Grid.Row="0" Grid.Column="1" Margin="2,2,0,2" ItemsSource="{Binding Customers}" 
+                              ItemContainerStyle="{StaticResource ddstyle}"
+                        SelectedIndex="{Binding SelectedCustomerIndex}"
+                              
+                        SelectedItem="{Binding SelectedCustomer}"                              
+                        IsEnabled="{Binding CustomerListEnabled}" >                                
+                       
+                        <ComboBox.Style>
+                            <Style TargetType="ComboBox">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CustomerListEnabled}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ComboBox.Style>
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding SalesRegionName, StringFormat={}{0}-}" Foreground="Red"/>
+                                    <TextBlock Margin="4,0,0,0" Text="{Binding GOM.Name}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Name:" ToolTip="Customer's name" Style="{StaticResource gridtextlabel}"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" IsEnabled="{Binding IsEnabled}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Background="FloralWhite" Style="{StaticResource gridtextbox}"/>
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Location:" ToolTip="Location of customer site" Style="{StaticResource gridtextlabel}"/>
+                    <TextBox Grid.Row="3" Grid.Column="1" IsEnabled="{Binding IsEnabled}" Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}" Background="BlanchedAlmond" Style="{StaticResource gridtextbox}"/>
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Country:" Style="{StaticResource gridtextlabel}" ToolTip="Select Country" />
+                    <ComboBox Grid.Row="4" Grid.Column="1" IsEnabled="{Binding IsEnabled}" ItemsSource="{Binding Countries}" Background="Beige" ItemContainerStyle="{StaticResource ddstyle}" 
+                            DisplayMemberPath="GOM.Name" 
+                            SelectedValuePath="GOM.ID" 
+                            SelectedValue="{Binding CountryID, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            Style="{StaticResource gridcombo}" />
+
+                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Sales Region:" Style="{StaticResource gridtextlabel}" ToolTip="Select Sales Region" />
+                    <ComboBox Grid.Row="5" Grid.Column="1" IsEnabled="{Binding IsEnabled}" ItemContainerStyle="{StaticResource ddstyle}"
+                              ItemsSource="{Binding SalesRegions}" Background="Beige" Style="{StaticResource gridcombo}"
+                              DisplayMemberPath="Name" 
+                              SelectedValuePath="ID" 
+                              SelectedValue="{Binding SalesRegionID, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Customer Number:" ToolTip="Customer number used in accounting system" Style="{StaticResource gridtextlabel}"  />
+                    <TextBox Grid.Row="6" Grid.Column="1" IsEnabled="{Binding IsEnabled}" Text="{Binding Number, UpdateSourceTrigger=PropertyChanged}" Background="Cornsilk" Style="{StaticResource gridtextbox}"/>
+                    <TextBlock Grid.Row="7" Grid.Column="0" Text="Deleted" Style="{StaticResource gridtextlabel}"  />
+                    <CheckBox Grid.Row="7" Grid.Column="1" IsEnabled="{Binding IsEnabled}" IsChecked="{Binding Deleted}" Style="{StaticResource chkbox}"/>
+                </Grid>
+
+                <TreeView x:Name="tv" Grid.Column="1" ItemsSource="{Binding Nodes}" HorizontalAlignment="Stretch">
+                         <!--loc:TVNodeSelected.TVIsSenderParameter="{Binding DataContext.WindowIsSender, ElementName=mainwindow}"-->
+    
+                    <TreeView.Resources>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="LightBlue"/>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="Transparent" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="Black" />
+
+                        <HierarchicalDataTemplate ItemsSource="{Binding Children}" DataType="{x:Type models:TreeViewNodeModel}" >
+                            <TextBlock Text="{Binding Name}" Foreground="Blue" Width="150"  />
+                            <HierarchicalDataTemplate.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Children}" DataType="{x:Type models:TreeViewNodeModel}" >
+                                    <TextBlock Text="{Binding Name}" Foreground="Green" Width="150" />
+                                    <HierarchicalDataTemplate.ItemTemplate>
+                                        <HierarchicalDataTemplate ItemsSource="{Binding Children}" DataType="{x:Type models:TreeViewNodeModel}" >
+                                            <TextBlock Text="{Binding Name}" Foreground="Red" Width="150"/>
+                                            <HierarchicalDataTemplate.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Name}" Width="180" />
+                                                </DataTemplate>
+                                            </HierarchicalDataTemplate.ItemTemplate>
+                                        </HierarchicalDataTemplate>
+                                    </HierarchicalDataTemplate.ItemTemplate>
+                                </HierarchicalDataTemplate>
+                            </HierarchicalDataTemplate.ItemTemplate>
+                        </HierarchicalDataTemplate>
+                    </TreeView.Resources>
+
+                    <TreeView.ItemContainerStyle>
+                        <Style TargetType="{x:Type TreeViewItem}">
+                            <Setter Property="FontWeight" Value="Normal" />
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+
+                            <Setter Property="loc:TVNodeSelected.TreeViewItemSelected" Value="{Binding DataContext.SelectCustomerNode, ElementName=mainwindow}"/>
+                            <Setter Property="loc:TVNodeSelected.TVSelectedCommandParameter" Value="{Binding .}"/>
+                         
+                            <Setter Property="Background" Value="Transparent"/>
+                                               
+                            <Style.Triggers>
+                                <Trigger Property="VirtualizingStackPanel.IsVirtualizing" Value="true">
+                                    <Setter Property="ItemsPanel">
+                                        <Setter.Value>
+                                            <ItemsPanelTemplate>
+                                                <VirtualizingStackPanel/>
+                                            </ItemsPanelTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+
+                                <DataTrigger Binding="{Binding NodeTypeID}" Value="0">
+                                    <Setter Property="IsSelected" Value="False"/>
+                                    <Setter Property="Focusable" Value="False"/>
+                                </DataTrigger>
+                                
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                </Trigger>
+
+                                <!--<DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                </DataTrigger>-->
+                                
+                            </Style.Triggers>
+                        </Style>
+                    </TreeView.ItemContainerStyle>
+                </TreeView>
+
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>

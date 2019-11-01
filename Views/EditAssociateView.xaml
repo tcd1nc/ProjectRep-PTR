@@ -1,0 +1,340 @@
+﻿<Window x:Class="PTR.Views.EditAssociateView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PTR.Views"
+        mc:Ignorable="d"
+        xmlns:loc="clr-namespace:PTR"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="SingleBorderWindow"
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}"
+        Title="Edit Associate" Height="690" Width="920">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <!--<loc:SalesDivisionSelectedConverter x:Key="SalesDivisionSelectedConverter"/>-->
+        
+        <Style x:Key="chkStyle" TargetType="CheckBox">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
+        <DataTemplate x:Key="ListBoxItemTemplate" >
+            <StackPanel Orientation="Horizontal">
+                <CheckBox IsChecked="{Binding IsSelected}" Style="{StaticResource chkStyle}" Content="{Binding Name}"  />
+            </StackPanel>
+        </DataTemplate>
+
+        
+    </Window.Resources>
+    <Grid>
+        <DockPanel LastChildFill="True">
+            <!--<Grid DockPanel.Dock="Top" Height="8"/>-->
+            <Grid DockPanel.Dock="Top" Height="28" Margin="0,4,0,0">
+                <StackPanel Orientation="Horizontal" Margin="20,0,0,0" ToolTip="Select a country where the associate has membership">
+                    <TextBlock Text="Show Associates who are members of:" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                    <ComboBox Style="{StaticResource combo}" ItemsSource="{Binding Countries}" DisplayMemberPath="CountryName" SelectedValue="ID"  SelectedItem="{Binding SelectedCountry}"></ComboBox>
+
+                    <Button Template="{StaticResource CRUDAddButton}" ToolTip="Add New Associate" Command="{Binding AddNew}" Margin="200,0,0,0"/>
+                </StackPanel>
+            </Grid>
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Save" Command="{Binding SaveAndClose}" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Left" ToolTip="Save changes"/>
+                <!--<Button Grid.Column="1" Content="Add New" Command="{Binding AddNew}" Margin="0,0,0,0" TextBlock.TextAlignment="Center" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Center" ToolTip="Create New Associate"/>-->
+                <Button Grid.Column="2" Content="Close" Command="{Binding Cancel}" Margin="0,0,0,0"  TextBlock.TextAlignment="Center" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Right" ToolTip="Close without saving"/>
+            </Grid>
+
+            <Grid VerticalAlignment="Top" HorizontalAlignment="Center" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="880"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <!--<RowDefinition Height="32"/>-->
+                    <RowDefinition Height="560"/>
+                    <RowDefinition Height="24"/>
+                </Grid.RowDefinitions>
+                <!--<StackPanel Orientation="Horizontal" Margin="4,0,0,0" ToolTip="Select a country where the associate has membership">
+                    <TextBlock Text="Show:" Margin="0,4,4,0"></TextBlock>
+                    <ComboBox Style="{StaticResource combo}" ItemsSource="{Binding Countries}" DisplayMemberPath="CountryName" SelectedValue="ID"  SelectedItem="{Binding SelectedCountry}"></ComboBox>
+                </StackPanel>-->
+                
+                <loc:ExtendedGrid Grid.Row="0" Margin="0,2,0,0"
+                                        ItemsSource="{Binding Associates, IsAsync=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True}"        					  
+                                        SelectedItem="{Binding SelectedAssociate}"    
+                                        SelectedIndex="{Binding SelectedAssociateIndex}" 
+                                        loc:GridScrollHelper.ScrollToSelectedItem="{Binding ScrollToSelectedItem}" 
+                                        AlternationCount="1000"                                                                                                                                        
+						                AutoGenerateColumns="False" 
+						                AllowDrop="False"                                                                                                                                                  
+						                CanUserAddRows="False" 
+						                CanUserDeleteRows="False"						                
+						                GridLinesVisibility="All"
+						                BorderBrush="Gray"
+						                BorderThickness="1"
+						                CanUserReorderColumns="False"
+						                CanUserSortColumns = "False"
+						                HorizontalScrollBarVisibility="Hidden"
+						                VerticalScrollBarVisibility="Visible"
+						                SelectionMode="Single"
+						                ScrollViewer.VerticalScrollBarVisibility="Visible"              
+						                FrozenColumnCount="0"  >
+
+                    <loc:ExtendedGrid.ItemContainerStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="IsEnabled" Value="True" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsEnabled}" Value="false">
+                                    <Setter Property="IsEnabled" Value="False"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </loc:ExtendedGrid.ItemContainerStyle>
+
+                    <loc:ExtendedGrid.Columns>
+                        <DataGridTemplateColumn Width="140" IsReadOnly="True"  KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical"  >
+                                        <TextBlock Text="Name" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding GOM.Name,  UpdateSourceTrigger=PropertyChanged}" TextAlignment="Left" >
+                                        <TextBox.Style>
+                                            <Style TargetType="TextBox">
+                                                <Setter Property="IsEnabled" Value="True"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Deleted}" Value="true">
+                                                        <Setter Property="IsEnabled" Value="False"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBox.Style>
+                                    </TextBox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="110" IsReadOnly="True"  KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical"  >
+                                        <TextBlock Text="Login Name" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding LoginName, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Left" >
+                                        <TextBox.Style>
+                                            <Style TargetType="TextBox">
+                                                <Setter Property="IsEnabled" Value="True"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Deleted}" Value="true">
+                                                        <Setter Property="IsEnabled" Value="False"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBox.Style>
+                                    </TextBox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="70" IsReadOnly="True"  KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical"  >
+                                        <TextBlock Text="GIN" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding GIN, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Left" >
+                                        <TextBox.Style>
+                                            <Style TargetType="TextBox">
+                                                <Setter Property="IsEnabled" Value="True"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Deleted}" Value="true">
+                                                        <Setter Property="IsEnabled" Value="False"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBox.Style>
+                                    </TextBox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="84" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical"  >
+                                        <TextBlock Text="System Administrator" TextWrapping="Wrap" TextAlignment="Center" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding Administrator, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" >
+                                        <CheckBox.Style>
+                                            <Style TargetType="CheckBox">
+                                                <Setter Property="IsEnabled" Value="True"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Deleted}" Value="true">
+                                                        <Setter Property="IsEnabled" Value="False"/>
+                                                    </DataTrigger>
+                                                    
+                                                </Style.Triggers>
+                                            </Style>
+                                        </CheckBox.Style>
+                                    </CheckBox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="80" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical"  >
+                                        <TextBlock Text="Deleted?" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding Deleted, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" >
+                                        
+                                    </CheckBox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="90" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical"  >
+                                        <TextBlock Text="Sales Divisions" TextAlignment="Center" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ListBox ItemsSource="{Binding SalesDivisionsColl}" VerticalAlignment="Top">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"  >
+                                                    <CheckBox.Style>
+                                                        <Style TargetType="CheckBox">
+                                                            <Setter Property="IsEnabled" Value="True"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.Deleted, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBox}, AncestorLevel=1}}" Value="true">
+                                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                                </DataTrigger>
+
+                                                                <DataTrigger Binding="{Binding DataContext.Administrator, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBox}, AncestorLevel=1}}" Value="true">
+                                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                                </DataTrigger>
+                                                                
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </CheckBox.Style>
+                                                </CheckBox>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="140" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical"  >
+                                        <TextBlock Text="Countries" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ListBox ItemsSource="{Binding CountriesColl}" MaxHeight="120" VerticalAlignment="Top">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True,NotifyOnTargetUpdated=True}"  >
+                                                    <CheckBox.Style>
+                                                        <Style TargetType="CheckBox">
+                                                            <Setter Property="IsEnabled" Value="True"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.Deleted, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBox}, AncestorLevel=1}}" Value="true">
+                                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding DataContext.Administrator, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBox}, AncestorLevel=1}}" Value="true">
+                                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </CheckBox.Style>
+                                                </CheckBox>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="200*" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical"  >
+                                        <TextBlock Text="Permissions" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ListBox ItemsSource="{Binding PermissionsColl}" MaxHeight="120" VerticalAlignment="Top">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox Content="{Binding UserPermissionType}" IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"  >
+                                                    <CheckBox.Style>
+                                                        <Style TargetType="CheckBox">
+                                                            <Setter Property="IsEnabled" Value="True"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.Deleted, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBox}, AncestorLevel=1}}" Value="true">
+                                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding DataContext.Administrator, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBox}, AncestorLevel=1}}" Value="true">
+                                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                                </DataTrigger>
+                                                                
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </CheckBox.Style>
+                                                </CheckBox>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                    </loc:ExtendedGrid.Columns>
+                </loc:ExtendedGrid>
+                <TextBlock Grid.Column="0" Grid.Row="1" Text="Duplicate Associate Name" Foreground="Red" Visibility="{Binding DuplicateName, Converter={StaticResource BoolToVis}}"/>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>

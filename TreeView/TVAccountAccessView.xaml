@@ -1,0 +1,291 @@
+﻿<Window x:Class="PTR.TreeView.TVAccountAccessView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PTR.TreeView"
+        xmlns:tv="clr-namespace:PTR.TVViewModels"
+        mc:Ignorable="d"
+        Title="TVAccountAccessView" Height="450" Width="800">
+    <Grid>  <!--behav:TreeViewDnDScroll.ScrollOnDragDrop="True"-->
+        <TreeView Name="treeview2"    Padding="30,0,10,0"                                
+                  
+                    VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.IsVirtualizing="True" ItemsSource="{Binding Customers, IsAsync=True}"   >
+            <TreeView.Resources>
+                <HierarchicalDataTemplate DataType="{x:Type tv:TVCustomerViewModel}" ItemsSource="{Binding Children, IsAsync=True}">
+                    <Grid x:Name="g1" Focusable="False" Tag="{Binding DataContext, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"  >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="250"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="50"/>
+                        </Grid.RowDefinitions>
+                        <Border Focusable="False" Grid.Column="0" Grid.Row="0" Margin="2,2,2,2" BorderBrush="Black" BorderThickness="1" CornerRadius="1"  >
+                            <Image x:Name="iconFile" Margin="1,1,1,1" Source="{Binding Customer.IconFileName, Converter={StaticResource stringtoimageconverter}}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+                        </Border>
+                        <TextBlock x:Name="customername" Height="24" Focusable="False" Grid.Column="1" Grid.Row="0" Text="{Binding Customer.CustomerName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="2,1,1,1" FontSize="11" VerticalAlignment="Center" />
+
+                        <!--<i:Interaction.Behaviors>
+                            <dragdrop:FrameworkElementDropBehavior/>
+                        </i:Interaction.Behaviors>-->
+
+                    </Grid>
+                    <HierarchicalDataTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="g1" Property="Background" Value="LightBlue"/>
+                        </Trigger>
+                        <DataTrigger Binding="{Binding IsFiltered}" Value="True" >
+                            <Setter TargetName="customername" Property="Foreground" Value="Red"/>
+                            <Setter TargetName="customername" Property="Background" Value="#FFF9FF3B"/>
+                        </DataTrigger>
+                    </HierarchicalDataTemplate.Triggers>
+                </HierarchicalDataTemplate>
+
+                <HierarchicalDataTemplate x:Name="assetItem2"  DataType="{x:Type tv:TVAssetViewModel}" ItemsSource="{Binding Children, IsAsync=True}" >
+                    <Grid x:Name="g2" VerticalAlignment="Center" ToolTip="Double click to view Asset details" 
+                            Tag="{Binding DataContext.IsEnabled, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="700"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="24"/>
+                        </Grid.RowDefinitions>
+                        <Border x:Name="b2" BorderBrush="Green" BorderThickness="1" Grid.Column="0" Grid.Row="0" CornerRadius="1" Margin="1,1,1,1" >
+                            <VirtualizingStackPanel Margin="4,1,1,1" Orientation="Horizontal" VerticalAlignment="Center" Cursor="Hand">
+                                <TextBlock x:Name="gt1" Text="{Binding Asset.Label}" FontSize="11" Foreground="Blue" MinWidth="70" />
+                                <TextBlock x:Name="gt3" Text=":" Foreground="Black" FontSize="11"/>
+                                <TextBlock x:Name="gt2" Text="{Binding Asset.Category}" Foreground="Black" FontSize="11" Margin="2,0,0,0" />
+                                <TextBlock x:Name="gt4" Text="{Binding Asset.Description}" Margin="4,0" Foreground="Black" FontSize="11" />
+                            </VirtualizingStackPanel>
+                        </Border>
+
+                        <!--<i:Interaction.Behaviors>
+                            --><!-- Added IsEnabled dependency property to allow state to be changed --><!--
+                            <dragdrop:FrameworkElementDragBehavior IsEnabled="{Binding DataContext.IsEnabled, ElementName=mainwindow}"/>
+                            <dragdrop:FrameworkElementDropBehavior/>
+                        </i:Interaction.Behaviors>-->
+                    </Grid>
+
+                    <HierarchicalDataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding CanBeParent}" Value="True" >
+                            <Setter TargetName="g2" Property="Background" Value="AliceBlue"/>
+                        </DataTrigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="g2" Property="Background" Value="LightBlue"/>
+                            <Setter TargetName="gt1" Property="Foreground" Value="White"/>
+                            <Setter TargetName="gt2" Property="Foreground" Value="White"/>
+                            <Setter TargetName="gt3" Property="Foreground" Value="White"/>
+                            <Setter TargetName="gt4" Property="Foreground" Value="White"/>
+                        </Trigger>
+                        <DataTrigger Binding="{Binding IsFiltered}" Value="True" >
+                            <Setter TargetName="b2" Property="BorderBrush" Value="Red"/>
+                            <Setter TargetName="b2" Property="BorderThickness" Value="1"/>
+                            <Setter TargetName="b2" Property="Background" Value="#FFF9FF3B"/>
+                        </DataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <!-- This binding refers to the actual WPF element. -->
+                                <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsMouseOver}" Value="True"/>
+                                <Condition Binding="{Binding Path=IsFiltered}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="b2" Property="Background" Value="Orange" />
+                        </MultiDataTrigger>
+                    </HierarchicalDataTemplate.Triggers>
+                </HierarchicalDataTemplate>
+            </TreeView.Resources>
+
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="{x:Type TreeViewItem}">
+                    <!--<Setter Property="behav:MouseDoubleClick.Command" Value="{Binding DataContext.DoubleClickCommand, ElementName=mainwindow}"/>-->
+                    <!--<Setter Property="behav:MouseDoubleClick.CommandParameter" Value="{Binding}"/>-->
+                    <Setter Property="FontWeight" Value="Normal" />
+                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                    <!--<Setter Property="behav:TreeViewItemBehavior.IsBroughtIntoViewWhenSelected" Value="True" />-->
+                    <Setter Property="Tag" Value="{Binding DataContext,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=Window}}"/>
+                    <Setter Property="Visibility" Value="{Binding Visibilty, Mode=TwoWay}"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="HorizontalContentAlignment" Value="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"/>
+                    <Setter Property="VerticalContentAlignment" Value="{Binding VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"/>
+                    <Setter Property="Padding" Value="1,0,0,0"/>
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                    <Setter Property="FocusVisualStyle" Value="{StaticResource TreeViewItemFocusVisual}"/>
+
+                    <Setter Property="ContextMenu">
+                        <Setter.Value>
+                            <ContextMenu  >
+                                <MenuItem Height="24"  VerticalContentAlignment="Center"                                       
+                                              IsEnabled="{Binding PlacementTarget.Tag.IsEnabled, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                                              Command="{Binding PlacementTarget.Tag.AddNewAssetCM, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}" CommandParameter="{Binding}" 
+                                              ToolTip="Add a new asset">
+                                    <MenuItem.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock VerticalAlignment="Center" Text="Add New Asset"/>
+                                        </DataTemplate>
+                                    </MenuItem.HeaderTemplate>
+                                    <MenuItem.Style>
+                                        <Style TargetType="MenuItem">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <!-- Detect the type of item under the context menu and determine the visibility of the menu item -->
+                                                <DataTrigger Binding="{Binding ., Converter={StaticResource DataTypeConverter}}" Value="{x:Type tv:TVAssetViewModel}">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding ., Converter={StaticResource DataTypeConverter}}" Value="{x:Type tv:TVCustomerViewModel}">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </MenuItem.Style>
+                                </MenuItem>
+
+                                <MenuItem Height="24" VerticalContentAlignment="Center"   
+                                               IsEnabled="{Binding PlacementTarget.Tag.IsEnabled, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                                              Command="{Binding PlacementTarget.Tag.DeleteAsset, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}" CommandParameter="{Binding}" 
+                                              ToolTip="Delete asset">
+                                    <MenuItem.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock VerticalAlignment="Center" Text="Delete Asset"/>
+                                        </DataTemplate>
+                                    </MenuItem.HeaderTemplate>
+                                    <MenuItem.Style>
+                                        <Style TargetType="MenuItem">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <!-- Detect the type of item under the context menu and determine the visibility of the menu item -->
+                                                <DataTrigger Binding="{Binding ., Converter={StaticResource DataTypeConverter}}" Value="{x:Type tv:TVAssetViewModel}">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </MenuItem.Style>
+                                </MenuItem>
+                                <MenuItem Height="24" VerticalContentAlignment="Center"   
+                                               IsEnabled="{Binding PlacementTarget.Tag.IsEnabled, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                                              Command="{Binding PlacementTarget.Tag.DeleteCustomer, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}" 
+                                              CommandParameter="{Binding}" >
+                                    <MenuItem.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock VerticalAlignment="Center" Text="Delete Customer"/>
+                                        </DataTemplate>
+                                    </MenuItem.HeaderTemplate>
+                                    <MenuItem.Style>
+                                        <Style TargetType="MenuItem">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <!-- Detect the type of item under the context menu and determine the visibility of the menu item -->
+                                                <DataTrigger Binding="{Binding ., Converter={StaticResource DataTypeConverter}}" Value="{x:Type tv:TVCustomerViewModel}">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </MenuItem.Style>
+                                </MenuItem>
+                                <MenuItem Height="24" VerticalContentAlignment="Center"   
+                                               IsEnabled="{Binding PlacementTarget.Tag.IsEnabled, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                                              Command="{Binding PlacementTarget.Tag.MoveSelectedAsset, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}" CommandParameter="{Binding}" 
+                                              ToolTip="Select asset to move">
+                                    <MenuItem.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock VerticalAlignment="Center" Text="Select Asset"/>
+                                        </DataTemplate>
+                                    </MenuItem.HeaderTemplate>
+                                    <MenuItem.Style>
+                                        <Style TargetType="MenuItem">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <!-- Detect the type of item under the context menu and determine the visibility of the menu item -->
+                                                <DataTrigger Binding="{Binding ., Converter={StaticResource DataTypeConverter}}" Value="{x:Type tv:TVAssetViewModel}">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </MenuItem.Style>
+                                </MenuItem>
+                                <MenuItem  Height="24" VerticalContentAlignment="Center"   
+                                              IsEnabled="{Binding PlacementTarget.Tag.IsEnabled, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                                              Command="{Binding PlacementTarget.Tag.PasteSelectedAsset, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}" CommandParameter="{Binding}" 
+                                              ToolTip="Paste asset">
+                                    <MenuItem.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock VerticalAlignment="Center" TextAlignment="Left" Text="{Binding PlacementTarget.Tag.MovingAssetLabel, StringFormat={}Paste Asset {0}, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"/>
+                                        </DataTemplate>
+                                    </MenuItem.HeaderTemplate>
+                                </MenuItem>
+                            </ContextMenu>
+                        </Setter.Value>
+                    </Setter>
+
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type TreeViewItem}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition MinWidth="19" Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition/>
+                                    </Grid.RowDefinitions>
+                                    <ToggleButton x:Name="Expander" ClickMode="Press" Cursor="Hand" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" Style="{StaticResource ExpandCollapseToggleStyle}"/>
+                                    <Border x:Name="Bd" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" Grid.Column="1" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="true">
+                                        <ContentPresenter x:Name="PART_Header" ContentSource="Header" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                    </Border>
+                                    <ItemsPresenter x:Name="ItemsHost" Grid.ColumnSpan="2" Grid.Column="1" Grid.Row="1"/>
+
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsExpanded" Value="false">
+                                        <Setter Property="Visibility" TargetName="ItemsHost" Value="Collapsed"/>
+                                    </Trigger>
+
+                                    <Trigger Property="HasItems" Value="false">
+                                        <Setter Property="Visibility" TargetName="Expander" Value="Hidden"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="true">
+                                        <Setter Property="Background" TargetName="Bd" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+                                    </Trigger>
+                                    <MultiTrigger>
+                                        <MultiTrigger.Conditions>
+                                            <Condition Property="IsSelected" Value="true"/>
+                                            <Condition Property="IsSelectionActive" Value="false"/>
+                                        </MultiTrigger.Conditions>
+                                        <Setter Property="Background" TargetName="Bd" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                                    </MultiTrigger>
+                                    <Trigger Property="IsEnabled" Value="false">
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <Trigger Property="VirtualizingStackPanel.IsVirtualizing" Value="true">
+                            <Setter Property="ItemsPanel">
+                                <Setter.Value>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel/>
+                                    </ItemsPanelTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <DataTrigger Binding="{Binding Visibility}" Value="Collapsed" >
+                            <Setter  Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Visibility}" Value="Visible" >
+                            <Setter  Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="FontWeight" Value="Bold" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </TreeView.ItemContainerStyle>
+        </TreeView>
+    </Grid>
+</Window>

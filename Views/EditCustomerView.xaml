@@ -1,0 +1,100 @@
+﻿<Window x:Class="PTR.Views.EditCustomerView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" 
+        Icon="/PTR;component/Images/people.ico"
+        xmlns:loc="clr-namespace:PTR"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="SingleBorderWindow"
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}"
+        Title="Customers" Width="600" Height="500"  >
+    
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        
+        <Style x:Key="requiredtt" TargetType="TextBlock">
+            <Setter Property="Text" Value="*"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Foreground" Value="Red"/>
+            <Setter Property="ToolTip" Value="Required Data"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Top" Height="2"/>
+            
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Save" Command="{Binding SaveAndClose}" Margin="20,0,20,0"  Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Left" ToolTip="Save changes"/>
+                <Button Grid.Column="2" Content="Close" Command="{Binding Cancel}" Margin="0,0,20,0" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Right" ToolTip="Close without saving"/>
+            </Grid>
+            <Grid DockPanel.Dock="Bottom" Height="28">
+                <TextBlock Text="{Binding DataMissingLabel}" Style="{StaticResource gridtextlabel}" TextAlignment="Center" VerticalAlignment="Center" Padding="0,2,0,0"
+                   HorizontalAlignment="Center" Foreground="GreenYellow" Width="400" Background="Gray" Visibility="{Binding InvalidField, Converter={StaticResource BoolToVis}}" />
+            </Grid>
+            <Grid DockPanel.Dock="Right" Width="110">
+                <StackPanel Grid.Column="2" Orientation="Vertical" Margin="0,20,0,0" VerticalAlignment="Top">
+                    <Button Template="{StaticResource CRUDButton}" Tag="Add" Content="Add" ToolTip="Add New Customer" Command="{Binding AddNew}"/>
+                    <Button Template="{StaticResource CRUDButton}" Tag="Delete" Content="Delete" ToolTip="Delete Customer" Command="{Binding Delete}"/>
+                </StackPanel>
+            </Grid>
+            
+            <Grid VerticalAlignment="Top" Margin="10,20,10,0" IsEnabled="{Binding HasCustomers}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="300"/>
+                    <ColumnDefinition Width="20*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="230"/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <TextBlock Text="Customers:" Style="{StaticResource gridtextlabel}" VerticalAlignment="Top"/>
+                <ListBox x:Name="lstcustomers" Margin="2,2,2,2" Grid.Column="1"  ItemsSource="{Binding Customers}" 
+                         SelectedItem="{Binding Customer}"                          
+                         loc:LBScrollHelper.ScrollToSelectedItem="{Binding ScrollToSelectedItem}"
+                         IsEnabled="{Binding CustomerListEnabled}"           
+                         IsSynchronizedWithCurrentItem="True" DisplayMemberPath="GOM.Name" >
+                </ListBox>
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Customer Name:" Style="{StaticResource gridtextlabel}" />
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Customer.GOM.Name, UpdateSourceTrigger=PropertyChanged, 
+                    NotifyOnTargetUpdated=True, NotifyOnSourceUpdated=True, ValidatesOnDataErrors=True}" Style="{StaticResource RequiredName}"  />
+                
+                <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource requiredtt}"/>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Location:" Style="{StaticResource gridtextlabel}" />
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Customer.Location, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource gridtextbox}"  />
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Country:" Style="{StaticResource gridtextlabel}" />
+                <ComboBox  Grid.Row="3" Grid.Column="1" DisplayMemberPath="GOM.Name" Style="{StaticResource gridcombo}"
+                           ItemsSource="{Binding Countries}"  
+                           SelectedValuePath="GOM.ID" 
+                           SelectedItem="{Binding SelectedCountry}"
+                           SelectedValue="{Binding Customer.CountryID, UpdateSourceTrigger=PropertyChanged}"  ItemContainerStyle="{StaticResource ddstyle}"/>
+               
+                <TextBlock Grid.Row="3" Grid.Column="2" Style="{StaticResource requiredtt}"/>
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="Customer Number:" Style="{StaticResource gridtextlabel}" />
+                <TextBox Grid.Row="4" Grid.Column="1" Width="100" Text="{Binding Customer.Number, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Style="{StaticResource gridtextbox}"  />
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Region:" Style="{StaticResource gridtextlabel}" />
+                <ComboBox Grid.Row="5" Grid.Column="1" DisplayMemberPath="Name" Style="{StaticResource gridcombo}"
+                                        ItemsSource="{Binding SalesRegions}" 
+                                        SelectedValuePath="ID" 
+                                        SelectedValue="{Binding Customer.SalesRegionID, UpdateSourceTrigger=PropertyChanged}"
+                                        ItemContainerStyle="{StaticResource ddstyle}"/>
+
+
+            </Grid>
+
+        </DockPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,188 @@
+﻿<Window x:Class="PTR.Views.PlaybookView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PTR.Views"
+        xmlns:xceed="http://schemas.xceed.com/wpf/xaml/toolkit"
+        mc:Ignorable="d"
+        xmlns:loc="clr-namespace:PTR"
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" ResizeMode="CanResize" WindowStyle="SingleBorderWindow" WindowState="Maximized"
+        WindowStartupLocation="CenterScreen"  
+        x:Name="_parent"
+        Title=" Projects" >
+
+    <Window.Resources>
+        <loc:MultiValueHighlightConverter x:Key="MultiValueHighlightConverter"/>
+              
+        <Style x:Key="ColumnHeaderStyle2" TargetType="{x:Type DataGridColumnHeader}">
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="TextBlock.TextWrapping" Value="Wrap"/>
+            <Setter Property="Height" Value="50"/>
+        </Style>
+
+        <Style x:Key="lvstyle" TargetType="ListView">
+            <Style.Triggers>
+                <Trigger Property="HasItems" Value="False">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListView">
+                                <TextBlock Text="No data..." Foreground="Blue" Padding="2,2,0,0"/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="chkStyle" TargetType="CheckBox">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
+
+        <DataTemplate x:Key="ListBoxItemTemplate" >
+            <CheckBox IsChecked="{Binding IsSelected}" Style="{StaticResource chkStyle}" Content="{Binding Description}" Background="{Binding Colour}" 
+                      Width="{Binding Width, RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBox}}"
+                      />
+        </DataTemplate>
+
+    </Window.Resources>
+    
+    <Grid>
+        <DockPanel LastChildFill="True" >
+            <!--<Grid DockPanel.Dock="Top" Height="2"/>-->
+
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Button Content="Close" Command="{Binding Close}" Margin="0,0,20,0" Width="50" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Right"/>
+                <Button x:Name="btnExcel" Width="180" Command="{Binding ExportToExcel}" Margin="10,0,0,0"  Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Left" >
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal" ToolTip="Export to Excel" VerticalAlignment="Center">
+                            <Image Source="/PTR;component/Images/export.ico"  Height="16" Width="20"/>
+                            <TextBlock Text="Export Filtered Data To Excel" FontSize="12" Height="24" Width="180" />
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+            </Grid>
+            <Grid DockPanel.Dock="Left" Width="250"  Margin="4,4,2,4">
+               
+                <Border Background="#EEEEEE" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Vertical" Margin="2,10,0,0" VerticalAlignment="Stretch" >
+                            <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="8,2,0,0">
+                                <Button x:Name="btnApplyFilter" Command="{Binding ApplyFilter}" Margin="6,0" Content="Apply Filters" Width="80" Style="{StaticResource filterButtonStyle}" />
+                                <Button x:Name="btnClearFilters" Command="{Binding ClearFilter}" Margin="2,0" Content="Clear Filters" Width="80" Style="{StaticResource filterButtonStyle}" />
+                            </StackPanel>
+                            
+                            <loc:FilterListControl x:Name="flCountries" Width="200" 
+							    ListItems="{Binding Countries}" 
+							    SelectedItems="{Binding CountrySrchString}" 
+							    Margin="4,0,0,0" 
+							    ShowAll="{Binding ShowAllCountries}"
+                                VisibleCount="8"
+							    Heading="Countries" 
+							    ToggleButtonVisibility="Visible"
+							    HorizontalAlignment="Left" 
+                                SelectAll="{Binding AllCountries}"
+                                SelectAllButtonCommand="{Binding AllCountriesCommand}"
+                                ExpandButtonCommand ="{Binding ExpandCountriesCommand}"/>
+                            
+                            <loc:RadioListControl x:Name="radSalesDivs" Width="150"
+                                ListItems ="{Binding SalesDivisionRadios}" 
+							    SelectedItemID ="{Binding SelectedDivisionID, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True,NotifyOnTargetUpdated=True}" 					  
+							    Margin="4,0,4,0" 							                                      
+							    Heading="Sales Division" 
+                                IsEnabled="{Binding SingleDivision}"						    
+							    HorizontalAlignment="Left" />
+                            <CheckBox Content="All Divisions (Sales Funnel Only)" IsChecked="{Binding GetAllSalesDivisions}" Margin="4,0,4,0"/>
+                            
+                            <loc:FilterListControl x:Name="flProjectTypes" Width="150"
+							    ListItems="{Binding ProjectTypes}" 
+							    SelectedItems="{Binding ProjectTypesSrchString}" 
+							    Margin="4,0,0,0" 
+							    ShowAll="True"                                
+							    Heading="Project Types" 
+							    ToggleButtonVisibility="Collapsed"
+							    HorizontalAlignment="Left" 
+                                SelectAll="{Binding AllProjectTypes}"
+                                SelectAllButtonCommand="{Binding AllProjectTypesCommand}" />
+
+                            <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="4,10,0,0">
+                                <TextBlock Text="Project Date Ranges:" FontWeight="Bold"  Style="{StaticResource textlabel}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="4,0,0,4" ToolTip="Select the Sales Close month from which to report projects">
+                                <TextBlock Text="From:" FontWeight="Bold" Width="50" Style="{StaticResource textlabel}" />
+                                <xceed:DateTimeUpDown  x:Name="startMonth" Height="24" Style="{StaticResource monthupdown}" 
+                                                       Value="{Binding StartMonthProjects, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="4,0,0,0">
+                                <TextBlock Text="Comments:" FontWeight="Bold"  Style="{StaticResource textlabel}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="4,0,0,4">
+                                <TextBlock Text="From:" FontWeight="Bold" Width="50" Style="{StaticResource textlabel}" />
+                                <xceed:DateTimeUpDown  x:Name="fromMonth" Height="24" Style="{StaticResource monthupdown}" Value="{Binding FirstMonthComments, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="4,0,0,10">
+                                <TextBlock Text="To:" Width="50" FontWeight="Bold" Style="{StaticResource textlabel}"/>
+                                <xceed:DateTimeUpDown  x:Name="toMonth" Height="24" Style="{StaticResource monthupdown}" Value="{Binding LastMonthComments, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
+                            </StackPanel>
+                            <TextBlock Text="Highlight:" Width="60" Margin="4,0,0,0" FontWeight="Bold" Style="{StaticResource textlabel}"/>
+                            <ListBox x:Name="lvp" ItemsSource="{Binding ProjectStatuses}" ItemTemplate="{StaticResource ListBoxItemTemplate}"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     Width="230" Height="200" Margin="4,0,0,4"
+                                     HorizontalAlignment="Left"/>
+                            <CheckBox Content="Misc Columns (Sales Funnel Only)" IsChecked="{Binding GetMiscColumns}" ToolTip="Show additional columns of data not normally used in the Playbook" Margin="4,10,4,0"/>
+
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+            <Grid Margin="0,4,4,4">
+                <TabControl>
+                    <TabItem Header="Sales Funnel">
+                        <ListView  x:Name="lvSalesFunnel"  Style="{StaticResource lvstyle}" >
+                            
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="{x:Type ListViewItem}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="Background" >
+                                        <Setter.Value>
+                                            <MultiBinding Converter="{StaticResource MultiValueHighlightConverter}" >
+                                                <Binding Path="SalesFunnelStage" />
+                                                <Binding ElementName="_parent" Path="DataContext.SelectedProjectStatuses"/>
+                                            </MultiBinding>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel />
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
+                        </ListView>
+                    </TabItem>
+                    <TabItem Header="New Business" Visibility="{Binding SingleDivisionVisibility}">
+                        <ListView  x:Name="lvNewBusiness"  Style="{StaticResource lvstyle}" >
+                            <ListView.Resources>
+                                <Style TargetType="{x:Type ListViewItem}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                                </Style>
+                            </ListView.Resources>
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel />
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
+                        </ListView>
+                    </TabItem>
+                </TabControl>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>

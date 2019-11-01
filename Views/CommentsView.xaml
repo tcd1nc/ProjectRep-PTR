@@ -1,0 +1,94 @@
+﻿<Window x:Class="PTR.Views.CommentsView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PTR.Views"
+         xmlns:loc="clr-namespace:PTR"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="None" BorderBrush="Blue" BorderThickness="1" 
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" 
+        loc:DialogCloser.DialogResult="{Binding SaveFlag}"
+        mc:Ignorable="d"
+        KeyDown="Window_KeyDown"
+        Title="Comments" Height="300" Width="450">
+    <Grid>
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Save" Command="{Binding SaveAndClose}" Margin="0,0,0,0"  Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Left" ToolTip="Save changes"/>
+                <Button Grid.Column="2" Content="Close" Command="{Binding Cancel}" Margin="0,0,0,0" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Right" ToolTip="Close without saving"/>
+            </Grid>
+
+            <loc:ExtendedGrid Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="4" x:Name="stats" HorizontalAlignment="Left" Margin="2,2,2,2"
+                                        VerticalAlignment="Stretch"                                                                                            
+                                        ItemsSource="{Binding Comments, IsAsync=True,  Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True}"        					  
+                                        AlternationCount="1000"                                                                                                                                        
+						                AutoGenerateColumns="False" 
+						                AllowDrop="False"                                                                                                                                                  
+						                CanUserAddRows="False" 
+						                CanUserDeleteRows="False"
+						                ColumnWidth="*"
+						                GridLinesVisibility="All"
+						                BorderBrush="Gray"
+						                BorderThickness="1"
+						                CanUserReorderColumns="False"
+						                CanUserSortColumns = "False"
+						                HorizontalScrollBarVisibility="Hidden"
+						                VerticalScrollBarVisibility="Visible" 
+						                SelectionMode="Single"
+						                ScrollViewer.VerticalScrollBarVisibility="Visible"              
+						                FrozenColumnCount="1" 
+						                SelectionUnit="Cell" >
+
+                <DataGrid.ItemContainerStyle>
+                    <Style TargetType="{x:Type DataGridRow}">
+                        <Setter Property="IsEnabled" Value="{Binding DataContext.ProjectIsActive, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"/>
+                    </Style>
+                </DataGrid.ItemContainerStyle>
+
+                <loc:ExtendedGrid.Columns>
+                    <DataGridTemplateColumn x:Name="Month" Width="90" IsReadOnly="True"  KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                        <DataGridTemplateColumn.HeaderTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Vertical"  >
+                                    <TextBlock Text="Month" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.HeaderTemplate>
+                        <DataGridTemplateColumn.CellStyle>
+                            <Style TargetType="{x:Type DataGridCell}">
+                                <Setter Property="Focusable" Value="False" />
+                            </Style>
+                        </DataGridTemplateColumn.CellStyle>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Vertical" VerticalAlignment="Top">
+                                    <TextBlock Background="AliceBlue" Text="{Binding CommentMonth,StringFormat=\{0:MMM-yy\}}" Padding="0,0,2,0" Height="24" TextAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn x:Name="Comments" Width="350*" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                        <DataGridTemplateColumn.HeaderTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Vertical" ToolTip="Monthly Comments"  >
+                                    <TextBlock Text="Comments" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.HeaderTemplate>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBox Height="24" Text="{Binding Comment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="2,0,0,0" ToolTip="{Binding Comments}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </loc:ExtendedGrid.Columns>
+            </loc:ExtendedGrid>
+        </DockPanel>
+    </Grid>
+</Window>

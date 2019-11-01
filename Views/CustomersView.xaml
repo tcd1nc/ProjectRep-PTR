@@ -1,0 +1,77 @@
+﻿<Window x:Class="PTR.Views.CustomersView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PTR.Views"
+        xmlns:loc="clr-namespace:PTR"
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}"
+        mc:Ignorable="d"               
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="SingleBorderWindow"
+        Title="New Customer" Height="300" Width="350">
+    <Window.Resources>
+        <loc:StringToImageConverter x:Key="StringToImageConverter"/>
+    </Window.Resources>
+    
+    <Grid>
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Top" Height="2">
+            </Grid>
+
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Button Content="Cancel" Command="{Binding Close}" Margin="10,0,0,0" Width="50" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Left"/>
+                <Button Content="Add" Command="{Binding SaveAndClose}" Width="50" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Right"/>
+            </Grid>
+            <Grid VerticalAlignment="Top" Margin="10,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="154"/>
+                 
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition Height="100"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="New Customer:" Style="{StaticResource textlabel}" Height="18" Width="94" />
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding CustomerName}" Style="{StaticResource textbox}"  />
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Location:" Style="{StaticResource textlabel}" Height="18" Width="94" />
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Location}" Style="{StaticResource textbox}"  />
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Customer Number:" Style="{StaticResource textlabel}" Height="18" Width="110" />
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding CustomerNumber}" Style="{StaticResource textbox}"  />
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Customer Logo:" Style="{StaticResource textlabel}" Height="18" Width="110" />
+                <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                    
+                    <Border Margin="2,0,0,0" BorderBrush="Black" BorderThickness="1" Height="80" Width="80" >
+                        <Image x:Name="CustomerLogo" Stretch="Uniform" AllowDrop="False" Focusable="False" 
+                               Source="{Binding IconFileName, Mode=OneWay, UpdateSourceTrigger=PropertyChanged,Converter={StaticResource StringToImageConverter}}" />
+                    </Border>
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="2,0" Width="130">
+                        <Button Style="{StaticResource filterButtonStyle}"  ToolTip="Select customer logo" Margin="4,8"
+                                                            Name="LogoButton" Command="{Binding ChangeImageCommand}" CommandParameter="{Binding}">
+                            <Button.Content>
+                                <StackPanel Orientation="Horizontal" ToolTip="Edit customer logo">
+                                    <Image Source="/PTR;component/Images/edit.ico" />
+                                    <TextBlock Margin="2,0" Text="Edit"/>
+                                </StackPanel>
+                            </Button.Content>
+                        </Button>
+                        <Button Margin="4,8" Style="{StaticResource filterButtonStyle}" ToolTip="Delete customer logo"
+                                                     Command="{Binding DeleteImageCommand}"  CommandParameter="{Binding}">
+                            <Button.Content>
+                                <StackPanel Orientation="Horizontal" ToolTip="Delete customer logo">
+                                    <Image Source="/PTR;component/Images/delete.ico"  />
+                                    <TextBlock Margin="2,0" Text="Delete"/>
+                                </StackPanel>
+                            </Button.Content>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+
+            </Grid>
+
+        </DockPanel>
+    </Grid>
+</Window>

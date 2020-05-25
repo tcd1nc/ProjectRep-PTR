@@ -20,7 +20,6 @@
         </ControlTemplate.Triggers>
     </ControlTemplate>
 
-
     <Style x:Key="LinkButton" TargetType="ButtonBase">
         <Setter Property="Template">
             <Setter.Value>
@@ -47,8 +46,7 @@
         <Setter Property="Foreground" Value="Blue"/>
         <Setter Property="Cursor" Value="Hand"/>
     </Style>
-    
-    
+        
     <Style x:Key="filterButtonStyle" TargetType="Button">
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Height" Value="20"/>
@@ -98,49 +96,5 @@
             </Button.Content>
         </Button>
     </ControlTemplate>
-
-    <!--<ControlTemplate x:Key="CRUDDelButton" TargetType="Button">
-        <Button Width="70" Command="{TemplateBinding Command}" Margin="10,4,0,0" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Left" >
-            <Button.Content>
-                <StackPanel Orientation="Horizontal" ToolTip="{TemplateBinding ToolTip}" VerticalAlignment="Center">
-                    <Image Source="/PTR;component/Images/delete.ico"  Height="16" Width="20"/>
-                    <TextBlock Text="Delete" FontSize="12" Height="24" Width="60"  Margin="2,0,0,0" >
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="Black"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsEnabled, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Button}}" Value="false">
-                                        <Setter Property="Foreground" Value="Gray"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </StackPanel>
-            </Button.Content>
-        </Button>
-    </ControlTemplate>-->
-
-    <!--<ControlTemplate x:Key="CommentsButton" TargetType="Button">
-        <Button Width="100" Command="{TemplateBinding Command}" Margin="10,4,0,0" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Left" >
-            <Button.Content>
-                <StackPanel Orientation="Horizontal" ToolTip="{TemplateBinding ToolTip}" VerticalAlignment="Center">
-                    <Image Source="/PTR;component/Images/edit.ico"  Height="16" Width="20"/>
-                    <TextBlock Text="Comments" FontSize="12" Height="24" Width="60"  >
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="Black"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsEnabled, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Button}}" Value="false">
-                                        <Setter Property="Foreground" Value="Gray"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </StackPanel>
-            </Button.Content>
-        </Button>
-    </ControlTemplate>-->
-
+    
 </ResourceDictionary>

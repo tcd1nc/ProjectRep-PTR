@@ -10,7 +10,7 @@
         WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow" WindowState="Maximized"
         loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" 
         loc:WindowBehavior.WindowClosing="{Binding WindowClosing}"    
-        Title="User" >
+        Title="User Setup" >
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
@@ -130,28 +130,27 @@
             </Grid>
             <Grid DockPanel.Dock="Bottom" Height="32">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="120"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="120"/>
                 </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Content="Save" Command="{Binding Save}" Margin="20,0,0,0" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Left" ToolTip="Save changes"/>
-                <TextBlock Grid.Column="1" Text="{Binding DataMessageLabel}" Style="{StaticResource gridtextlabel}" TextAlignment="Center" VerticalAlignment="Center" Padding="0,2,0,0"
-                   HorizontalAlignment="Center" Foreground="GreenYellow" Width="400" Background="Gray" Visibility="{Binding ShowDataMessage, Converter={StaticResource BoolToVis}}" />
-                <Button Grid.Column="2" Content="Close" Command="{Binding Cancel}" Margin="0,0,20,0"  TextBlock.TextAlignment="Center" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Right" ToolTip="Close without saving"/>
+                <Button Grid.Column="0" Content="Save" Command="{Binding Save}" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ToolTip="Save changes"/>
+                <TextBlock Grid.Column="1" Text="{Binding DataMessageLabel}" Style="{StaticResource ErrorMessageLbl}" Visibility="{Binding ShowDataMessage, Converter={StaticResource BoolToVis}, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Grid.Column="2" Content="Close" Command="{Binding Cancel}" TextBlock.TextAlignment="Center" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Center" ToolTip="Close window"/>
             </Grid>
 
             <Grid Grid.Column="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" >
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="450" />
+                    <ColumnDefinition Width="470" />
                     <ColumnDefinition Width="800" />
-                    <ColumnDefinition Width="100" />
+                    <ColumnDefinition Width="40" />
                 </Grid.ColumnDefinitions>
                 <ScrollViewer VerticalScrollBarVisibility="Auto" >
                     <Grid VerticalAlignment="Top" HorizontalAlignment="Left" >
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="150"/>
-                            <ColumnDefinition Width="160"/>
-                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="100"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="28"/>
@@ -163,11 +162,11 @@
                             <RowDefinition Height="28"/>
                             <RowDefinition Height="28"/>
                             <RowDefinition Height="28"/>
+                            <RowDefinition />
                             <RowDefinition Height="38"/>
-                            <RowDefinition Height="100"/>
-                            <RowDefinition Height="120"/>
-                            <RowDefinition Height="100"/>
-                            <RowDefinition Height="100"/>
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
                             <RowDefinition Height="28"/>
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Selected User:"  >
@@ -182,10 +181,10 @@
                             </TextBlock.Style>
                         </TextBlock>
 
-                        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding Users}"  ItemContainerStyle="{StaticResource ddstyle}"
-                         SelectedItem="{Binding SelectedUser}"                              
+                        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding Users}" ItemContainerStyle="{StaticResource ddstyle}"
+                         SelectedItem="{Binding SelectedUser}"                         
                          IsEnabled="{Binding UserListEnabled}"           
-                         IsSynchronizedWithCurrentItem="True" DisplayMemberPath="GOM.Name" >
+                         IsSynchronizedWithCurrentItem="True" DisplayMemberPath="Name" >
                             <ComboBox.Style>
                                 <Style TargetType="ComboBox" BasedOn="{StaticResource gridcombo}">
                                     <Style.Triggers>
@@ -195,13 +194,12 @@
                                     </Style.Triggers>
                                 </Style>
                             </ComboBox.Style>
-
                         </ComboBox>
                         <TextBlock Grid.Row="2" Grid.Column="0" Text="Name:" ToolTip="User's name" Style="{StaticResource gridtextlabel}"/>
                         <TextBox Grid.Row="2" Grid.Column="1" IsEnabled="{Binding IsEnabled}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Background="FloralWhite" Style="{StaticResource gridtextbox}"/>
                         <TextBlock Grid.Row="3" Grid.Column="0" Text="Login Name:" ToolTip="Login name used on PC where this program is installed" Style="{StaticResource gridtextlabel}"/>
                         <TextBox Grid.Row="3" Grid.Column="1" IsEnabled="{Binding IsEnabled}" Text="{Binding LoginName, UpdateSourceTrigger=PropertyChanged}" Background="BlanchedAlmond" Style="{StaticResource gridtextbox}"/>
-                        <TextBlock Grid.Row="4" Grid.Column="2" HorizontalAlignment="Left" TextAlignment="Left" Text="{Binding DomainName, StringFormat={}@{0}}" Style="{StaticResource textlabel}"/>
+                        <TextBlock Grid.Row="4" Grid.Column="2" HorizontalAlignment="Left" TextAlignment="Left" Text="{Binding DomainName, StringFormat={}@{0}}" Style="{StaticResource gridtextlabel}" Width="150" Margin="2,0,0,0"  />
                         <TextBlock Grid.Row="4" Grid.Column="0" Text="Email:" ToolTip="Email address used for correspondence" Style="{StaticResource gridtextlabel}"  />
                         <TextBox Grid.Row="4" Grid.Column="1" IsEnabled="{Binding IsEnabled}" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" Background="Cornsilk" Style="{StaticResource gridtextbox}"/>
                         <TextBlock Grid.Row="5" Grid.Column="0" Text="GIN:" ToolTip="User's ID Number" Style="{StaticResource gridtextlabel}" />
@@ -210,47 +208,62 @@
                         <CheckBox Grid.Row="6" Grid.Column="1" IsEnabled="{Binding IsEnabled}" IsChecked="{Binding Administrator, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource chkbox}" />
                         <TextBlock Grid.Row="7" Grid.Column="0" Text="Show Others:" Style="{StaticResource gridtextlabel}" ToolTip="Allow other user's projects to be visible"  />
                         <CheckBox Grid.Row="7" Grid.Column="1" IsEnabled="{Binding IsEnabled}" IsChecked="{Binding ShowOthers, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource chkbox}" />
-                        <TextBlock Grid.Row="8" Grid.Column="0" Text="Show Reminder:" Style="{StaticResource gridtextlabel}" ToolTip="Show user Required Actions on each startup"  />
-                        <CheckBox Grid.Row="8" Grid.Column="1" IsEnabled="{Binding IsEnabled}" IsChecked="{Binding ShowNag, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource chkbox}" />
-
-                        <TextBlock Grid.Row="9" Grid.Column="0" Text="User's Menu Options" Padding="0,4,0,0" Grid.ColumnSpan="3" Foreground="Blue" HorizontalAlignment="Center" Style="{StaticResource gridtextlabel}" />
-
-                        <TextBlock Grid.Row="10" Grid.Column="0" VerticalAlignment="Top" Text="Reports Menu:" Style="{StaticResource gridtextlabel}" ToolTip="Select Report Menu Options"/>
-                        <ListBox Grid.Row="10" Grid.Column="1" IsEnabled="{Binding IsEnabled}" ItemsSource="{Binding ReportMnuOptions}" Background="Beige" Style="{StaticResource lstbox}">
+                        <TextBlock Grid.Row="8" Grid.Column="0" Text="Edit Completed/Cancelled:" Style="{StaticResource gridtextlabel}" ToolTip="Grant user permission to edit completed or cancelled projects"  />
+                        <CheckBox Grid.Row="8" Grid.Column="1" IsEnabled="{Binding IsEnabled}" IsChecked="{Binding AllowEditCompletedCancelled, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource chkbox}" />
+                        <TextBlock Grid.Row="9" Grid.Column="0" VerticalAlignment="Top" Text="Business Units:" Style="{StaticResource gridtextlabel}" ToolTip="Select divisions that user belongs to"  />
+                        <ListBox Grid.Row="9" Grid.Column="1" IsEnabled="{Binding IsEnabled}" ItemsSource="{Binding BusinessUnitOptions}" Background="Beige" Style="{StaticResource lstbox}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}" />
+                                    <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}" 
+                                               ToolTip="{Binding Name}">
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Padding="0,2,0,0"/>
+                                    </CheckBox>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-                        <TextBlock Grid.Row="11" Grid.Column="0" VerticalAlignment="Top" Text="Administration Menu:" Style="{StaticResource gridtextlabel}" ToolTip="Select Administrative Menu Options" />
+
+                        <TextBlock Grid.Row="10" Grid.Column="1" Text="User's Menu Options" Padding="0,4,0,0"  Foreground="Blue" HorizontalAlignment="Center" Style="{StaticResource gridtextlabel}" />
+                        
+                        <TextBlock Grid.Row="11" Grid.Column="0" VerticalAlignment="Top" Text="Edit Menu:" Style="{StaticResource gridtextlabel}" ToolTip="Select Administrative Menu Options" />
                         <ListBox Grid.Row="11" Grid.Column="1" IsEnabled="{Binding IsEnabled}" ItemsSource="{Binding AdministrationMnuOptions}" Background="Beige" Style="{StaticResource lstbox}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}" />
+                                    <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}" 
+                                              ToolTip="{Binding Name}">
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Padding="0,2,0,0"/>
+                                    </CheckBox>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-                        <TextBlock Grid.Row="12" Grid.Column="0" VerticalAlignment="Top" Text="Projects Menu:" Style="{StaticResource gridtextlabel}" ToolTip="Select Projects Menu Options"/>
-                        <ListBox Grid.Row="12" Grid.Column="1" IsEnabled="{Binding IsEnabled}" ItemsSource="{Binding ProjectMnuOptions}" Background="Beige" Style="{StaticResource lstbox}">
+                        
+                        <TextBlock Grid.Row="12" Grid.Column="0" VerticalAlignment="Top" Text="Reports Menu:" Style="{StaticResource gridtextlabel}" ToolTip="Select Report Menu Options"/>
+                        <ListBox Grid.Row="12" Grid.Column="1" IsEnabled="{Binding IsEnabled}" ItemsSource="{Binding ReportMnuOptions}" Background="Beige" Style="{StaticResource lstbox}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}" />
+                                    <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}" 
+                                               ToolTip="{Binding Name}">
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Padding="0,2,0,0"/>
+                                    </CheckBox>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-
-                        <TextBlock Grid.Row="13" Grid.Column="0" VerticalAlignment="Top" Text="Sales Divisions:" Style="{StaticResource gridtextlabel}" ToolTip="Select divisions that user belongs to"  />
-                        <ListBox Grid.Row="13" Grid.Column="1" IsEnabled="{Binding IsEnabled}" ItemsSource="{Binding SalesDivisionsOptions}" Background="Beige" Style="{StaticResource lstbox}">
+                                                                       
+                        <TextBlock Grid.Row="13" Grid.Column="0" VerticalAlignment="Top" Text="Projects Menu:" Style="{StaticResource gridtextlabel}" ToolTip="Select Projects Menu Options"/>
+                        <ListBox Grid.Row="13" Grid.Column="1" IsEnabled="{Binding IsEnabled}" ItemsSource="{Binding ProjectMnuOptions}" Background="Beige" Style="{StaticResource lstbox}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsChecked,  UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}" />
+                                    <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}" 
+                                               ToolTip="{Binding Name}">
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Padding="0,2,0,0"/>
+                                    </CheckBox>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-
+                       
                         <TextBlock Grid.Row="14" Grid.Column="0" Text="Deleted?:" Style="{StaticResource gridtextlabel}" ToolTip="Check this to prevent a user being authenticated" />
-                        <CheckBox Grid.Row="14" Grid.Column="1" IsChecked="{Binding Deleted, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource chkbox}" />
+                        <CheckBox Grid.Row="14" Grid.Column="1" IsEnabled="{Binding IsEnabled}" IsChecked="{Binding Deleted, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource chkbox}" >
+                            <TextBlock VerticalAlignment="Center" Padding="0,2,0,0"/>
+                        </CheckBox>
 
                     </Grid>
                 </ScrollViewer>
@@ -275,13 +288,13 @@
                                             </StackPanel>
                                             <HierarchicalDataTemplate.ItemTemplate>
                                                 <DataTemplate>
-                                                    <StackPanel Orientation="Horizontal" Width="550">
+                                                    <StackPanel Orientation="Horizontal" Width="600">
                                                         <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" IsThreeState="False" Width="20"/>
-                                                        <TextBlock Text="{Binding Name}" Width="180" />
+                                                        <TextBlock Text="{Binding Name}" Width="280" />
                                                         <StackPanel Orientation="Horizontal" Margin="2,0,0,0" IsEnabled="{Binding IsChecked}">
-                                                            <RadioButton Margin="4,0,0,0" Content="Read-Only" Width="100" GroupName="" IsChecked="{Binding IsROChecked, Mode=TwoWay}" ToolTip="Grant user ability to only read Project data"/>
-                                                            <RadioButton Margin="2,0,0,0" Content="Edit Activity" Width="100" GroupName="" IsChecked="{Binding IsEditActChecked, Mode=TwoWay}" ToolTip="Grant user ability to edit Monthly Activities and Read-Only access to Project Details"/>
-                                                            <RadioButton Margin="2,0,0,0" Content="Full Access" Width="100" GroupName="" IsChecked="{Binding IsFAChecked, Mode=TwoWay}" ToolTip="Grant user ability to edit Project Details and edit Monthly Activities"/>
+                                                            <RadioButton Margin="4,0,0,0" Content="Read-Only" Width="90" GroupName="" IsChecked="{Binding IsROChecked, Mode=TwoWay}" ToolTip="Grant user ability to only read Project data"/>
+                                                            <RadioButton Margin="2,0,0,0" Content="Edit Activity" Width="90" GroupName="" IsChecked="{Binding IsEditActChecked, Mode=TwoWay}" ToolTip="Grant user ability to edit Monthly Activities and Read-Only access to Project Details"/>
+                                                            <RadioButton Margin="2,0,0,0" Content="Full Access" Width="90" GroupName="" IsChecked="{Binding IsFAChecked, Mode=TwoWay}" ToolTip="Grant user ability to edit Project Details and edit Monthly Activities"/>
                                                         </StackPanel>
                                                     </StackPanel>
                                                 </DataTemplate>

@@ -3,31 +3,25 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:xceed="http://schemas.xceed.com/wpf/xaml/toolkit"
+        xmlns:ctrls="clr-namespace:PTR.Controls"
         Icon="/PTR;component/Images/heatmapinv.png"
         mc:Ignorable="d"
         xmlns:loc="clr-namespace:PTR"
         loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResize" WindowStyle="SingleBorderWindow" WindowState="Maximized"
-        Title=" Sales Pipeline Report (Totals are all local currency values unless USD selected)" >
+        Title=" Sales Pipeline Report" >
     <Window.Resources>
       
         <Style x:Key="CurrencyStyle" TargetType="{x:Type DataGridCell}">
-            <!--<Setter Property="Background" Value="Beige"/>-->
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="HorizontalContentAlignment" Value="Right"/>
             <Setter Property="ContentStringFormat" Value="C0"/>
-            
         </Style>
 
-        <Style x:Key="StatusStyle" TargetType="{x:Type DataGridCell}">
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-        </Style>
-
-        <Style x:Key="ColumnHeaderStyle" TargetType="{x:Type DataGridColumnHeader}">
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-        </Style>
-
+        <DataTemplate x:Key="SPStatusTemplate" >
+            <TextBlock Text="{Binding Status}" Padding="2,0,2,0" Background="{Binding StatusColour, FallbackValue=White}" />
+        </DataTemplate>
+        
     </Window.Resources>
 
     <Grid>
@@ -35,8 +29,13 @@
             <Grid DockPanel.Dock="Top" Height="2"/>
 
             <Grid DockPanel.Dock="Bottom" Height="32">
-                <Button Content="Close" Command="{Binding Close}" Margin="0,0,20,0" Width="50" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Right" ToolTip="Close this window"/>
-                <Button x:Name="btnExcel" Width="180" Command="{Binding ExportToExcel}" Margin="10,0,0,0"  Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Left" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="120"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="2" Content="Close" Command="{Binding Close}" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Center" ToolTip="Close report form"/>
+                <Button Grid.Column="0" x:Name="btnExcel" Command="{Binding ExportToExcel}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"   Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Center" >
                     <Button.Content>
                         <StackPanel Orientation="Horizontal" ToolTip="Export to Excel" VerticalAlignment="Center">
                             <Image Source="/PTR;component/Images/export.ico"  Height="16" Width="20"/>
@@ -55,7 +54,7 @@
                         </Grid.RowDefinitions>
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="8,2,0,0">
                             <Button x:Name="btnApplyFilter" Command="{Binding ApplyFilter}" Margin="6,0" Content="Apply Filters" Width="80" Style="{StaticResource filterButtonStyle}" />
-                            <Button x:Name="btnClearFilters" Command="{Binding ClearFilter}" Margin="2,0" Content="Clear Filters" Width="80" Style="{StaticResource filterButtonStyle}" />
+                            <Button x:Name="btnClearFilters" Command="{Binding ClearAllFilters}" Margin="2,0" Content="Clear Filters" Width="80" Style="{StaticResource filterButtonStyle}" />
                         </StackPanel>
 
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -63,42 +62,42 @@
 
                                 <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="24,2,0,0">
                                     <TextBlock Text="From:" FontWeight="Bold" Width="50" Style="{StaticResource textlabel}"/>
-                                    <xceed:DateTimeUpDown  x:Name="fromMonth" Height="24" Style="{StaticResource monthupdown}" Value="{Binding FirstMonth, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
+                                    <ctrls:MonthUpDown x:Name="fromMonth" Style="{StaticResource monthpicker}" Value="{Binding FirstMonth, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="24,2,0,0">
                                     <TextBlock Text="To:" Width="50" FontWeight="Bold" Style="{StaticResource textlabel}"/>
-                                    <xceed:DateTimeUpDown  x:Name="toMonth" Height="24" Style="{StaticResource monthupdown}" Value="{Binding LastMonth, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
+                                    <ctrls:MonthUpDown  x:Name="toMonth" Style="{StaticResource monthpicker}" Value="{Binding LastMonth, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
                                 </StackPanel>
 
-                                <loc:FilterListControl x:Name="flCountries" Width="170" TTip="These are the countries that you have been given permission to see"
-							    ListItems="{Binding Countries}" 
+                                <loc:FilterListControl x:Name="flCountries" Width="170" TTip="These are the countries of customers that you have been granted access to"
+							    ListItems="{Binding CountriesFilter}" 
 							    SelectedItems="{Binding CountriesSrchString}" 
 							    Margin="4,8,0,0" 
 							    ShowAll="{Binding ShowAllCountries}"
                                 VisibleCount="8"
-							    Heading="Current User's Countries" 
+							    Heading="Your Countries" 
 							    ToggleButtonVisibility="Visible"
 							    HorizontalAlignment="Left" 
                                 SelectAll="{Binding AllCountries}"
                                 SelectAllButtonCommand="{Binding AllCountriesCommand}"
                                 ExpandButtonCommand ="{Binding ExpandCountriesCommand}"/>
 
-                                <loc:FilterListControl x:Name="flSalesDivisions" Width="150" TTip="These are the sales divisions that you have been given access to"
-							    ListItems="{Binding SalesDivisions}" 
-							    SelectedItems="{Binding SalesDivisionSrchString}" 
-							    Margin="4,0,4,4" 
+                                <loc:FilterListControl x:Name="flSalesDivisions" Width="170" TTip="These are the business units that you have been granted access to"
+							    ListItems="{Binding BusinessUnitFilter}" 
+							    SelectedItems="{Binding BusinessUnitSrchString}" 
+							    Margin="4,2,4,4" 
 							    ShowAll="True"   
                                 VisibleCount="4"
-							    Heading="Sales Divisions" 
+							    Heading="Business Units" 
 							    ToggleButtonVisibility="Collapsed" 
 							    HorizontalAlignment="Left" 
-							    SelectAll="{Binding AllSalesDivisions}"                                                                                                 							    
-                                SelectAllButtonCommand="{Binding AllSalesDivisionsCommand}" />
+							    SelectAll="{Binding AllBusinessUnits}"                                                                                                 							    
+                                SelectAllButtonCommand="{Binding AllBusinessUnitsCommand}" />
 
-                                <loc:FilterListControl x:Name="flProjectStatusTypes" Width="150"
-							    ListItems="{Binding ProjectStatusTypes}" 
+                                <loc:FilterListControl x:Name="flProjectStatusTypes" Width="170"
+							    ListItems="{Binding ProjectStatusTypesFilter}" 
 							    SelectedItems="{Binding ProjectStatusTypesSrchString}" 
-							    Margin="4,0,0,0" 
+							    Margin="4,2,0,0" 
 							    ShowAll="True"
                                 VisibleCount="4"
 							    Heading="Project Statuses" 
@@ -107,10 +106,10 @@
                                 SelectAll="{Binding AllProjectStatuses}"
                                 SelectAllButtonCommand="{Binding AllProjectStatusTypesCommand}"  />
 
-                                <loc:FilterListControl x:Name="flProjectTypes" Width="150"
-							    ListItems="{Binding ProjectTypes}" 
+                                <loc:FilterListControl x:Name="flProjectTypes" Width="170"
+							    ListItems="{Binding ProjectTypesFilter}" 
 							    SelectedItems="{Binding ProjectTypesSrchString}" 
-							    Margin="4,0,0,0" 
+							    Margin="4,2,0,0" 
 							    ShowAll="True"                                
 							    Heading="Project Types" 
 							    ToggleButtonVisibility="Collapsed"
@@ -125,36 +124,6 @@
                                         <CheckBox IsChecked="{Binding NonKPM}" Content="Non-KPM" Margin="2,6,2,0" Width="80" ToolTip="Show non-KPM projects"/>
                                     </StackPanel>
                                 </GroupBox>
-
-                                <GroupBox Header="CDP/CCP" Margin="4,10,2,0" FontFamily="Arial" FontSize="12" HorizontalAlignment="Left" Width="180" FontWeight="Bold" >
-                                    <StackPanel Orientation="Horizontal">
-                                        <CheckBox x:Name="allcdpccp" IsChecked="{Binding AllCDPCCP}" Content="All" Margin="2,6,2,0" Width="50" ToolTip="Show All projects"/>
-                                        <CheckBox x:Name="cdp" IsChecked="{Binding CDP}" Content="CDP" Margin="2,6,2,0" Width="50" ToolTip="Show CDP projects">
-                                            <CheckBox.Style>
-                                                <Style TargetType="CheckBox">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsChecked, ElementName=allcdpccp}" Value="True">
-                                                            <Setter Property="IsEnabled" Value="False"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </CheckBox.Style>
-                                        </CheckBox>
-
-                                        <CheckBox x:Name="ccp" IsChecked="{Binding CCP}" Content="CCP" Margin="2,6,2,0" Width="50" ToolTip="Show CCP projects">
-                                            <CheckBox.Style>
-                                                <Style TargetType="CheckBox">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsChecked, ElementName=allcdpccp}" Value="True">
-                                                            <Setter Property="IsEnabled" Value="False"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </CheckBox.Style>
-                                        </CheckBox>
-                                    </StackPanel>
-                                </GroupBox>
-
                             </StackPanel>
                         </ScrollViewer>
                     </Grid>
@@ -168,21 +137,22 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <StackPanel Grid.Row="0" Style="{StaticResource stkpanel}">
-                    <TextBlock Text="Projects Value" Style="{StaticResource textlabel}"/>
+                    <TextBlock Text="{Binding TblCaption}" Style="{StaticResource textlabel}"/>
                 </StackPanel>
                 <DataGrid Grid.Row="1" x:Name="Results" 
                                 AutoGenerateColumns="True"  
-                                ItemsSource="{Binding Data, IsAsync=True, Mode=OneWay}" FrozenColumnCount="1" 
+                                ItemsSource="{Binding Data, IsAsync=True, Mode=OneWay}" 
+                                FrozenColumnCount="1" 
                                 HorizontalAlignment="Left"
                                 AllowDrop="False"                                       
-                                HorizontalScrollBarVisibility="Hidden"     
-                                
+                                HorizontalScrollBarVisibility="Auto"     
+                                Background="White"
                                 CanUserAddRows="False"
                                 CanUserDeleteRows="False"
                                 loc:MouseDataGridCellMove.MouseGridCellMove="{Binding MouseMove}"
                                 CanUserReorderColumns="False"
-                                CanUserResizeColumns="False"                   
-                                LoadingRow="DataGrid_LoadingRow"                                
+                                CanUserResizeColumns="False"  
+                                CanUserResizeRows="False"
                                 AutoGeneratingColumn="ReportGrid_AutoGeneratingColumn"                                
                                 AlternationCount="200" >
                     <DataGrid.Resources>
@@ -197,18 +167,20 @@
                             <!--<Setter Property="ToolTipService.Placement" Value="Absolute"/>-->
                             <Setter Property="ToolTipService.Placement" Value="Relative"/>
                             <Setter Property="ToolTip.VerticalOffset" Value="220"/>
-                            <Setter Property="ToolTip.HorizontalOffset" Value="20"/>
+                            <Setter Property="ToolTip.HorizontalOffset" Value="0"/>
                             <Setter Property="Background" Value="White"/>
                             <Setter Property="ToolTip">
                                 <Setter.Value>
-                                    <StackPanel Orientation="Vertical" Width="250" >
-                                        <TextBlock Text="{Binding CurrentMonth}" FontWeight="Bold"/>
+
+                                    <StackPanel Orientation="Vertical" Width="Auto" MaxHeight="600">
                                         <StackPanel Style="{StaticResource stkpanel}">
-                                            <TextBlock Text="Status" Foreground="Blue"/>
-                                            <TextBlock Text="{Binding CurrentStatus}" Margin="4,0,0,0" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding CurrentMonth}" FontWeight="Bold"/>
+                                            <TextBlock Text="Status: " Foreground="Blue" Margin="6,0,0,0"/>
+                                            <TextBlock Text="{Binding CurrentStatus}" Margin="2,0,2,0" FontWeight="Bold"/>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding SummaryString}"/>
+                                        <TextBlock Text="{Binding SummaryString}" />
                                     </StackPanel>
+
                                 </Setter.Value>
                             </Setter>
                         </Style>
@@ -221,27 +193,68 @@
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
+
+                        <Style TargetType="{x:Type DataGridRow}">
+                            <Style.Setters>
+                                <Setter Property="Background" Value="{Binding StatusColour}"/>
+                            </Style.Setters>
+                        </Style>
+                        
+                        <Style TargetType="{x:Type DataGridCell}">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="LightCyan" />
+                                    <Setter Property="Foreground" Value="Blue"/>
+                                    <Setter Property="FontWeight" Value="DemiBold" />
+                                </Trigger>
+                            </Style.Triggers>
+                            <Style.Setters>
+                                <Setter Property="Background" Value="{Binding StatusColour}"/>
+                            </Style.Setters>
+                        </Style>
+
                     </DataGrid.Resources>
                 </DataGrid>
                
                 <StackPanel Grid.Row="2" Style="{StaticResource stkpanel}">
-                    <TextBlock Text="Number of Projects" Style="{StaticResource textlabel}"/>
+                    <TextBlock Text="{Binding CountTblCaption}" Style="{StaticResource textlabel}"/>
                 </StackPanel>
                 <DataGrid Grid.Row="3" x:Name="ProjectCount" AutoGenerateColumns="True" ItemsSource="{Binding ProjectCount, IsAsync=True, Mode=OneWay}" HorizontalAlignment="Left"
                           FrozenColumnCount="1"   
                           Background="White"
-                                AllowDrop="False"                                                          
-                                CanUserAddRows="False"
-                                CanUserDeleteRows="False"
-                                CanUserReorderColumns="False"
-                                CanUserResizeColumns="False"                                
-                                LoadingRow="DataGrid_LoadingRow"                                
-                                AutoGeneratingColumn="ProjectCountGrid_AutoGeneratingColumn"                                
-                                AlternationCount="200" >
+                          AllowDrop="False"                                                          
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          CanUserReorderColumns="False"
+                          CanUserResizeColumns="False"   
+                          CanUserResizeRows="False"
+                          HorizontalScrollBarVisibility="Auto"                          
+                          AutoGeneratingColumn="ProjectCountGrid_AutoGeneratingColumn"                                
+                          AlternationCount="200" >
                     <DataGrid.Resources>
                         <Style TargetType="{x:Type ScrollViewer}">
                             <Setter Property="loc:ScrollSynchronizer.ScrollGroup" Value="Group1" />
                         </Style>
+
+                        <Style TargetType="{x:Type DataGridRow}">
+                            <Style.Setters>
+                                <Setter Property="Background" Value="{Binding StatusColour}"/>
+                            </Style.Setters>
+                        </Style>
+
+                        <Style TargetType="{x:Type DataGridCell}">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="LightCyan" />
+                                    <Setter Property="Foreground" Value="Blue"/>
+                                    <Setter Property="FontWeight" Value="DemiBold" />
+                                </Trigger>
+                            </Style.Triggers>
+                            <Style.Setters>
+                                <Setter Property="Background" Value="{Binding StatusColour}"/>
+                            </Style.Setters>
+                        </Style>
+
                     </DataGrid.Resources>
                 </DataGrid>
             </Grid>

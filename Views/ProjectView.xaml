@@ -6,56 +6,95 @@
         xmlns:loc="clr-namespace:PTR"
         mc:Ignorable="d"
         Icon="/PTR;component/Images/details.ico"
-        xmlns:xceed="http://schemas.xceed.com/wpf/xaml/toolkit"
+        xmlns:ctrls="clr-namespace:PTR.Controls"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="SingleBorderWindow"
-        Title="{Binding WindowTitle}" Height="630" Width="650"
+        Title="{Binding WindowTitle}" Height="650" Width="800"
+        loc:WindowBehavior.WindowClosing="{Binding WindowClosing}" 
         loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}"
-        loc:DialogCloser.DialogResult="{Binding SaveProjectFlag}" >
+        loc:DialogCloser.DialogResult="{Binding SaveProjectFlag}" 
+        loc:WindowEvent.DetectWindowLoaded="{Binding WindowLoaded}">
+    
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
-        <loc:CultureFormatConverter x:Key="CultConv" />
-        <Style x:Key="ttStyle" TargetType="ToolTip">
+        <loc:DecCheckConverter x:Key="DecCheckConv"/>
+       
+        <Style x:Key="ttStyle2" TargetType="ToolTip">
             <Setter Property="OverridesDefaultStyle" Value="True"/>
             <Setter Property="HasDropShadow" Value="False"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToolTip">
                         <Border BorderThickness="1" CornerRadius="2" BorderBrush="Blue" Padding="2,2,2,2" Background="LemonChiffon">
-                            <TextBlock TextAlignment="Left" Text="Product names must be separated by a semi-colon and space and no hyphens used&#10;e.g: BUSAN 1009; BUSAN 1455; BLX 12345" />
+                            <ContentPresenter>
+                                <ContentPresenter.Content>
+                                    <StackPanel Orientation="Vertical" Background="LemonChiffon">
+                                        <TextBlock Padding="2,2,2,2" TextAlignment="Left" Text="{Binding ProductTT}" />
+                                        <TextBlock Padding="2,2,2,2" TextAlignment="Left" Text="Permitted product names:" FontWeight="Bold" Background="LemonChiffon"/>
+                                        <ListBox Padding="2,2,2,2" BorderThickness="0" ItemsSource="{Binding ProductGroupNames}" DisplayMemberPath="Name" Background="LemonChiffon" />
+                                    </StackPanel>
+                                </ContentPresenter.Content>
+                            </ContentPresenter>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
 
-        <ToolTip x:Key="ProductsTT" Style="{StaticResource ttStyle}" />
+        <ToolTip x:Key="ProductsTT" Style="{StaticResource ttStyle2}" />
 
         <Style x:Key="requiredtt" TargetType="TextBlock">
             <Setter Property="Text" Value="*"/>
             <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="TextBlock.VerticalAlignment" Value="Center"/>
             <Setter Property="Foreground" Value="Red"/>
             <Setter Property="ToolTip" Value="Required Data"/>
         </Style>
+
+        <Style x:Key="ttPNStyle" TargetType="ToolTip">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="HasDropShadow" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border BorderThickness="1" CornerRadius="4" BorderBrush="Blue" Padding="2,2,2,2" Background="LemonChiffon">
+                            <ContentPresenter>
+                                <ContentPresenter.Content>
+                                    <TextBlock Width="380">                                      
+                                        <Run Text="The Project Name cannot be changed after the project is created." Foreground="Black"/>
+                                        <LineBreak/>
+                                        <Run Text="{Binding MaxProjNameLength, StringFormat={}The maximum length is {0} characters}" Foreground="Black" />
+                                    </TextBlock>
+                                </ContentPresenter.Content>
+                            </ContentPresenter>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <ToolTip x:Key="ProjectNameTT" Style="{StaticResource ttPNStyle}" />
+
+        <ContextMenu Height="0" Width="0" x:Key="contextmenu" >
+            <TextBox>No menu</TextBox>
+        </ContextMenu>
 
     </Window.Resources>
     <Grid>
         <DockPanel LastChildFill="True" Margin="4,4,4,4">
             <Grid DockPanel.Dock="Bottom" Height="32" >
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="100"/>
-                    <ColumnDefinition/>
-                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="120"/>
                 </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Content="Save" IsEnabled="{Binding IsEnabled}" Visibility="{Binding IsEnabled, Converter={StaticResource BoolToVis}}" Command="{Binding SaveProject}" CommandParameter="{Binding Project}" ToolTip="Save changes and close form" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" Margin="20,0,0,0" HorizontalAlignment="Left"/>
-                <TextBlock Grid.Column="1" Text="{Binding DataMissingLabel}" Style="{StaticResource gridtextlabel}" TextAlignment="Center" VerticalAlignment="Center" Padding="0,2,0,0"
-                   HorizontalAlignment="Center" Foreground="GreenYellow" Width="400" Background="Gray" Visibility="{Binding InvalidField, Converter={StaticResource BoolToVis}}" />
-                <Button Grid.Column="2" Content="Close" Command="{Binding CloseWindowCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}" ToolTip="Close form without saving changes" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" Margin="0,0,20,0" HorizontalAlignment="Right"/>
+                <Button Grid.Column="2" Content="Save and Close" IsEnabled="{Binding IsEnabled}" Visibility="{Binding IsEnabled, Converter={StaticResource BoolToVis}}" Command="{Binding SaveProject}" ToolTip="Save changes and close window" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="{Binding DataMissingLabel}" Style="{StaticResource ErrorMessageLbl}" Visibility="{Binding InvalidField, Converter={StaticResource BoolToVis}}" />
             </Grid>
 
             <TabControl >
                 <TabItem Header="Details" >
                     <GroupBox Header="Project Details" Style="{StaticResource grpbox}" Margin="0,10,0,0" IsEnabled="{Binding IsEnabled}">
-                        <Grid Margin="0,2,0,0">
+                        <Grid Margin="0,2,0,0" >
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="28"/>
                                 <RowDefinition Height="28"/>
@@ -69,58 +108,97 @@
                                 <RowDefinition Height="28"/>
                                 <RowDefinition Height="28"/>
                                 <RowDefinition Height="28"/>
+                                <RowDefinition >
+                                    <RowDefinition.Style>
+                                        <Style TargetType="RowDefinition">
+                                            <Setter Property="Height" Value="0"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding MiscComboEnabled}" Value="True">
+                                                    <Setter Property="Height" Value="28"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </RowDefinition.Style>
+                                </RowDefinition>
+                                <RowDefinition Height="100"/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="120"/>
                                 <ColumnDefinition Width="10"/>
-                                <ColumnDefinition Width="90"/>
-                                <ColumnDefinition Width="90"/>
-                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="80"/>
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Project Type:" Style="{StaticResource gridtextlabel}" />
-                            <ComboBox Grid.Row="0" Grid.Column="1" Style="{StaticResource gridcombo}"
+                            <ComboBox x:Name="projecttype" Grid.Row="0" Grid.Column="1" Style="{StaticResource gridcombo}" 
+                                       ToolTip="{Binding Path=SelectedItem.Description, RelativeSource={RelativeSource Self}}"
                                         ItemsSource="{Binding ProjectTypesList}"  
-                                        SelectedValuePath="ID"  
-                                        DisplayMemberPath="Name" 
-                                        SelectedValue="{Binding Project.ProjectTypeID}"  ItemContainerStyle="{StaticResource ddstyle}"/>
+                                        SelectedItem="{Binding SelectedProjectType}"
+                                        SelectedValuePath="ID"                                          
+                                        SelectedValue="{Binding Project.ProjectTypeID}" ItemContainerStyle="{StaticResource ddstyle}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Background="{Binding Colour}" Orientation="Vertical" HorizontalAlignment="Stretch" >
+                                            <TextBlock Text="{Binding Name}" Width="{Binding ActualWidth,RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ComboBox}}}"
+                                                   ToolTip="{Binding Description}" TextAlignment="Left" Padding="2,2,2,2" Background="{Binding Colour}" HorizontalAlignment="Left"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
 
-                            <CheckBox Grid.Column="4" Content="KPM" IsChecked="{Binding Project.KPM}" Style="{StaticResource chkbox}"/>
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Industry:"  Style="{StaticResource gridtextlabel}" />
+                            <TextBlock Grid.Row="0" Grid.Column="3" Text="Priority:"
+                                       Visibility="{Binding SelectedItem.ShowPriority, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
+                                       Style="{StaticResource gridtextlabel}" />
+                            <ComboBox Grid.Row="0" Grid.Column="4" DisplayMemberPath="Name" 
+                                      Visibility="{Binding SelectedItem.ShowPriority, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
+                                      Style="{StaticResource gridcombo}"
+                                      ItemsSource="{Binding Priorities}"  
+                                      SelectedValuePath="ID"  
+                                      SelectedValue="{Binding Project.PriorityID, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}"/>
+                            
+                            <CheckBox Grid.Column="6" 
+                                      Visibility="{Binding SelectedItem.ShowKPM, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
+                                       HorizontalAlignment="Left" Margin="18,0,0,0" IsChecked="{Binding Project.KPM}" Style="{StaticResource chkbox}" >
+                                <TextBlock Text="KPM" VerticalAlignment="Center" Padding="0,2,0,0"/>
+                            </CheckBox>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Business Unit:"  Style="{StaticResource gridtextlabel}" />
                             <ComboBox Grid.Row="1" Grid.Column="1" DisplayMemberPath="Name" Style="{StaticResource gridcombo}"
                                         SelectedItem="{Binding SelectedSalesDivision}" 
-                                        ItemsSource="{Binding SalesDivisions}"  
+                                        ItemsSource="{Binding BusinessUnits}"  
                                         SelectedValuePath="ID"  
-                                        SelectedValue="{Binding Project.SalesDivisionID}"  ItemContainerStyle="{StaticResource ddstyle}"/>
-                           
+                                        SelectedValue="{Binding Project.SalesDivisionID, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}"/>
                             <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource requiredtt}" />
 
                             <TextBlock Grid.Row="1" Grid.Column="3" Text="Segment:" Style="{StaticResource gridtextlabel}"  />
-                            <ComboBox Grid.Row="1" Grid.Column="4" Grid.ColumnSpan="2" DisplayMemberPath="GOM.Name" Style="{StaticResource gridcombo}"
+                            <ComboBox Grid.Row="1" Grid.Column="4" Grid.ColumnSpan="3" DisplayMemberPath="Name" Style="{StaticResource gridcombo}"
                                         SelectedItem="{Binding SelectedIndustrySegment}"                                      
-                                        ItemsSource="{Binding MarketSegments}"  
-                                        SelectedValuePath="GOM.ID"
-                                        SelectedValue="{Binding Project.MarketSegmentID}"  ItemContainerStyle="{StaticResource ddstyle}"/>
+                                        ItemsSource="{Binding IndustrySegments}"  
+                                        SelectedValuePath="ID"
+                                        SelectedValue="{Binding Project.IndustrySegmentID}" ItemContainerStyle="{StaticResource ddstyle}"/>
                             
-                            <TextBlock Grid.Row="1" Grid.Column="6"  Style="{StaticResource requiredtt}" />
+                            <TextBlock Grid.Row="1" Grid.Column="7" Style="{StaticResource requiredtt}" />
 
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Application:" Style="{StaticResource gridtextlabel}"  />
-                            <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4" DisplayMemberPath="GOM.Name" Style="{StaticResource gridcombo}"
-                                        ItemsSource="{Binding ApplicationCategories}"  
-                                        SelectedValuePath="GOM.ID"  
-                                        SelectedValue="{Binding Project.ApplicationID}"  ItemContainerStyle="{StaticResource ddstyle}"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="6" DisplayMemberPath="Name" Style="{StaticResource gridcombo}"
+                                        ItemsSource="{Binding Applications}"  
+                                        SelectedValuePath="ID"  
+                                        SelectedValue="{Binding Project.ApplicationID, FallbackValue=0}" ItemContainerStyle="{StaticResource ddstyle}"/>
 
-                            <TextBlock Grid.Row="2" Grid.Column="5" Style="{StaticResource requiredtt}" />
+                            <TextBlock Grid.Row="2" Grid.Column="7" Style="{StaticResource requiredtt}" />
 
                             <TextBlock Grid.Row="3" Grid.Column="0" Text="Customer:" Style="{StaticResource gridtextlabel}" />
-                            <ComboBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="4" Style="{StaticResource gridcombo}"
+                            <ComboBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="6" Style="{StaticResource gridcombo}"
                                       SelectedItem="{Binding SelectedCustomer}"                                       
                                       ItemsSource="{Binding Customers}"  
-                                      SelectedValuePath="GOM.ID"  
+                                      SelectedValuePath="ID"  
+                                      ToolTip="Country - Sales Area - Customer"
                                       SelectedValue="{Binding Project.CustomerID}" >
                                 <ComboBox.ItemContainerStyle>
-                                    <Style TargetType="ComboBoxItem">
+                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource ddstyle}">
                                         <Setter Property="IsEnabled" Value="{Binding IsEnabled}"/>
                                         <Setter Property="Foreground" Value="Blue"/>
                                         <Style.Triggers>
@@ -134,92 +212,186 @@
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding SalesRegionName, StringFormat={}{0}-}" Foreground="Red"/>
-                                            <TextBlock Margin="4,0,0,0" Text="{Binding GOM.Name}"/>
+                                            <TextBlock Text="{Binding CountryName, StringFormat={}{0}}" Foreground="Green"/>
+                                            <TextBlock Text="{Binding SalesRegionName, StringFormat={} - {0}}" Foreground="Red"/>
+                                            <TextBlock Text="{Binding Name, StringFormat={} - {0}}"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
-                                
-                                
                             </ComboBox>
-                            <TextBlock Grid.Row="3" Grid.Column="5" Style="{StaticResource requiredtt}" />
+                            <TextBlock Grid.Row="3" Grid.Column="7" Style="{StaticResource requiredtt}" />
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Associate:"  Style="{StaticResource gridtextlabel}"  />
-                            <ComboBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" DisplayMemberPath="GOM.Name" Style="{StaticResource gridcombo}"
-                                      ItemsSource="{Binding Associates}"  
-                                      SelectedValuePath="GOM.ID"  
-                                      SelectedValue="{Binding Project.OwnerID}"  ItemContainerStyle="{StaticResource ddstyle}"/>
-                            
-                            <TextBlock Grid.Row="4" Grid.Column="4" Style="{StaticResource requiredtt}"/>
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Owner:" Style="{StaticResource gridtextlabel}"  />
+                            <ComboBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" DisplayMemberPath="Name" Style="{StaticResource gridcombo}"
+                                      ItemsSource="{Binding Associates, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"  
+                                      SelectedValuePath="ID" 
+                                      SelectedItem="{Binding SelectedUser, Mode=OneWay}"
+                                      SelectedValue="{Binding Project.OwnerID}" >
+                                       
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource ddstyle}">
+                                        <Setter Property="IsEnabled" Value="{Binding IsEnabled}"/>
+                                        <Setter Property="Foreground" Value="Blue"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsEnabled}" Value="false">
+                                                <Setter Property="Background" Value="WhiteSmoke"/>
+                                                <Setter Property="Foreground" Value="DarkGray"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
+                            <TextBlock Grid.Row="4" Grid.Column="3" Style="{StaticResource requiredtt}"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="3" Text="Sponsor:" Style="{StaticResource gridtextlabel}" Visibility="{Binding ShowSponsor, Converter={StaticResource BoolToVis}}"  />
+                            <ComboBox Grid.Row="4" Grid.Column="4" Grid.ColumnSpan="3" DisplayMemberPath="Name" Style="{StaticResource gridcombo}" Visibility="{Binding ShowSponsor, Converter={StaticResource BoolToVis}}"
+                                      ItemsSource="{Binding Associates, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"  
+                                      SelectedValuePath="ID" 
+                                      SelectedItem="{Binding SelectedUser, Mode=OneWay}"
+                                      SelectedValue="{Binding Project.SponsorID}" >
+
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource ddstyle}">
+                                        <Setter Property="IsEnabled" Value="{Binding IsEnabled}"/>
+                                        <Setter Property="Foreground" Value="Blue"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsEnabled}" Value="false">
+                                                <Setter Property="Background" Value="WhiteSmoke"/>
+                                                <Setter Property="Foreground" Value="DarkGray"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
+                            <TextBlock Grid.Row="4" Grid.Column="7" Visibility="{Binding ShowSponsor, Converter={StaticResource BoolToVis}}" Style="{StaticResource requiredtt}"/>
 
                             <TextBlock Grid.Row="5" Grid.Column="0" Text="Project Name:" Style="{StaticResource gridtextlabel}"  />
-                            <TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="4" IsEnabled="{Binding ProjectNameEnabled}"
-                                     MaxLength="{Binding MaxProjNameLength}" 
-                                     Text="{Binding Project.GOM.Name, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource gridtextbox}" 
-                                     ToolTip="The Project Name cannot be changed after the project is created.&#10;The maximum length is 25 characters."/>
-                            <TextBlock Grid.Row="5" Grid.Column="5" Style="{StaticResource requiredtt}"/>
+                            <TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="6" IsEnabled="{Binding ProjectNameEnabled}"
+                                     MaxLength="{Binding MaxProjNameLength}" ContextMenu="{x:Null}"
+                                     Text="{Binding Project.Name, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource gridtextbox}" 
+                                     ToolTip="{StaticResource ProjectNameTT}"/>
+
+                            <TextBlock Grid.Row="5" Grid.Column="7" Style="{StaticResource requiredtt}"/>
                             <TextBlock Grid.Row="6" Grid.Column="0" Text="Description:" Style="{StaticResource gridtextlabel}"  />
-                            <TextBox Grid.Row="6" Grid.ColumnSpan="4" Grid.Column="1" Text="{Binding Project.GOM.Description}" Style="{StaticResource gridtextbox}"/>
+                            <TextBox Grid.Row="6" Grid.ColumnSpan="6" Grid.Column="1" ContextMenu="{x:Null}" Text="{Binding Project.Description, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource gridtextbox}"
+                                     ToolTip="Description or Objectives" />
                             <TextBlock Grid.Row="7" Grid.Column="0" Text="Other Resources:" Style="{StaticResource gridtextlabel}"  />
-                            <TextBox Grid.Row="7" Grid.ColumnSpan="4" Grid.Column="1" Text="{Binding Project.Resources}" Style="{StaticResource gridtextbox}"/>
+                            <TextBox Grid.Row="7" Grid.ColumnSpan="6" ContextMenu="{x:Null}" Grid.Column="1" Text="{Binding Project.Resources, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource gridtextbox}"
+                                ToolTip="Human and physical resources" />
                             <TextBlock Grid.Row="8" Grid.Column="0" Text="Status:" Style="{StaticResource gridtextlabel}" />
                             <ComboBox Grid.Row="8" Grid.Column="1" Style="{StaticResource gridcombo}" 
                                         ItemsSource="{Binding ProjectStatusTypesList}"  
                                         DisplayMemberPath="Description" 
                                         SelectedValuePath="ID" 
-                                        SelectedValue="{Binding ProjectStatus}"  ItemContainerStyle="{StaticResource ddstyle}"/>
-                           
-                            <TextBlock Grid.Row="8" Grid.Column="4" Text="Completed:" Style="{StaticResource gridtextlabel}" IsEnabled="{Binding CompletedDateEnabled}"  />
-                            <xceed:DateTimePicker Grid.Row="8" Grid.Column="5" Width="104" IsEnabled="{Binding CompletedDateEnabled}" 
-                                                  Value="{Binding Project.CompletedDate, UpdateSourceTrigger=PropertyChanged}" 
-                                                  Style="{StaticResource daypicker}"/>
+                                        SelectedValue="{Binding ProjectStatus, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}" />
 
-                            <TextBlock Grid.Row="9" Grid.Column="0" Text="Opportunity Category:" Style="{StaticResource gridtextlabel}" />
-                            <ComboBox Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="5" Style="{StaticResource gridcombo}"  
+                            <TextBlock Grid.Row="8" Grid.Column="2" Grid.ColumnSpan="2" Text="Completed/Cancelled:" >
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource gridtextlabel}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CompletedDateEnabled}" Value="False">
+                                                <Setter Property="Foreground" Value="LightGray"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <DatePicker Grid.Row="8" Grid.Column="4" HorizontalAlignment="Stretch" Width="Auto"                                         
+                                            IsEnabled="{Binding CompletedDateEnabled}" Style="{StaticResource datepicker}"
+                                            SelectedDate="{Binding Project.CompletedDate, UpdateSourceTrigger=PropertyChanged}"  />
+
+                            <TextBlock Grid.Row="9" Grid.Column="0" Text="Incomplete Reason:" >
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource gridtextlabel}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ReasonForIncompleteProjectEnabled}" Value="False">
+                                                <Setter Property="Foreground" Value="LightGray"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <ComboBox Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="6" Style="{StaticResource gridcombo}" IsEnabled="{Binding ReasonForIncompleteProjectEnabled}"
+                                        ItemsSource="{Binding Reasons}"  
+                                        DisplayMemberPath="Name" 
+                                        SelectedValuePath="ID" 
+                                        SelectedValue="{Binding Project.IncompleteReasonID, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}" />
+                            <TextBlock Grid.Row="9" Grid.Column="7" Style="{StaticResource requiredtt}" Visibility="{Binding ReasonForIncompleteProjectEnabled, Converter={StaticResource BoolToVis}}" />
+
+                            <TextBlock Grid.Row="10" Grid.Column="0" Text="Opportunity Category:" Style="{StaticResource gridtextlabel}" />
+                            <ComboBox Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="6" Style="{StaticResource gridcombo}"  
                                        ItemsSource="{Binding NewBusinessCategories}"  
                                        DisplayMemberPath="Name" 
                                        SelectedValuePath="ID" 
-                                       SelectedValue="{Binding Project.NewBusinessCategoryID, UpdateSourceTrigger=PropertyChanged}"  ItemContainerStyle="{StaticResource ddstyle}"/>
-                           
-                            <TextBlock Grid.Row="9" Grid.Column="6"  Style="{StaticResource requiredtt}" />
-                            <TextBlock Grid.Row="10" Grid.Column="0" Text="Strategic Move Code:" Style="{StaticResource gridtextlabel}" />
-                            <ComboBox Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="5" Style="{StaticResource gridcombo}"  
+                                       SelectedValue="{Binding Project.NewBusinessCategoryID, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}"/>
+                            <TextBlock Grid.Row="10" Grid.Column="7"
+                                       Visibility="{Binding SelectedItem.OpportunityCatRequired, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
+                                       Style="{StaticResource requiredtt}" />
+                            
+                            <TextBlock Grid.Row="11" Grid.Column="0" Text="Strategic Move Code:" Style="{StaticResource gridtextlabel}" />
+                            <ComboBox Grid.Row="11" Grid.Column="1" Grid.ColumnSpan="6" Style="{StaticResource gridcombo}"  
                                        ItemsSource="{Binding SMCodes, UpdateSourceTrigger=PropertyChanged}"  
-                                       SelectedValuePath="GOM.ID" 
-                                      SelectedIndex="{Binding SelectedSMCodeIndex, UpdateSourceTrigger=PropertyChanged}"                                      
-                                       SelectedValue="{Binding Project.SMCodeID, UpdateSourceTrigger=PropertyChanged}"  ItemContainerStyle="{StaticResource ddstyle}">
-                               
+                                       SelectedValuePath="ID"                                                                          
+                                       SelectedValue="{Binding Project.SMCodeID, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding GOM.Name}"  Margin="0,0"/>
-                                            <TextBlock Text="{Binding GOM.Description}" Margin="4,0"/>
+                                            <TextBlock Text="{Binding Name}" Margin="0,0"/>
+                                            <TextBlock Text="{Binding Description}" Margin="4,0"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
+
+                            <TextBlock Grid.Row="12" Grid.Column="0" Text="{Binding MiscellaneousDataLabel, StringFormat={}{0}:}" Style="{StaticResource gridtextlabel}" />
+                            <ComboBox Grid.Row="12" Grid.Column="1" Grid.ColumnSpan="6" Style="{StaticResource gridcombo}"
+                                        ItemsSource="{Binding MiscellaneousData}"  
+                                        DisplayMemberPath="Name" 
+                                        SelectedValuePath="ID" 
+                                        SelectedValue="{Binding Project.MiscDataID, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}" />
+                            <TextBlock Grid.Row="12" Grid.Column="7" Style="{StaticResource requiredtt}" />
+
+                            <TextBlock Grid.Row="13" Grid.Column="0" Text="Comments:" Style="{StaticResource gridtextlabel}" VerticalAlignment="Top" />
+                            <TextBox Grid.Row="13" Grid.Column="1" Grid.ColumnSpan="6"                                 
+                                     ContextMenu="{x:Null}" Style="{StaticResource commentsbox}" ToolTip="Comments"
+                                     Text="{Binding Project.Comments, UpdateSourceTrigger=PropertyChanged}" />
+                            
                         </Grid>
                     </GroupBox>
                 </TabItem>
-
+            
                 <TabItem Header="Products" >
                     <GroupBox Header="Products" Style="{StaticResource grpbox}" Margin="0,10,0,0" IsEnabled="{Binding IsEnabled}">
                         <Grid Margin="0,2,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="28"/>
+                                <RowDefinition >
+                                    <RowDefinition.Style>
+                                        <Style TargetType="RowDefinition">
+                                            <Setter Property="Height" Value="0"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedItem.ShowDifferentiatedTech, ElementName=projecttype}" Value="True">
+                                                    <Setter Property="Height" Value="28"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </RowDefinition.Style>
+                                </RowDefinition>
+
                                 <RowDefinition Height="28"/>
-                                <RowDefinition Height="28"/>
+                                <RowDefinition Height="350"/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="150"/>
-                                <ColumnDefinition Width="186"/>
-                                <ColumnDefinition Width="100"/>
-                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="22"/>
+                                <ColumnDefinition Width="450"/>
+                                <ColumnDefinition Width="6"/>
                                 <ColumnDefinition Width="1*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Products:"  Style="{StaticResource gridtextlabel}"  />
-                            <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding Project.Products, UpdateSourceTrigger=PropertyChanged}" 
-                                  ToolTip="{StaticResource ProductsTT}">
+                            <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" ContextMenu="{x:Null}" Text="{Binding Project.Products, UpdateSourceTrigger=PropertyChanged}" 
+                                  ToolTip="{StaticResource ProductsTT}" ToolTipService.ShowDuration="10000" >
                                 <TextBox.Style>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource gridtextbox}">
                                         <Setter Property="Background" Value="White"/>
@@ -231,16 +403,13 @@
                                     </Style>
                                 </TextBox.Style>
                             </TextBox>
+                            <TextBlock Grid.Row="0" Grid.Column="3" 
+                                       Visibility="{Binding SelectedItem.ProductRequired, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
+                                       Style="{StaticResource requiredtt}" />
+                            
                             <TextBlock Grid.Row="0" Grid.Column="4" Text="Error" Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left" Foreground="Red" Visibility="{Binding InValidProduct, Converter={StaticResource BoolToVis}}" ToolTip="Product list formatting is incorrect"/>
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Differentiated Technology:"  Style="{StaticResource gridtextlabel}"  />
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Differentiated Technology:" Style="{StaticResource gridtextlabel}"  />
                             <CheckBox Grid.Row="1" Grid.Column="1" IsChecked="{Binding Project.DifferentiatedTechnology}" Style="{StaticResource chkbox}"/>
-
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="CDP/CCP:"  Style="{StaticResource gridtextlabel}"  />
-                            <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" 
-                                      DisplayMemberPath="Name" Style="{StaticResource gridcombo}"                                       
-                                        ItemsSource="{Binding CDPCCP}"  
-                                        SelectedValuePath="ID"
-                                        SelectedValue="{Binding Project.CDPCCPID}"  ItemContainerStyle="{StaticResource ddstyle}"/>
                             
                         </Grid>
                     </GroupBox>
@@ -251,7 +420,18 @@
                         <Grid Margin="0,2,0,0" >
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="28"/>
-                                <RowDefinition Height="28"/>
+                                <RowDefinition >
+                                    <RowDefinition.Style>
+                                        <Style TargetType="RowDefinition">
+                                            <Setter Property="Height" Value="0"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ShowUnitCost}" Value="True">
+                                                    <Setter Property="Height" Value="28"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </RowDefinition.Style>
+                                </RowDefinition>
                                 <RowDefinition Height="28"/>
                                 <RowDefinition Height="28"/>
                                 <RowDefinition Height="28"/>
@@ -260,81 +440,91 @@
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="180"/>
-                                <ColumnDefinition Width="94"/>
+                                <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="74"/>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="6"/>
                                 <ColumnDefinition Width="80"/>
                                 <ColumnDefinition Width="1*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Estimated Annual Sales:" Style="{StaticResource gridtextlabel}" />
-                            <TextBox Grid.Column="1" Style="{StaticResource gridtextbox}" ToolTip="Local currency"  >
-                                <TextBox.Text>
-                                    <MultiBinding Converter="{StaticResource CultConv}">
-                                        <Binding Mode="TwoWay" Path="Project.EstimatedAnnualSales" />
-                                        <Binding Mode="OneWay" Path="CultureCode" />
-                                    </MultiBinding>
-                                </TextBox.Text>
-                            </TextBox>
+                            <TextBlock Grid.Column="1" Style="{StaticResource gridtextlabel}" Text="{Binding CurrencySymbol}"/>
+                            <loc:NumericTextBox Grid.Column="2" Style="{StaticResource gridtextbox}" ToolTip="Sales estimate for 12 months"  
+                                NumericalError="{Binding EstimatedSalesError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                BackgroundErrorColor="Red" Text="{Binding Project.EstimatedAnnualSales, StringFormat={}{0:N0}, Converter={StaticResource DecCheckConv}, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Grid.Row="0" Grid.Column="3"
+                                       Visibility="{Binding SelectedItem.SalesRequired, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
+                                       Style="{StaticResource requiredtt}" />
 
-                            <TextBlock Grid.Row="0" Grid.Column="2"  Style="{StaticResource requiredtt}" />
-                            <TextBlock Grid.Row="0" Grid.Column="3" Text="Confirmed!" Foreground="Blue" Visibility="{Binding Project.SalesForecastConfirmed, Converter={StaticResource BoolToVis}}" Style="{StaticResource textlabel}" Margin="4,2,0,0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Unit Cost:" Style="{StaticResource gridtextlabel}" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource gridtextlabel}" Text="{Binding CurrencySymbol}"/>
+                            <ctrls:DecimalUpDown Grid.Row="1" Grid.Column="2" Value="{Binding Project.UnitCost, UpdateSourceTrigger=PropertyChanged}"
+                                       Step="0.01" Margin="2,2,2,2"  />
+                            <TextBlock Grid.Row="1" Grid.Column="3" Text="$/kg" TextAlignment="Left" Style="{StaticResource gridtextlabel}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="4" 
+                                       Visibility="{Binding SelectedItem.UnitPriceRequired, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
+                                       Style="{StaticResource requiredtt}"/>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Gross Margin:" Style="{StaticResource gridtextlabel}" />
-                            <TextBox Grid.Row="1" Grid.Column="1" Style="{StaticResource gridtextbox}" ToolTip="Local currency"  >
-                                <TextBox.Text>
-                                    <MultiBinding Converter="{StaticResource CultConv}">
-                                        <Binding Mode="TwoWay" Path="Project.GM" />
-                                        <Binding Mode="OneWay" Path="CultureCode" />
-                                    </MultiBinding>
-                                </TextBox.Text>
-                            </TextBox>
-                            <TextBlock Grid.Row="1" Grid.Column="2"  Style="{StaticResource requiredtt}"/>
-                            <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding PercentGM, StringFormat={}GM: {0:P0}}" Style="{StaticResource textlabel}" Margin="4,2,0,0"/>
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Estimated MPC:" Style="{StaticResource gridtextlabel}" />
-                            <TextBox Grid.Row="2" Grid.Column="1" Style="{StaticResource gridtextbox}" ToolTip="Local currency" >
-                                <TextBox.Text>
-                                    <MultiBinding Converter="{StaticResource CultConv}">
-                                        <Binding Mode="TwoWay" Path="Project.EstimatedAnnualMPC" />
-                                        <Binding Mode="OneWay" Path="CultureCode" />
-                                    </MultiBinding>
-                                </TextBox.Text>
-                            </TextBox>
-                            <TextBlock Grid.Row="2" Grid.Column="2"  Style="{StaticResource requiredtt}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Gross Margin:" Style="{StaticResource gridtextlabel}" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource gridtextlabel}" Text="{Binding CurrencySymbol}"/>
+                            <loc:NumericTextBox Grid.Row="2" Grid.Column="2" Style="{StaticResource gridtextbox}" ToolTip="Gross Margin estimate for 12 months" 
+                                NumericalError="{Binding EstimatedGMError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                                                 
+                                BackgroundErrorColor="Red" Text="{Binding Project.GM, StringFormat={}{0:N0}, Converter={StaticResource DecCheckConv}, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Grid.Row="2" Grid.Column="3" 
+                                       Visibility="{Binding SelectedItem.GMRequired, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
+                                       Style="{StaticResource requiredtt}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="5" Text="{Binding PercentGM, StringFormat={}GM: {0:P0}}" Style="{StaticResource textlabel}" Margin="4,2,0,0"/>
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Targeted Volume:" Style="{StaticResource gridtextlabel}" />
-                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Project.TargetedVolume, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}"  
-                                         ToolTip="Annual quantity of product(s)"
-                                         Style="{StaticResource gridtextbox}"/>
-                            <TextBlock Grid.Row="3" Grid.Column="2" Text="kg/yr"  TextAlignment="Left" Style="{StaticResource gridtextlabel}" Margin="2,2,0,0"/>
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Expected Sales Start:" Style="{StaticResource gridtextlabel}"  />
-                            <xceed:DateTimePicker Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"  
-                                                  Value="{Binding Project.ExpectedDateFirstSales, UpdateSourceTrigger=PropertyChanged}" 
-                                                  Style="{StaticResource daypicker}"
-                                                  IsEnabled="{Binding ExpectedDateFirstSalesEnabled}" 
-                                                  ToolTip="The start date is set here and can only be changed when updating the monthly status."/>
-                            <TextBlock Grid.Row="4" Grid.Column="2"  Style="{StaticResource requiredtt}"/>
-                            <TextBlock Grid.Row="4" Grid.Column="3" Text="Confirmed!" Foreground="Blue" Visibility="{Binding Project.SalesForecastConfirmed, Converter={StaticResource BoolToVis}}" Style="{StaticResource textlabel}" Margin="4,2,0,0"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Estimated MPC:" Style="{StaticResource gridtextlabel}" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource gridtextlabel}" Text="{Binding CurrencySymbol}"/>
+                            <loc:NumericTextBox Grid.Row="3" Grid.Column="2" Style="{StaticResource gridtextbox}" ToolTip="MPC estimate for 12 months" 
+                                NumericalError="{Binding EstimatedMPCError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                BackgroundErrorColor="Red" Text="{Binding Project.EstimatedAnnualMPC, StringFormat={}{0:N0}, Converter={StaticResource DecCheckConv}, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Grid.Row="3" Grid.Column="3" 
+                                       Visibility="{Binding SelectedItem.MPCRequired, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
+                                       Style="{StaticResource requiredtt}"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Targeted Volume:" Style="{StaticResource gridtextlabel}"  />
+                            <loc:NumericTextBox Grid.Row="4" Grid.Column="2" Style="{StaticResource gridtextbox}" ToolTip="Annual quantity of product(s)"  
+                                NumericalError="{Binding TargetedVolumeError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                BackgroundErrorColor="Red" Text="{Binding Project.TargetedVolume, StringFormat={}{0:N0}, Converter={StaticResource DecCheckConv}, UpdateSourceTrigger=PropertyChanged}" />                                         
+                            <TextBlock Grid.Row="4" Grid.Column="3" Text="kg/yr" TextAlignment="Left" Style="{StaticResource gridtextlabel}" Margin="2,2,0,0"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="4" 
+                                       Visibility="{Binding SelectedItem.SalesVolumeRequired, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
+                                       Style="{StaticResource requiredtt}"/>
+                            
                             <TextBlock Grid.Row="5" Grid.Column="0" Text="Probability Of Success:" Style="{StaticResource gridtextlabel}" />
-                            <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Project.ProbabilityOfSuccess, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}"  
-                                                  Style="{StaticResource gridtextbox}"/>
-                            <TextBlock Grid.Row="5" Grid.Column="2" Text="%"  TextAlignment="Left" Style="{StaticResource gridtextlabel}" Margin="2,2,0,0"/>
+                            <loc:NumericTextBox Grid.Row="5" Grid.Column="2" Style="{StaticResource gridtextbox}"
+                                NumericalError="{Binding ProbOfSuccessError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                BackgroundErrorColor="Red" Text="{Binding Project.ProbabilityOfSuccess, StringFormat={}{0:N0}, Converter={StaticResource DecCheckConv}, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Grid.Row="5" Grid.Column="3" Text="%" TextAlignment="Left" Style="{StaticResource gridtextlabel}"/>
+                            <TextBlock Grid.Row="5" Grid.Column="4" 
+                                       Visibility="{Binding SelectedItem.ProbabilityRequired, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
+                                       Style="{StaticResource requiredtt}"/>
+                                                        
                         </Grid>
                     </GroupBox>
                 </TabItem>
 
                 <TabItem Header="Evaluation Plans" >
-                    <GroupBox Margin="0,10,0,0" >
+                    <GroupBox Margin="0,10,0,0"  IsEnabled="{Binding IsEnabled}">
                         <GroupBox.Style>
                             <Style TargetType="GroupBox" BasedOn="{StaticResource grpbox}">
                                 <Setter Property="Header">
                                     <Setter.Value>
-                                        <CheckBox Foreground="Blue" IsEnabled="{Binding IsEnabled}" Content="Required" IsChecked="{Binding Project.EPRequired}"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <CheckBox x:Name="eprequired" Foreground="Blue" IsEnabled="{Binding IsEnabled}" IsChecked="{Binding Project.EPRequired}">
+                                                <TextBlock Text="Required" VerticalAlignment="Center" Padding="0,2,0,0"/>
+                                            </CheckBox>
+                                        </StackPanel>
                                     </Setter.Value>
                                 </Setter>
                             </Style>
                         </GroupBox.Style>
                         
-                        <Grid Margin="0,2,0,2">
+                        <Grid Margin="0,2,0,2" IsEnabled="{Binding EPEnabled}">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="32"/>
                                 <RowDefinition Height="*"/>
@@ -346,8 +536,8 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button IsEnabled="{Binding IsEnabled}" Template="{StaticResource CRUDButton}" Tag="Add" Content="Add" ToolTip="Add New Evaluation Plan" Command="{Binding AddNewEvaluationPlan}" />
-                                <Button IsEnabled="{Binding IsEnabled}" Template="{StaticResource CRUDButton}" Tag="Delete" Content="Delete" ToolTip="Delete Evaluation Plan" Command="{Binding DeleteEvaluationPlan}" />
+                                <Button Template="{StaticResource CRUDButton}" Tag="Add" Content="Add" ToolTip="Add New Evaluation Plan" Command="{Binding AddNewEvaluationPlan}" />
+                                <Button Template="{StaticResource CRUDButton}" Tag="Delete" Content="Delete" ToolTip="Delete Evaluation Plan" Command="{Binding DeleteEvaluationPlan}" />
                             </StackPanel>
 
                             <ListView Grid.Row="1" x:Name="eps" Grid.Column="1"
@@ -356,15 +546,15 @@
                                      SelectedItem="{Binding SelectedEvaluationPlan}"
                                      HorizontalContentAlignment="Left" 
                                      loc:MouseDoubleClick.Command="{Binding OpenEvaluationPlan}" 
-                                     loc:MouseDoubleClick.CommandParameter="{Binding SelectedItem, ElementName=eps}">
+                                     loc:MouseDoubleClick.CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}">
                                 <ListView.View>
                                     <GridView>
-                                        <GridViewColumn Width="70" Header="ID" DisplayMemberBinding="{Binding GOM.ID}"/>
+                                        <GridViewColumn Width="70" Header="ID" DisplayMemberBinding="{Binding ID}"/>
                                         <GridViewColumn Width="100" Header="Created" DisplayMemberBinding="{Binding Created, StringFormat={}{0:dd-MMM-yyyy}}"/>
                                         <GridViewColumn Width="300" Header="Title" >
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <TextBlock TextWrapping="NoWrap" Text="{Binding GOM.Description}"  />
+                                                    <TextBlock TextWrapping="NoWrap" Text="{Binding Description}"  />
                                                 </DataTemplate>
                                             </GridViewColumn.CellTemplate>
                                         </GridViewColumn>
@@ -376,7 +566,8 @@
                 </TabItem>
 
                 <TabItem Header="Milestones" >
-                    <GroupBox Header="Milestones" Style="{StaticResource grpbox}" Margin="0,10,0,0">
+                    <GroupBox Margin="0,10,0,0" Header="Milestones" Style="{StaticResource grpbox}" IsEnabled="{Binding MilestoneIsEnabled}">
+                                                
                         <Grid Margin="0,2,0,2">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="32"/>
@@ -389,25 +580,31 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button IsEnabled="{Binding IsEnabled}" Template="{StaticResource CRUDButton}" Tag="Add" Content="Add" ToolTip="Add New Milestone" Command="{Binding AddNewMilestone}" />
-                                <Button IsEnabled="{Binding IsEnabled}" Template="{StaticResource CRUDButton}" Tag="Delete" Content="Delete" ToolTip="Delete Milestone" Command="{Binding DeleteMilestone}" />
+                                <Button Template="{StaticResource CRUDButton}" Tag="Add" Content="Add" ToolTip="Add New Milestone" Command="{Binding AddNewMilestone}" />
+                                <Button Template="{StaticResource CRUDButton}" Tag="Delete" Content="Delete" ToolTip="Delete Milestone" Command="{Binding DeleteMilestone}" />
                             </StackPanel>
 
-                            <ListView Grid.Row="1" x:Name="milestones" Grid.Column="1"
+                            <ListView Grid.Row="1" x:Name="milestones" Grid.Column="1" 
                                      HorizontalAlignment="Stretch"   
                                      ItemsSource="{Binding Project.Milestones}" 
                                      SelectedItem="{Binding SelectedMilestone}"
                                      HorizontalContentAlignment="Left" 
                                      loc:MouseDoubleClick.Command="{Binding OpenMilestone}" 
-                                     loc:MouseDoubleClick.CommandParameter="{Binding SelectedItem, ElementName=milestones}">
+                                     loc:MouseDoubleClick.CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}">
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="{x:Type ListViewItem}" >
+                                        <Setter Property="IsEnabled" Value="{Binding IsEnabled}"/>
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+
                                 <ListView.View>
                                     <GridView>
-                                        <GridViewColumn Width="70" Header="ID" DisplayMemberBinding="{Binding GOM.ID}"/>
+                                        <GridViewColumn Width="70" Header="ID" DisplayMemberBinding="{Binding ID}"/>
                                         <GridViewColumn Width="100" Header="Due Date" DisplayMemberBinding="{Binding TargetDate, StringFormat={}{0:dd-MMM-yyyy}}"/>
-                                        <GridViewColumn Width="200" Header="Description" DisplayMemberBinding="{Binding GOM.Description}">
+                                        <GridViewColumn Width="200" Header="Description" DisplayMemberBinding="{Binding Description}">
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <TextBlock TextWrapping="NoWrap" Text="{Binding GOM.Description}"  />
+                                                    <TextBlock TextWrapping="NoWrap" Text="{Binding Description}"  />
                                                 </DataTemplate>
                                             </GridViewColumn.CellTemplate>
                                         </GridViewColumn>
@@ -418,6 +615,42 @@
                         </Grid>
                     </GroupBox>
                 </TabItem>
+
+                <TabItem Header="User Access" >
+                    <GroupBox Header="User Permissions" Style="{StaticResource grpbox}" Margin="0,10,0,0" IsEnabled="{Binding IsEnabled}">
+                        <Grid Margin="0,2,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="28"/>
+                                <RowDefinition Height="28"/>
+                                <RowDefinition Height="28"/>
+                                <RowDefinition Height="350"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="450"/>
+                                <ColumnDefinition Width="6"/>
+                                <ColumnDefinition Width="1*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Non-Owners Can Edit:" Style="{StaticResource gridtextlabel}" 
+                                       ToolTip="{Binding ToolTip, ElementName=nonowners}" />
+
+                            <CheckBox x:Name="nonowners" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" HorizontalAlignment="Left" Margin="8,0,0,0" 
+                                      IsChecked="{Binding Project.AllowNonOwnerEdits}" Style="{StaticResource chkbox}"
+                                      ToolTip="Allow other users who have full access to edit project details and monthly comments" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Allow Milestone Access:" Style="{StaticResource gridtextlabel}"  
+                                       ToolTip="{Binding ToolTip, ElementName=milestoneaccess}"/>
+                            <CheckBox x:Name="milestoneaccess"  Grid.Row="1" Grid.Column="1" IsChecked="{Binding Project.AllowNonOwnerMileStoneAccess}" 
+                                      HorizontalAlignment="Left" Margin="8,0,0,0" Style="{StaticResource chkbox}"
+                                      ToolTip="Allow other users to edit their assigned Milestones" />
+
+
+                        </Grid>
+                    </GroupBox>
+                </TabItem>
+
+
             </TabControl>
         </DockPanel>
     </Grid>

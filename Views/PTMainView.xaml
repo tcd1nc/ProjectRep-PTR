@@ -1,19 +1,17 @@
 ﻿<Window x:Class="PTR.PTMainView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Icon="/PTR;component/PT64.ico"
+        Icon="/PTR;component/Images/PT64.ico"
         xmlns:loc="clr-namespace:PTR"
-        xmlns:models="clr-namespace:PTR.Models"
         xmlns:ctrl="clr-namespace:PTR.Controls"
-        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" 
-        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" 
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}"    
+        loc:WindowBehavior.WindowClosing="{Binding WindowClosing}" 
+        loc:WindowBehavior.CancelClosing="{Binding CancelClosingCommand}"  
         WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow" WindowState="Maximized"
         Title="{Binding Title}" >
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
-        <loc:CultureFormatConverter x:Key="CultConv" />
-
         <Style x:Key="ttStyle" TargetType="ToolTip">
             <Setter Property="OverridesDefaultStyle" Value="True"/>
             <Setter Property="HasDropShadow" Value="False"/>
@@ -23,48 +21,64 @@
                         <Border BorderThickness="1" CornerRadius="4" BorderBrush="Blue" Padding="2,2,2,2" Background="LemonChiffon">
                             <ContentPresenter>
                                 <ContentPresenter.Content>
-                                    <TextBlock Width="240">                                      
-                                        <Run Text="Project ID:" Foreground="Black"/>
-                                        <Run Text="{Binding ID, StringFormat={}{0}}" />
-                                        <LineBreak/>
-                                        <Run Text="Division:" Foreground="Black"/>
-                                        <Run Text="{Binding SalesDivision}"/>
-                                        <LineBreak/>
-                                        <Run Text="Status:" Foreground="Black"/>
-                                        <Run Text="{Binding ProjectStatus}"/>
-                                        <LineBreak/>
-                                        <Run Text="Type:" Foreground="Black"/>
-                                        <Run Text="{Binding ProjectType}"/>
-                                        <LineBreak/>
-                                        <Run Text="Project:" Foreground="Black"/>
-                                        <Run Text="{Binding ProjectName}"/>
-                                        <LineBreak/>
-                                        <Run Text="Targeted Sales:" Foreground="Black"/>
-                                        <Run Text="{Binding EstimatedAnnualSales, StringFormat={}{0:C0}}"/>
-                                        <LineBreak/>
-                                        <Run Text="Customer:" Foreground="Black"/>
-                                        <Run Text="{Binding Customer}"/>
-                                        <LineBreak/>
-                                        <Run Text="Associate:" Foreground="Black"/>
-                                        <Run Text="{Binding Associate}"/>
-                                        <LineBreak/>
-                                        <Run Text="Expected Date New Sales:" Foreground="Black"/>
-                                        <Run Text="{Binding ExpectedDateNewSales, StringFormat={}{0:d MMM yyyy}}"/>
-                                        <LineBreak/>
-                                        <Run Text="KPM:" Foreground="Black"/>
-                                        <Image Source="/PTR;component/Images/award.png" Height="16" Width="20" Margin="2,0,0,0">
+                                    <Grid >
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="230"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                        </Grid.RowDefinitions>
+                                                                              
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Project ID:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ProjectID}" />
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Business Unit:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SalesDivision}"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Status:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ProjectStatus}"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Type:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ProjectType}"/>
+                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Project:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding ProjectName}"/>
+                                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Targeted Sales:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding EstimatedAnnualSalesUSD, StringFormat={}${0:N0}}"/>
+                                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Customer:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding Customer}"/>
+                                        <TextBlock Grid.Row="7" Grid.Column="0" Text="Associate:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding UserName}"/>
+                                        <TextBlock Grid.Row="8" Grid.Column="0" Text="KPM:" Foreground="Black">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding KPM}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>                                                            
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                            </TextBlock>
+                                        <Image Grid.Row="8" Grid.Column="1" HorizontalAlignment="Left" Source="/PTR;component/Images/award.png" Height="16" Width="20" Margin="2,0,0,0">
                                             <Image.Style>
-                                                    <Style TargetType="Image">
-                                                        <Setter Property="Visibility" Value="Hidden"/>                                                        
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding KPM}" Value="True">
-                                                                <Setter Property="Visibility" Value="Visible"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Image.Style>
-                                            </Image>
-                                    </TextBlock>
+                                                <Style TargetType="Image">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding KPM}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Image.Style>
+                                        </Image>
+                                    </Grid>
                                 </ContentPresenter.Content>
                             </ContentPresenter>
                         </Border>
@@ -72,8 +86,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <models:HierarchyDataTemplateSelector x:Key="hierarchyDataTemplateSelector" />
         
     </Window.Resources>
 
@@ -82,71 +94,183 @@
             <Grid DockPanel.Dock="Top" Height="32">
                 <Menu HorizontalAlignment="Left" Height="24" Margin="2,2,2,2">
                     <MenuItem Header="File">
-                        <MenuItem Header="New Project" x:Name="mnuNewProject" Command="{Binding NewProject}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" ToolTip="Create a new project" 
+                        <MenuItem Header="New Project" Command="{Binding NewProject}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" ToolTip="Create a new project" 
                                   IsEnabled="{Binding EnableNewProjectBtn}"
                                   Visibility="{Binding ShowNewProject, Converter={StaticResource BoolToVis}}">
                             <MenuItem.Icon>
                                 <Image Source="/PTR;component/Images/add.ico" Height="16" Width="20" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Header="S_ave" x:Name="mnuSave" Command="{Binding SaveAll}" ToolTip="Save Changes" 
-                              IsEnabled="{Binding EnableSaveBtn}"
+                        <MenuItem Header="S_ave" Command="{Binding SaveAll}" ToolTip="Save Changes" 
+                             
                               Visibility="{Binding ShowSave, Converter={StaticResource BoolToVis}}">
                             <MenuItem.Icon>
                                 <Image Source="/PTR;component/Images/save.ico" Height="16" Width="20" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Header="C_lose" x:Name="mnuClose" Command="{Binding Shutdown}" ToolTip="Close" >
+                        <MenuItem Header="C_lose" x:Name="mnuClose" Command="{Binding CloseDown}" ToolTip="Close" >
                             <MenuItem.Icon>
                                 <Image Source="/PTR;component/Images/close.ico" Height="16" Width="20" />
                             </MenuItem.Icon>
                         </MenuItem>
                     </MenuItem>
                     <MenuItem Header="Edit" Visibility="{Binding ShowAdministrationMnu, Converter={StaticResource BoolToVis}}" ToolTip="Edit Settings" >
-                        <MenuItem Header="Customers" x:Name="mnuEditCustomer"
-                                  Visibility="{Binding ShowCustomerMnu, Converter={StaticResource BoolToVis}}" 
-                                  Command="{Binding OpenDialog}" CommandParameter="EditCustomer" 
-                                  ToolTip="Add or Edit Customers" >
+                        <MenuItem Header="Business Units"
+                                  Visibility="{Binding ShowBUMnu, Converter={StaticResource BoolToVis}}" 
+                                  Command="{Binding OpenDialog}" CommandParameter="EditBU" 
+                                  ToolTip="Edit Business Units" >
                             <MenuItem.Icon>
                                 <Image Source="/PTR;component/Images/people.ico" Height="16" Width="20" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Header="Countries" x:Name="mnuEditCountry" 
+                        <MenuItem Header="Customers"
+                                  Visibility="{Binding ShowCustomerMnu, Converter={StaticResource BoolToVis}}" 
+                                  Command="{Binding OpenDialog}" CommandParameter="EditCustomer" 
+                                  ToolTip="Edit Customers" >
+                            <MenuItem.Icon>
+                                <Image Source="/PTR;component/Images/people.ico" Height="16" Width="20" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Countries" 
                                   Visibility="{Binding ShowCountryMnu, Converter={StaticResource BoolToVis}}" 
                                   Command="{Binding OpenDialog}" CommandParameter="EditCountry" 
-                                  ToolTip="Add or Edit Countries" >
+                                  ToolTip="Edit Countries" >
                             <MenuItem.Icon>
                                 <Image Source="/PTR;component/Images/AsiaAustralia.ico" Height="16" Width="20" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Header="Sales Regions" x:Name="mnuEditSalesRegions" 
+                        <MenuItem Header="Sales Regions" 
                                   Visibility="{Binding ShowSalesRegionMnu, Converter={StaticResource BoolToVis}}" 
-                                  Command="{Binding OpenDialog}" CommandParameter="SalesRegionView" ToolTip="Add or Edit Sales Regions" >
+                                  Command="{Binding OpenDialog}" CommandParameter="SalesRegionView" ToolTip="Edit Sales Regions" >
                             <MenuItem.Icon>
                                 <Image Source="/PTR;component/Images/compass.ico" Height="16" Width="20" />
                             </MenuItem.Icon>
                         </MenuItem>
                         
-                        <MenuItem Header="Users" x:Name="mnuEditAssociate" 
+                        <MenuItem Header="Users" 
                                   Visibility="{Binding ShowUserMnu, Converter={StaticResource BoolToVis}}" 
                                   Command="{Binding OpenDialog}" CommandParameter="EditUser" 
-                                  ToolTip="Add or Edit Associates and Access Permissions" >
+                                  ToolTip="Edit Associates and Access Permissions" >
                             <MenuItem.Icon>
                                 <Image Source="/PTR;component/Images/users.ico" Height="16" Width="20" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Header="Exchange Rates" x:Name="mnuEditExchangeRates" 
+                        <MenuItem Header="Exchange Rates"
                                   Visibility="{Binding ShowExchangeRateMnu, Converter={StaticResource BoolToVis}}" 
-                                  Command="{Binding OpenDialog}" CommandParameter="ExchangeRateView" ToolTip="Add or Edit Exchange Rates" >
+                                  Command="{Binding OpenDialog}" CommandParameter="ExchangeRateView" ToolTip="Edit Exchange Rates" >
                             <MenuItem.Icon>
                                 <Image Source="/PTR;component/Images/dollar.ico" Height="16" Width="20" />
                             </MenuItem.Icon>
                         </MenuItem>
                         
+                        
+                        <MenuItem Header="Sales Stages"
+                                   Visibility="{Binding ShowActivityStagesMnu, Converter={StaticResource BoolToVis}}" 
+                                  Command="{Binding OpenDialog}" CommandParameter="ProjectSalesStagesView" ToolTip="Edit Sales Stages" >
+                            <MenuItem.Icon>
+                                <Image Source="/PTR;component/Images/Tools.ico" Height="16" Width="20" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Product Names" 
+                                  Visibility="{Binding ShowProductNameMnu, Converter={StaticResource BoolToVis}}" 
+                                  Command="{Binding OpenDialog}" CommandParameter="ProductNamesView" ToolTip="Edit Product Names" >
+                            <MenuItem.Icon>
+                                <Image Source="/PTR;component/Images/Tools.ico" Height="16" Width="20" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        
+                        <MenuItem Header="Project Types"
+                                  Visibility="{Binding ShowProjectTypesMnu, Converter={StaticResource BoolToVis}}" 
+                                  Command="{Binding OpenDialog}" CommandParameter="ProjectTypesView" ToolTip="Edit Project Types" >
+                            <MenuItem.Icon>
+                                <Image Source="/PTR;component/Images/Tools.ico" Height="16" Width="20" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        
+                        <MenuItem Header="Applications"
+                                  Visibility="{Binding ShowApplicationsMnu, Converter={StaticResource BoolToVis}}" 
+                                  Command="{Binding OpenDialog}" CommandParameter="ApplicationsView" ToolTip="Edit Applications" >
+                            <MenuItem.Icon>
+                                <Image Source="/PTR;component/Images/Tools.ico" Height="16" Width="20" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        
+                        <MenuItem Header="Industry Segments" 
+                                  Visibility="{Binding ShowIndustrySegmentsMnu, Converter={StaticResource BoolToVis}}" 
+                                  Command="{Binding OpenDialog}" CommandParameter="IndustrySegmentsView" ToolTip="Edit Industry Segments" >
+                            <MenuItem.Icon>
+                                <Image Source="/PTR;component/Images/Tools.ico" Height="16" Width="20" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+
+                        <MenuItem Header="Industry Segments - Applications Links" 
+                                  Visibility="{Binding ShowIndustrySegmentsApplicationsMnu, Converter={StaticResource BoolToVis}}" 
+                                  Command="{Binding OpenDialog}" CommandParameter="IndustrySegmentsApplicationsView" ToolTip="Edit Industry Segments - Applications Links" >
+                            <MenuItem.Icon>
+                                <Image Source="/PTR;component/Images/Tools.ico" Height="16" Width="20" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+
+                        <MenuItem Header="New Business Categories" 
+                                  Visibility="{Binding ShowNewBusinessCategoriesMnu, Converter={StaticResource BoolToVis}}" 
+                                  Command="{Binding OpenDialog}" CommandParameter="NewBusinessCategoriesView" ToolTip="Edit New Business Categories" >
+                            <MenuItem.Icon>
+                                <Image Source="/PTR;component/Images/Tools.ico" Height="16" Width="20" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+
+                        <MenuItem Header="Incomplete Project Reasons" 
+                                  Visibility="{Binding ShowIncompleteProjectReasonsMnu, Converter={StaticResource BoolToVis}}" 
+                                  Command="{Binding OpenDialog}" CommandParameter="IncompleteProjectReasonsView" ToolTip="Edit Incomplete Project Reasons" >
+                            <MenuItem.Icon>
+                                <Image Source="/PTR;component/Images/Tools.ico" Height="16" Width="20" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+
+                        <MenuItem Header="Strategic Move Codes" 
+                                  Visibility="{Binding ShowSMCodesMnu, Converter={StaticResource BoolToVis}}" 
+                                  Command="{Binding OpenDialog}" CommandParameter="SMCodesView" ToolTip="Edit Strategic Move Codes" >
+                            <MenuItem.Icon>
+                                <Image Source="/PTR;component/Images/Tools.ico" Height="16" Width="20" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+
+                        <MenuItem Header="Trial Statuses" 
+                                  Visibility="{Binding ShowTrialStatusesMnu, Converter={StaticResource BoolToVis}}" 
+                                  Command="{Binding OpenDialog}" CommandParameter="TrialStatusesView" ToolTip="Edit Trial Statuses" >
+                            <MenuItem.Icon>
+                                <Image Source="/PTR;component/Images/Tools.ico" Height="16" Width="20" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        
+                        <MenuItem Header="Report Fields" 
+                                  Visibility="{Binding ShowReportFieldsMnu, Converter={StaticResource BoolToVis}}" 
+                                  Command="{Binding OpenDialog}" CommandParameter="ReportFieldsView" ToolTip="Edit Report Fields" >
+                            <MenuItem.Icon>
+                                <Image Source="/PTR;component/Images/Tools.ico" Height="16" Width="20" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+
+                        <MenuItem Header="Miscellaneous Data" 
+                                  Visibility="{Binding ShowMiscellaneousDataMnu, Converter={StaticResource BoolToVis}}" 
+                                  Command="{Binding OpenDialog}" CommandParameter="MiscellaneousDataView" ToolTip="Edit Miscellaneous Data Fields" >
+                            <MenuItem.Icon>
+                                <Image Source="/PTR;component/Images/Tools.ico" Height="16" Width="20" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+
+                        <MenuItem Header="Setup" 
+                                  Visibility="{Binding ShowSetupMnu, Converter={StaticResource BoolToVis}}" 
+                                  Command="{Binding OpenDialog}" CommandParameter="SetupView" ToolTip="Edit program Setup" >
+                            <MenuItem.Icon>
+                                <Image Source="/PTR;component/Images/Tools.ico" Height="16" Width="20" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+
                     </MenuItem>
 
                     <MenuItem Header="Reports" Visibility="{Binding ShowReportsMnu, Converter={StaticResource BoolToVis}}" ToolTip="Reports" >
-                        <MenuItem Header="Sales Pipeline Report" x:Name="mnuAnnualReport" 
+                        <MenuItem Header="Sales Pipeline Report" 
                                   Visibility="{Binding ShowSalesPipelineMnu, Converter={StaticResource BoolToVis}}" 
                                   Command="{Binding OpenDialog}" CommandParameter="SalesFunnelReport" 
                                   ToolTip="Generate Sales Funnel Summary Report" >
@@ -154,7 +278,7 @@
                                 <Image Source="/PTR;component/Images/heatmapinv.png" Height="16" Width="20" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Header="Status Report" x:Name="mnuStatusReport" 
+                        <MenuItem Header="Status Report" 
                                   Visibility="{Binding ShowStatusMnu, Converter={StaticResource BoolToVis}}"
                                   Command="{Binding OpenDialog}" CommandParameter="StatusReport" 
                                   ToolTip="Generate Status Report" >
@@ -162,7 +286,7 @@
                                 <Image Source="/PTR;component/Images/statuses.ico" Height="16" Width="20" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Header="Project List" x:Name="mnuProjectReport" 
+                        <MenuItem Header="Project List" 
                                   Visibility="{Binding ShowProjectListMnu, Converter={StaticResource BoolToVis}}"
                                   Command="{Binding OpenDialog}" CommandParameter="ProjectReport" 
                                   ToolTip="Generate Project Report" >
@@ -170,10 +294,18 @@
                                 <Image Source="/PTR;component/Images/table.ico" Height="16" Width="20" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Header="Evaluation Plans" x:Name="mnuEVPlans" 
+                        <MenuItem Header="Evaluation Plans" 
                                   Visibility="{Binding ShowEvaluationPlansMnu, Converter={StaticResource BoolToVis}}"
                                   Command="{Binding OpenDialog}" CommandParameter="EvaluationPlans" 
-                                  ToolTip="Review Evaluations Plans" >
+                                  ToolTip="Review Evaluation Plans" >
+                            <MenuItem.Icon>
+                                <Image Source="/PTR;component/Images/table.ico" Height="16" Width="20" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Custom Reports" 
+                                  Visibility="{Binding ShowCustomReportsMnu, Converter={StaticResource BoolToVis}}"
+                                  Command="{Binding OpenDialog}" CommandParameter="CustomReports" 
+                                  ToolTip="Custom Reports" >
                             <MenuItem.Icon>
                                 <Image Source="/PTR;component/Images/table.ico" Height="16" Width="20" />
                             </MenuItem.Icon>
@@ -181,15 +313,15 @@
                     </MenuItem>
 
                     <MenuItem Header="Projects" Visibility="{Binding ShowProjectsMnu, Converter={StaticResource BoolToVis}}" ToolTip="Project Maintenance" >
-                        <MenuItem Header="Project Master View"  
+                        <MenuItem Header="Master List"  
                                   Visibility="{Binding ShowProjectMasterListMnu, Converter={StaticResource BoolToVis}}" 
                                   Command="{Binding OpenDialog}" CommandParameter="ProjectMasterReport" 
-                              ToolTip="Projects Master List" >
+                              ToolTip="Project Master List" >
                             <MenuItem.Icon>
                                 <Image Source="/PTR;component/Images/report.ico" Height="16" Width="20" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Header="Maintenance" x:Name="mnuMaintenanceDue" 
+                        <MenuItem Header="Maintenance" 
                                   Visibility="{Binding ShowProjectMaintenanceMnu, Converter={StaticResource BoolToVis}}"  
                                   Command="{Binding OpenDialog}" CommandParameter="MaintenanceDue" ToolTip="Project Maintenance" >
                             <MenuItem.Icon>
@@ -204,13 +336,14 @@
 
             <Grid DockPanel.Dock="Bottom" Height="32">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="160"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="160"/>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="120"/>
                 </Grid.ColumnDefinitions>
                 
-                <Button Grid.Column="2" Content="Close" Command="{Binding CloseDown}" Margin="0,0,10,0" Width="50" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Right" ToolTip="Save changes and Close program"/>
-                <Button Grid.Column="0" x:Name="btnExcel" Width="200" Visibility="{Binding ExportIsEnabled, Converter={StaticResource BoolToVis}}" Command="{Binding ExportToExcel}" Margin="10,0,0,0"  Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Left" >
+                <Button Grid.Column="2" Content="Close" Command="{Binding CloseDown}" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Center" ToolTip="Save changes and close program"/>
+                <Button Grid.Column="0" x:Name="btnExcel" Visibility="{Binding ExportIsEnabled, Converter={StaticResource BoolToVis}}" 
+                        Command="{Binding ExportToExcel}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Center" >
                     <Button.Content>
                         <StackPanel Orientation="Horizontal" ToolTip="Export Selected Project to Excel" VerticalAlignment="Center">
                             <Image Source="/PTR;component/Images/export.ico"  Height="16" Width="20"/>
@@ -218,7 +351,6 @@
                         </StackPanel>
                     </Button.Content>
                 </Button>
-               
             </Grid>
 
             <Grid>
@@ -237,66 +369,38 @@
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="8,0,0,0">
-                            <Button x:Name="btnApplyFilter" Command="{Binding ApplyFilter}" Margin="6,0" Content="Apply Filters" Width="80" Style="{StaticResource filterButtonStyle}" />
-                            <Button x:Name="btnClearFilters" Command="{Binding ClearFilter}" Margin="2,0" Content="Clear Filters" Width="80" Style="{StaticResource filterButtonStyle}" />
+                            <Button x:Name="btnApplyFilter" Command="{Binding ApplyFilter}" Margin="6,0" Content="Refresh View" Width="80" Style="{StaticResource filterButtonStyle}" />
+                            <Button x:Name="btnClearFilters" Command="{Binding ClearFilters}" Margin="2,0" Content="Clear Filters" Width="80" Style="{StaticResource filterButtonStyle}" ToolTip="Clear all filters" />
                         </StackPanel>
 
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" >
-                            <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Margin="6,0,0,0" Background="WhiteSmoke">
-                                <loc:FilterListControl x:Name="flCountries" Width="170" TTip="These are the countries that you have been given access to"
-							        ListItems="{Binding Countries}" 
+                            <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Margin="6,2,0,0" Background="WhiteSmoke">
+                                <loc:FilterListControl x:Name="flCountries" Width="170" TTip="These are the countries of customers that you have been granted access to"
+							        ListItems="{Binding CountriesFilter}" 
 							        SelectedItems="{Binding CountriesSrchString}" 
-							        Margin="4,4,0,0" 
-							        ShowAll="{Binding ShowAllCountries}"
-                                    VisibleCount="8"
-							        Heading="Current User's Countries" 
+							        Margin="4,4,0,0" 							                                            
+							        Heading="Your Countries" 
 							        ToggleButtonVisibility="Visible"
+                                    ShowAll="{Binding ShowAllCountries}"        
+                                    VisibleCount="8"                   
 							        HorizontalAlignment="Left"                                  
                                     SelectAll="{Binding AllCountries}"
                                     SelectAllButtonCommand="{Binding AllCountriesCommand}"
                                     ExpandButtonCommand ="{Binding ExpandCountriesCommand}"/>
-
-                                <loc:RadioListControl x:Name="radSalesDivs" Width="150" TTip="These are the sales divisions that you have been given access to"
-                                    ListItems ="{Binding SalesDivisionRadios}" 
-							        SelectedItemID ="{Binding SelectedDivisionID, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True,NotifyOnTargetUpdated=True}" 
-							        Margin="4,0,4,0" 							                                      
-							        Heading="Sales Division" 							    
-							        HorizontalAlignment="Left" />
-
-                                <loc:FilterListControl x:Name="flProjectStatuses" Width="150"
-							        ListItems="{Binding ProjectStatusTypes}" 
-							        SelectedItems="{Binding ProjectStatusTypesSrchString}" 
-							        Margin="4,0,0,0" 
-							        ShowAll="True"                                
-							        Heading="Project Statuses" 
-							        ToggleButtonVisibility="Collapsed"
-							        HorizontalAlignment="Left" 
-                                    SelectAll="{Binding AllProjectStatuses}"
-                                    SelectAllButtonCommand="{Binding AllProjectStatusTypesCommand}" />
-
-                                <loc:FilterListControl x:Name="flProjectTypes" Width="150"
-							        ListItems="{Binding ProjectTypes}" 
-							        SelectedItems="{Binding ProjectTypesSrchString}" 
-							        Margin="4,0,0,0" 
-							        ShowAll="True"                                
-							        Heading="Project Types" 
-							        ToggleButtonVisibility="Collapsed"
-							        HorizontalAlignment="Left" 
-                                    SelectAll="{Binding AllProjectTypes}"
-                                    SelectAllButtonCommand="{Binding AllProjectTypesCommand}" />
-
-                                <loc:FilterListControl x:Name="flAssociates" Width="170" 
+                                                               
+                                    <loc:FilterListControl x:Name="flAssociates" Width="170" 
 							        ListItems="{Binding Associates}" 
 							        SelectedItems="{Binding AssociatesSrchString}" 
-							        Margin="4,0,0,0" 							                                     
+							        Margin="4,4,0,0" 							                                     
 							        Heading="Associates" 
-							        ToggleButtonVisibility="Visible"
-                                    ShowAll="{Binding ShowAllAssociates}"
-                                    VisibleCount="12"
+							        ToggleButtonVisibility="Hidden"
+                                    ShowAll="True"
+                                    VisibleCount="200"
 							        HorizontalAlignment="Left" 
-							        SelectAll="{Binding AllAssociates}"                                                                                               
+							        SelectAll="{Binding AllAssociates}"                                                                                                                                    
 							        ExpandButtonCommand ="{Binding ExpandAssociateButtonCommand}"
                                     SelectAllButtonCommand="{Binding AllAssociatesCommand}" />
+                               
                             </StackPanel>
                         </ScrollViewer>
                     </Grid>
@@ -320,27 +424,30 @@
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="20"/>
                             </Grid.RowDefinitions>
-                                                       
-                            <DataGrid Grid.Row="0" x:Name="ProjectList"     
+
+                            <DataGrid Grid.Row="0" x:Name="ProjectList"
+                                Sorting="ProjectList_Sorting"
                                 Background="White"                                                               
-                                AutoGenerateColumns="False"   
+                                AutoGenerateColumns="True"   
                                 HorizontalAlignment="Stretch" 
                                 VerticalAlignment="Stretch"
                                 HorizontalScrollBarVisibility="Auto"
 						        VerticalScrollBarVisibility="Auto" 
-                                ItemsSource="{Binding AssociatesProjects, IsAsync=True, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True}" FrozenColumnCount="1" 
+                                ItemsSource="{Binding UserProjects, IsAsync=True, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}" FrozenColumnCount="1" 
                                 loc:MouseDoubleClick.Command="{Binding OpenProject}" 
-                                loc:MouseDoubleClick.CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"                             
+                                loc:MouseDoubleClick.CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"                          
                                 BorderBrush="Gray"
                                 AllowDrop="False"                                                          
                                 CanUserAddRows="False"
                                 CanUserDeleteRows="False"
                                 CanUserReorderColumns="True"
-                                CanUserResizeColumns="False"    
+                                CanUserResizeColumns="True" 
+                                CanUserResizeRows="False"
                                 SelectionMode="Single"
                                 SelectionUnit="FullRow"
                                 SelectedItem="{Binding SelectedProject}"
-                                IsEnabled="{Binding EnableProjectList}">
+                                IsEnabled="{Binding EnableProjectList}"                                      
+                                AutoGeneratingColumn="ProjectList_AutoGeneratingColumn" >
                                 <DataGrid.Resources>
                                     <Style TargetType="{x:Type DataGridRow}">
                                         <Style.Triggers>
@@ -351,7 +458,7 @@
                                             </Trigger>
                                         </Style.Triggers>
                                         <Style.Setters>
-                                            <Setter Property="Background" Value="{Binding Colour}"/>
+                                            <Setter Property="Background" Value="{Binding ProjectTypeColour, FallbackValue=Transparent}"/>
                                             <Setter Property="ToolTip">
                                                 <Setter.Value>
                                                     <ToolTip Style="{StaticResource ttStyle}" Content="{Binding }" Background="LemonChiffon"/>
@@ -360,411 +467,22 @@
                                         </Style.Setters>
                                     </Style>
                                 </DataGrid.Resources>
-
-                                <DataGrid.Columns>
-                                    <DataGridTemplateColumn Width="70" x:Name="ID" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
-                                        <DataGridTemplateColumn.HeaderTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="Project ID"  />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.HeaderTemplate>
-
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding ID, Mode=OneTime}" Height="24" Padding="0,3,0,0" VerticalAlignment="Center" TextAlignment="Center" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Width="70" x:Name="Division" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
-                                        <DataGridTemplateColumn.HeaderTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="Division" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.HeaderTemplate>
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding SalesDivision, Mode=OneTime}" Height="24" Padding="2,3,0,0" TextAlignment="Center" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Width="75" x:Name="ProjectStatus" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
-                                        <DataGridTemplateColumn.HeaderTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="Status" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.HeaderTemplate>
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding ProjectStatus, Mode=OneTime}" Padding="2,3,0,0" Height="24" TextAlignment="Left" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-
-                                    <DataGridTemplateColumn Width="85" x:Name="ProjectType" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
-                                        <DataGridTemplateColumn.HeaderTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="Type" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.HeaderTemplate>
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding ProjectType, Mode=OneTime}" Padding="2,3,0,0" Height="24" TextAlignment="Left" />
-                                                    <Image Source="/PTR;component/Images/award.png" Height="16" Width="20" Margin="2,0,0,0">
-                                                        <Image.Style>
-                                                            <Style TargetType="Image">
-                                                                <Setter Property="Visibility" Value="Hidden"/>
-                                                                <Setter Property="ToolTip" Value="KPM"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding KPM}" Value="True">
-                                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Image.Style>
-                                                    </Image>
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Width="170" x:Name="ProjectName" KeyboardNavigation.IsTabStop="False"  HeaderStyle="{StaticResource ColumnHeaderStyle}">
-                                        <DataGridTemplateColumn.HeaderTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="Name" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.HeaderTemplate>
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding ProjectName, Mode=OneTime}" Height="24" Padding="2,3,0,0" TextAlignment="Left"  />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Width="100" x:Name="TargetedSales" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
-                                        <DataGridTemplateColumn.HeaderTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="Targeted Sales" ToolTip="Targeted Sales (local currency) for 12 months" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.HeaderTemplate>
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBlock  Padding="0,3,2,0"  Height="24" TextAlignment="Right" >
-                                                    <TextBlock.Text>
-                                                        <MultiBinding Converter="{StaticResource CultConv}">
-                                                            <Binding Mode="TwoWay" Path="EstimatedAnnualSales" />
-                                                            <Binding Mode="OneWay" Path="CultureCode" />
-                                                        </MultiBinding>
-                                                    </TextBlock.Text>
-                                                </TextBlock>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-
-                                    <DataGridTemplateColumn Width="170" x:Name="Customer" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
-                                        <DataGridTemplateColumn.HeaderTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="Customer" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.HeaderTemplate>
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding Customer, Mode=OneTime}" Height="24" Padding="2,3,0,0" TextAlignment="Left" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-
-                                    <DataGridTemplateColumn Width="120" x:Name="Associate" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
-                                        <DataGridTemplateColumn.HeaderTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="Associate" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.HeaderTemplate>
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding Associate, Mode=OneTime}" Height="24" Padding="2,3,0,0" TextAlignment="Left" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Width="120"  KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
-                                        <DataGridTemplateColumn.HeaderTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="Actions" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.HeaderTemplate>
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Image Source="/PTR;component/Images/compass.ico" Height="16" Width="20" Margin="2,0,0,0">
-                                                        <Image.Style>
-                                                            <Style TargetType="Image">
-                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                <Setter Property="ToolTip" Value="Overdue Monthly Activity"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding OverdueActivity}" Value="True">
-                                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Image.Style>
-                                                    </Image>
-                                                    <Image Source="/PTR;component/Images/compass.ico" Height="16" Width="20" Margin="2,0,0,0">
-                                                        <Image.Style>
-                                                            <Style TargetType="Image">
-                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                <Setter Property="ToolTip" Value="Completion Required"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding RequiringCompletion}" Value="True">
-                                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Image.Style>
-                                                    </Image>
-                                                    <Image Source="/PTR;component/Images/compass.ico" Height="16" Width="20" Margin="2,0,0,0">
-                                                        <Image.Style>
-                                                            <Style TargetType="Image">
-                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                <Setter Property="ToolTip" Value="Incomplete Evaluation Plan"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IncompleteEP}" Value="True">
-                                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Image.Style>
-                                                    </Image>
-                                                    <Image Source="/PTR;component/Images/compass.ico" Height="16" Width="20" Margin="2,0,0,0">
-                                                        <Image.Style>
-                                                            <Style TargetType="Image">
-                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                <Setter Property="ToolTip" Value="Evaluation Plan Required"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding EPRequired}" Value="True">
-                                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Image.Style>
-                                                    </Image>
-                                                    <Image Source="/PTR;component/Images/compass.ico" Height="16" Width="20" Margin="2,0,0,0">
-                                                        <Image.Style>
-                                                            <Style TargetType="Image">
-                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                <Setter Property="ToolTip" Value="Milestone Due"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding MilestoneDue}" Value="True">
-                                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Image.Style>
-                                                    </Image>
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                </DataGrid.Columns>
                             </DataGrid>
 
                             <StackPanel Grid.Row="1" HorizontalAlignment="Left" Orientation="Horizontal">
-                                <Grid Width="{Binding ActualWidth, ElementName=ID}">
-                                    <TextBlock Text=""/>
-                                </Grid>
-                                <Grid Width="{Binding ActualWidth, ElementName=Division}">
-                                    <TextBlock Text=""/>
-                                </Grid>
-                                <Grid Width="{Binding ActualWidth, ElementName=ProjectStatus}">
-                                    <TextBlock Text=""/>
-                                </Grid>
-                                <Grid Width="{Binding ActualWidth, ElementName=ProjectType}">
-                                    <TextBlock Text=""/>
-                                </Grid>
-                                <Grid Width="{Binding ActualWidth, ElementName=ProjectName}">
-                                    <TextBlock Text=""/>
-                                </Grid>
-                                <Grid Width="{Binding ActualWidth, ElementName=TargetedSales}">
-                                    <TextBlock Text="{Binding SumSalesUSD, Mode=TwoWay, StringFormat={}USD {0:C0}}" Foreground="Blue" TextAlignment="Right"/>
-                                </Grid>
-                                <Grid Width="{Binding ActualWidth, ElementName=Customer}">
-                                    <TextBlock Text=""/>
-                                </Grid>
+                                <TextBlock Margin="200,0,0,0" Text="{Binding SumSalesUSD, Mode=OneWay, StringFormat={}Total Sales Potential USD {0:N0}}" Foreground="Blue" TextAlignment="Right"/>
                             </StackPanel>
                         </Grid>
                         <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch" ResizeDirection="Rows" Height="5" BorderBrush="DarkGray" BorderThickness="1"/>
-                 
+
                         <ctrl:ActivitiesControl x:Name="activities" Grid.Row="2"
-                            CanSave="{Binding EnableSaveBtn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                                               
-                            ClearActivities ="{Binding ClearActivities}"
-                            UpdateMonthlyActivities ="{Binding UpdateActivities}"
-                            SelectedProjectItem="{Binding Path=SelectedItem, ElementName=ProjectList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                        <GridSplitter Grid.Column="1" Grid.RowSpan="3" ResizeBehavior="PreviousAndNext" ResizeDirection="Columns" VerticalAlignment="Stretch" 
-                                       BorderBrush="DarkGray" BorderThickness="1"
-                                      Width="5"/>
-
-                        <!--<Grid Grid.Column="2" Grid.RowSpan="3" Margin="2,4,4,4" >
-
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="32"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <Button MinWidth="80" Command="{Binding RefreshToDoList}" Margin="10,0,0,0" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Left" >
-                                <Button.Content>
-                                    <StackPanel Orientation="Horizontal" ToolTip="Click to Refresh To Do List" VerticalAlignment="Center">
-                                        <Image Source="/PTR;component/Images/refresh.ico" Height="18" Width="18"  />
-                                        <TextBlock Text="To Do List" Style="{StaticResource textlabel}" Padding="0,2,0,0" HorizontalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button.Content>
-                            </Button>-->
-
-                            <!--<TreeView Grid.Row="1" ItemsSource="{Binding ToDoList}" BorderThickness="0" Background="WhiteSmoke"
-                                  ItemTemplateSelector="{StaticResource hierarchyDataTemplateSelector}" >
-                                <TreeView.ItemContainerStyle>
-                                    <Style TargetType="{x:Type TreeViewItem}">
-                                        <Setter Property="loc:MouseDoubleClick.Command" Value="{Binding DataContext.OpenTVProject, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                        <Setter Property="loc:MouseDoubleClick.CommandParameter" Value="{Binding}"/>
-                                        <Setter Property="IsExpanded" Value="True"/>
-                                        <Style.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="true">
-                                                <Setter Property="Background" Value="AliceBlue"/>
-                                                <Setter Property="Foreground" Value="Red"/>
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TreeView.ItemContainerStyle>
-                                <TreeView.Resources>
-                                    <SolidColorBrush Color="Aqua" x:Key="{x:Static SystemColors.HighlightBrushKey}"/>
-
-                                    <HierarchicalDataTemplate x:Key="EPTemplate" ItemsSource="{Binding SubItems}"  ItemTemplateSelector="{x:Null}">
-                                        <TextBlock Text="{Binding Name}" Foreground="Red" />
-                                        <HierarchicalDataTemplate.ItemTemplate>
-                                            <HierarchicalDataTemplate ItemsSource="{Binding Items}"  ItemTemplateSelector="{x:Null}">
-                                                <TextBlock Text="{Binding Name}" Foreground="Green" />
-                                                <HierarchicalDataTemplate.ItemTemplate>
-                                                    <DataTemplate DataType="{x:Type models:MaintenanceModel}" >
-                                                        <StackPanel Orientation="Horizontal" Width="120">
-                                                            <StackPanel.Style>
-                                                                <Style TargetType="StackPanel">
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding MaintenanceTypeID}" Value="1">
-                                                                            <Setter Property="ToolTip">
-                                                                                <Setter.Value>
-                                                                                    <StackPanel Orientation="Vertical" Width="120">
-                                                                                        <TextBlock Text="{Binding ProjectID, StringFormat={}Project ID: {0:N0}}" Foreground="Blue" Style="{StaticResource textlabel}" />
-                                                                                        <TextBlock Text="{Binding ProjectName, StringFormat={}Project Name: {0}}" Style="{StaticResource textlabel}"/>
-                                                                                    </StackPanel>
-                                                                                </Setter.Value>
-                                                                            </Setter>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding MaintenanceTypeID}" Value="2">
-                                                                            <Setter Property="ToolTip">
-                                                                                <Setter.Value>
-                                                                                    <StackPanel Orientation="Vertical" Width="120">
-                                                                                        <TextBlock Text="{Binding ProjectID, StringFormat={}Project ID: {0:N0}}" Foreground="Blue" Style="{StaticResource textlabel}" />
-                                                                                        <TextBlock Text="{Binding ProjectName, StringFormat={}Title: {0}}" Style="{StaticResource textlabel}"/>
-                                                                                    </StackPanel>
-                                                                                </Setter.Value>
-                                                                            </Setter>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </StackPanel.Style>
-                                                            <TextBlock Text="{Binding ProjectID}" Foreground="Blue" />
-                                                            <TextBlock Margin="2,0,0,0" Text="{Binding ProjectName}" Width="80" Height="20" 
-                                                                        TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Foreground="Blue" />
-                                                        </StackPanel>
-                                                    </DataTemplate>
-                                                </HierarchicalDataTemplate.ItemTemplate>
-                                            </HierarchicalDataTemplate>
-                                        </HierarchicalDataTemplate.ItemTemplate>
-                                    </HierarchicalDataTemplate>
-
-                                    <HierarchicalDataTemplate x:Key="MaintenanceTemplate" ItemsSource="{Binding Items}" ItemTemplateSelector="{x:Null}">
-                                        <TextBlock Text="{Binding Name}" Foreground="Red" />
-                                        <HierarchicalDataTemplate.ItemTemplate>
-                                            <DataTemplate DataType="{x:Type models:MaintenanceModel}" >
-                                                <StackPanel Orientation="Horizontal" Width="120">
-                                                    <StackPanel.Style>
-                                                        <Style TargetType="StackPanel">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding MaintenanceTypeID}" Value="1">
-                                                                    <Setter Property="ToolTip">
-                                                                        <Setter.Value>
-                                                                            <StackPanel Orientation="Vertical" Width="120">
-                                                                                <TextBlock Text="{Binding ProjectID, StringFormat={}Project ID: {0:N0}}" Foreground="Blue" Style="{StaticResource textlabel}" />
-                                                                                <TextBlock Text="{Binding ProjectName, StringFormat={}Project Name: {0}}" Style="{StaticResource textlabel}"/>
-                                                                            </StackPanel>
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding MaintenanceTypeID}" Value="2">
-                                                                    <Setter Property="ToolTip">
-                                                                        <Setter.Value>
-                                                                            <StackPanel Orientation="Vertical" Width="120">
-                                                                                <TextBlock Text="{Binding ProjectID, StringFormat={}Project ID: {0:N0}}" Foreground="Blue" Style="{StaticResource textlabel}" />
-                                                                                <TextBlock Text="{Binding ProjectName, StringFormat={}Title: {0}}" Style="{StaticResource textlabel}"/>
-                                                                            </StackPanel>
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding MaintenanceTypeID}" Value="3">
-                                                                    <Setter Property="ToolTip">
-                                                                        <Setter.Value>
-                                                                            <StackPanel Orientation="Vertical" Width="120">
-                                                                                <TextBlock Text="{Binding ProjectID, StringFormat={}Project ID: {0:N0}}" Foreground="Blue" Style="{StaticResource textlabel}" />
-                                                                                <TextBlock Text="{Binding ActionDate, StringFormat={}Target Date: {0:dd-MMM-yyyy}}" Style="{StaticResource textlabel}"/>
-                                                                                <TextBlock Text="{Binding ProjectName, StringFormat={}Description: {0}}" Style="{StaticResource textlabel}"/>
-                                                                                <TextBlock Text="{Binding UserName, StringFormat={}Assigned To: {0}}" Style="{StaticResource textlabel}"/>
-                                                                            </StackPanel>
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </DataTrigger>
-
-                                                                <DataTrigger Binding="{Binding MaintenanceTypeID}" Value="4">
-                                                                    <Setter Property="ToolTip">
-                                                                        <Setter.Value>
-                                                                            <StackPanel Orientation="Vertical" Width="120">
-                                                                                <TextBlock Text="{Binding ProjectID, StringFormat={}Project ID: {0:N0}}" Foreground="Blue" Style="{StaticResource textlabel}" />
-                                                                                <TextBlock Text="{Binding ProjectName, StringFormat={}Project Name: {0}}" Style="{StaticResource textlabel}"/>
-                                                                            </StackPanel>
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </DataTrigger>
-
-                                                                <DataTrigger Binding="{Binding MaintenanceTypeID}" Value="5">
-                                                                    <Setter Property="ToolTip">
-                                                                        <Setter.Value>
-                                                                            <StackPanel Orientation="Vertical" Width="120">
-                                                                                <TextBlock Text="{Binding ProjectID, StringFormat={}Project ID: {0:N0}}" Foreground="Blue" Style="{StaticResource textlabel}" />
-                                                                                <TextBlock Text="{Binding ProjectName, StringFormat={}Project Name: {0}}" Style="{StaticResource textlabel}"/>
-                                                                            </StackPanel>
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </StackPanel.Style>
-
-                                                    <TextBlock Width="15" Text="{Binding ProjectID, StringFormat={}{0:N0}}" Foreground="Blue" Style="{StaticResource textlabel}"/>
-                                                    <TextBlock Width="80" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Foreground="Blue" >
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource textlabel}">
-                                                                <Setter Property="Text" Value="{Binding ProjectName}" />
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding MaintenanceTypeID}" Value="3">
-                                                                        <Setter Property="Text" Value="{Binding ActionDate, StringFormat=\{0:dd-MMM-yyyy\}}"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </HierarchicalDataTemplate.ItemTemplate>
-                                    </HierarchicalDataTemplate>
-                                </TreeView.Resources>
-                            </TreeView>-->
-                        <!--</Grid>-->
+                             IsDirtyData = "{Binding IsDirtyData, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                              
+                             ProjectStatus="{Binding ProjectStatus, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                                                
+                             CanSave="{Binding CanSave, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                                               
+                             ClearActivities ="{Binding ClearActivities}"
+                             UpdateMonthlyActivities ="{Binding UpdateActivities}"      
+                             SelectedProjectItem="{Binding SelectedProject, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
+                           
                     </Grid>
                 </Border>
             </Grid>

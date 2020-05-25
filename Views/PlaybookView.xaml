@@ -3,185 +3,256 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:PTR.Views"
-        xmlns:xceed="http://schemas.xceed.com/wpf/xaml/toolkit"
+        xmlns:ctrls="clr-namespace:PTR.Controls"
         mc:Ignorable="d"
+        Icon="/PTR;component/Images/report.ico"
         xmlns:loc="clr-namespace:PTR"
         loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" ResizeMode="CanResize" WindowStyle="SingleBorderWindow" WindowState="Maximized"
         WindowStartupLocation="CenterScreen"  
         x:Name="_parent"
-        Title=" Projects" >
+        Title=" Project Master List" >
 
     <Window.Resources>
-        <loc:MultiValueHighlightConverter x:Key="MultiValueHighlightConverter"/>
-              
-        <Style x:Key="ColumnHeaderStyle2" TargetType="{x:Type DataGridColumnHeader}">
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="TextBlock.TextWrapping" Value="Wrap"/>
-            <Setter Property="Height" Value="50"/>
+
+        <Style x:Key="ttStyle" TargetType="ToolTip">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="HasDropShadow" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border BorderThickness="1" CornerRadius="4" BorderBrush="Blue" Padding="2,2,2,2" Background="LemonChiffon">
+                            <ContentPresenter>
+                                <ContentPresenter.Content>
+                                    <Grid >
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="120"/>
+                                            <ColumnDefinition Width="220"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Project ID:" Foreground="Black" />
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ProjectID}" />
+                                        <TextBlock Grid.Row="1" Grid.Column="0"  Text="Business Unit:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1"  Text="{Binding SalesDivision}"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="0"  Text="Industry Segment:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1"  Text="{Binding IndustrySegment}"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="0"  Text="Application:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="1"  Text="{Binding Application}"/>
+                                        <TextBlock Grid.Row="4" Grid.Column="0"  Text="Status:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="4" Grid.Column="1"  Text="{Binding ProjectStatus}"/>
+                                        <TextBlock Grid.Row="5" Grid.Column="0"  Text="Sales Funnel Stage:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="5" Grid.Column="1"  Text="{Binding SalesFunnelStage}" Background="{Binding StatusColour, FallbackValue=Transparent}"/>
+                                        <TextBlock Grid.Row="6" Grid.Column="0" Foreground="Black" >
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="KPM:"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding KPM}" Value="False">
+                                                            <Setter Property="Height" Value="0"/>
+                                                            <Setter Property="Text" Value="Not KPM"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <Image Grid.Row="6" Grid.Column="1" Source="/PTR;component/Images/award.png" Width="20" Margin="2,0,0,0" HorizontalAlignment="Left">
+                                            <Image.Style>
+                                                <Style TargetType="Image">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Setter Property="Height" Value="16"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding KPM}" Value="False">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Setter Property="Height" Value="0"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Image.Style>
+                                        </Image>
+
+                                        <TextBlock Grid.Row="7" Grid.Column="0" Text="Start:" Foreground="Black" />
+                                        <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding ActivatedDate, StringFormat={}{0:d MMM yyyy}}" />
+                                        <TextBlock Grid.Row="8" Grid.Column="0" Text="Type:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding ProjectType}"/>
+                                        <TextBlock Grid.Row="9" Grid.Column="0" Text="Project:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="9" Grid.Column="1" Text="{Binding ProjectName}"/>
+                                        <TextBlock Grid.Row="10" Grid.Column="0" Text="Targeted Sales:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="10" Grid.Column="1" Text="{Binding EstimatedAnnualSalesUSD, StringFormat={}${0:N0}}"/>
+                                        <TextBlock Grid.Row="11" Grid.Column="0" Text="Customer:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="11" Grid.Column="1" Text="{Binding Customer}"/>
+                                        <TextBlock Grid.Row="12" Grid.Column="0" Text="Associate:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="12" Grid.Column="1" Text="{Binding UserName}"/>
+                                        <TextBlock Grid.Row="13" Grid.Column="0" Text="Products:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="13" Grid.Column="1" Text="{Binding Products}"/>
+                                        <TextBlock Grid.Row="14" Grid.Column="0" Text="Resources:" Foreground="Black"/>
+                                        <TextBlock Grid.Row="14" Grid.Column="1" Text="{Binding Resources}"/>
+                                    </Grid>
+                                </ContentPresenter.Content>
+                            </ContentPresenter>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
-        <Style x:Key="lvstyle" TargetType="ListView">
-            <Style.Triggers>
-                <Trigger Property="HasItems" Value="False">
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="ListView">
-                                <TextBlock Text="No data..." Foreground="Blue" Padding="2,2,0,0"/>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style x:Key="chkStyle" TargetType="CheckBox">
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="Focusable" Value="False"/>
-        </Style>
-
-        <DataTemplate x:Key="ListBoxItemTemplate" >
-            <CheckBox IsChecked="{Binding IsSelected}" Style="{StaticResource chkStyle}" Content="{Binding Description}" Background="{Binding Colour}" 
-                      Width="{Binding Width, RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBox}}"
-                      />
-        </DataTemplate>
-
+      
     </Window.Resources>
     
     <Grid>
         <DockPanel LastChildFill="True" >
-            <!--<Grid DockPanel.Dock="Top" Height="2"/>-->
-
             <Grid DockPanel.Dock="Bottom" Height="32">
-                <Button Content="Close" Command="{Binding Close}" Margin="0,0,20,0" Width="50" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Right"/>
-                <Button x:Name="btnExcel" Width="180" Command="{Binding ExportToExcel}" Margin="10,0,0,0"  Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Left" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="130"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="2" Content="Close" Command="{Binding Close}" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Center" ToolTip="Close report form"/>
+                <Button Grid.Column="0" x:Name="btnExcel" Command="{Binding ExportPlaybook}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"  Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Center" >
                     <Button.Content>
-                        <StackPanel Orientation="Horizontal" ToolTip="Export to Excel" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" ToolTip="Export Playbook data to Excel" VerticalAlignment="Center">
                             <Image Source="/PTR;component/Images/export.ico"  Height="16" Width="20"/>
-                            <TextBlock Text="Export Filtered Data To Excel" FontSize="12" Height="24" Width="180" />
+                            <TextBlock Text="Export Playbook" FontSize="12" Height="24" Width="100" />
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+                <Button Grid.Column="1" Command="{Binding ExportAll}"  CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"  Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Center" >
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal" ToolTip="Export All data to Excel" VerticalAlignment="Center">
+                            <Image Source="/PTR;component/Images/export.ico"  Height="16" Width="20"/>
+                            <TextBlock Text="Export All" FontSize="12" Height="24" Width="100" />
                         </StackPanel>
                     </Button.Content>
                 </Button>
             </Grid>
-            <Grid DockPanel.Dock="Left" Width="250"  Margin="4,4,2,4">
-               
-                <Border Background="#EEEEEE" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel Orientation="Vertical" Margin="2,10,0,0" VerticalAlignment="Stretch" >
-                            <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="8,2,0,0">
-                                <Button x:Name="btnApplyFilter" Command="{Binding ApplyFilter}" Margin="6,0" Content="Apply Filters" Width="80" Style="{StaticResource filterButtonStyle}" />
-                                <Button x:Name="btnClearFilters" Command="{Binding ClearFilter}" Margin="2,0" Content="Clear Filters" Width="80" Style="{StaticResource filterButtonStyle}" />
-                            </StackPanel>
-                            
-                            <loc:FilterListControl x:Name="flCountries" Width="200" 
-							    ListItems="{Binding Countries}" 
-							    SelectedItems="{Binding CountrySrchString}" 
-							    Margin="4,0,0,0" 
-							    ShowAll="{Binding ShowAllCountries}"
-                                VisibleCount="8"
-							    Heading="Countries" 
-							    ToggleButtonVisibility="Visible"
-							    HorizontalAlignment="Left" 
-                                SelectAll="{Binding AllCountries}"
-                                SelectAllButtonCommand="{Binding AllCountriesCommand}"
-                                ExpandButtonCommand ="{Binding ExpandCountriesCommand}"/>
-                            
-                            <loc:RadioListControl x:Name="radSalesDivs" Width="150"
-                                ListItems ="{Binding SalesDivisionRadios}" 
-							    SelectedItemID ="{Binding SelectedDivisionID, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True,NotifyOnTargetUpdated=True}" 					  
-							    Margin="4,0,4,0" 							                                      
-							    Heading="Sales Division" 
-                                IsEnabled="{Binding SingleDivision}"						    
-							    HorizontalAlignment="Left" />
-                            <CheckBox Content="All Divisions (Sales Funnel Only)" IsChecked="{Binding GetAllSalesDivisions}" Margin="4,0,4,0"/>
-                            
-                            <loc:FilterListControl x:Name="flProjectTypes" Width="150"
-							    ListItems="{Binding ProjectTypes}" 
-							    SelectedItems="{Binding ProjectTypesSrchString}" 
-							    Margin="4,0,0,0" 
-							    ShowAll="True"                                
-							    Heading="Project Types" 
-							    ToggleButtonVisibility="Collapsed"
-							    HorizontalAlignment="Left" 
-                                SelectAll="{Binding AllProjectTypes}"
-                                SelectAllButtonCommand="{Binding AllProjectTypesCommand}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                            <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="4,10,0,0">
-                                <TextBlock Text="Project Date Ranges:" FontWeight="Bold"  Style="{StaticResource textlabel}" />
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="4,0,0,4" ToolTip="Select the Sales Close month from which to report projects">
-                                <TextBlock Text="From:" FontWeight="Bold" Width="50" Style="{StaticResource textlabel}" />
-                                <xceed:DateTimeUpDown  x:Name="startMonth" Height="24" Style="{StaticResource monthupdown}" 
-                                                       Value="{Binding StartMonthProjects, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
-                            </StackPanel>
-
-                            <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="4,0,0,0">
-                                <TextBlock Text="Comments:" FontWeight="Bold"  Style="{StaticResource textlabel}" />
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="4,0,0,4">
-                                <TextBlock Text="From:" FontWeight="Bold" Width="50" Style="{StaticResource textlabel}" />
-                                <xceed:DateTimeUpDown  x:Name="fromMonth" Height="24" Style="{StaticResource monthupdown}" Value="{Binding FirstMonthComments, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="4,0,0,10">
-                                <TextBlock Text="To:" Width="50" FontWeight="Bold" Style="{StaticResource textlabel}"/>
-                                <xceed:DateTimeUpDown  x:Name="toMonth" Height="24" Style="{StaticResource monthupdown}" Value="{Binding LastMonthComments, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
-                            </StackPanel>
-                            <TextBlock Text="Highlight:" Width="60" Margin="4,0,0,0" FontWeight="Bold" Style="{StaticResource textlabel}"/>
-                            <ListBox x:Name="lvp" ItemsSource="{Binding ProjectStatuses}" ItemTemplate="{StaticResource ListBoxItemTemplate}"
-                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                     Width="230" Height="200" Margin="4,0,0,4"
-                                     HorizontalAlignment="Left"/>
-                            <CheckBox Content="Misc Columns (Sales Funnel Only)" IsChecked="{Binding GetMiscColumns}" ToolTip="Show additional columns of data not normally used in the Playbook" Margin="4,10,4,0"/>
-
+                <Border Grid.Column="0" HorizontalAlignment="Left" Width="200" Margin="4,4,2,4" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="32"/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="8,2,0,0">
+                            <Button x:Name="btnApplyFilter" Command="{Binding ApplyFilter}" Margin="6,0" Content="Refresh View" Width="80" Style="{StaticResource filterButtonStyle}" />
+                            <Button x:Name="btnClearFilters" Command="{Binding ClearFilters}" Margin="2,0" Content="Clear Filters" Width="80" Style="{StaticResource filterButtonStyle}" ToolTip="Clear all filters"/>
                         </StackPanel>
-                    </ScrollViewer>
-                </Border>
-            </Grid>
-            <Grid Margin="0,4,4,4">
-                <TabControl>
-                    <TabItem Header="Sales Funnel">
-                        <ListView  x:Name="lvSalesFunnel"  Style="{StaticResource lvstyle}" >
-                            
-                            <ListView.ItemContainerStyle>
-                                <Style TargetType="{x:Type ListViewItem}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                    <Setter Property="VerticalContentAlignment" Value="Stretch"/>
-                                    <Setter Property="Background" >
-                                        <Setter.Value>
-                                            <MultiBinding Converter="{StaticResource MultiValueHighlightConverter}" >
-                                                <Binding Path="SalesFunnelStage" />
-                                                <Binding ElementName="_parent" Path="DataContext.SelectedProjectStatuses"/>
-                                            </MultiBinding>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </ListView.ItemContainerStyle>
 
-                            <ListView.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <VirtualizingStackPanel />
-                                </ItemsPanelTemplate>
-                            </ListView.ItemsPanel>
-                        </ListView>
-                    </TabItem>
-                    <TabItem Header="New Business" Visibility="{Binding SingleDivisionVisibility}">
-                        <ListView  x:Name="lvNewBusiness"  Style="{StaticResource lvstyle}" >
-                            <ListView.Resources>
-                                <Style TargetType="{x:Type ListViewItem}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                    <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="6,0,0,0">
+                            <StackPanel Orientation="Vertical" Margin="2,4,0,0" VerticalAlignment="Stretch" Background="WhiteSmoke"  >
+
+                                <TextBlock Text="Sales Start Date:" Margin="4,10,0,0" FontWeight="Bold" Style="{StaticResource textlabel}" />
+                                <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="40,0,0,0" ToolTip="Select the Sales Close month from which to report projects">
+                                    <TextBlock Text="From:" Width="35" Style="{StaticResource textlabel}" />
+                                    <ctrls:MonthUpDown x:Name="startMonth" 
+                                                       Style="{StaticResource monthpicker}"   
+                                                       Value="{Binding StartMonthProjects, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
+                                </StackPanel>
+
+                                <TextBlock Text="Comments:" Style="{StaticResource textlabel}" FontWeight="Bold"  Margin="4,4,0,0"/>
+                                <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="40,0,0,0">
+                                    <TextBlock Text="From:" Width="35" Style="{StaticResource textlabel}" />
+                                    <ctrls:MonthUpDown x:Name="fromMonth"  
+                                                        Style="{StaticResource monthpicker}"   
+                                                       Value="{Binding FirstMonthComments, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Style="{StaticResource stkpanel}" Margin="40,2,0,0">
+                                    <TextBlock Text="To:" Width="35" Style="{StaticResource textlabel}"/>
+                                    <ctrls:MonthUpDown x:Name="toMonth"
+                                              Style="{StaticResource monthpicker}"         
+                                                       Value="{Binding LastMonthComments, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
+                                </StackPanel>
+
+                                <loc:FilterListControl x:Name="flCountries" Width="160" TTip="These are the countries of customers that you have been granted access to"
+							        ListItems="{Binding CountriesFilter}"                                                    
+							        SelectedItems="{Binding CountriesSrchString}" 
+							        Margin="4,12,0,0" 
+							        ShowAll="{Binding ShowAllCountries}"
+                                    VisibleCount="12"
+							        Heading="Your Countries" 
+							        ToggleButtonVisibility="Visible"
+							        HorizontalAlignment="Left" 
+                                    SelectAll="{Binding AllCountries}"
+                                    SelectAllButtonCommand="{Binding AllCountriesCommand}"
+                                    ExpandButtonCommand ="{Binding ExpandCountriesCommand}" />
+
+                                <Button Width="150" Margin="10,10,4,0" HorizontalAlignment="Left" Visibility="{Binding EditDetailVis}" Style="{StaticResource LinkButton}" Command="{Binding OpenProjectDetails}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"
+                                    Content="Edit Details" ToolTip="Edit Project Details" />
+                                <Button Width="150" Margin="10,10,4,0" HorizontalAlignment="Left" Visibility="{Binding EditDetailVis}" Style="{StaticResource LinkButton}" Command="{Binding OpenComments}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}" 
+                                    Content="Edit Comments" ToolTip="Edit Project Comments" />
+
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+
+                <!--<TabControl Grid.Column="1">
+                    <TabItem Header="Sales Funnel">-->
+                        <DataGrid Grid.Column="1" x:Name="grSalesFunnel"  Margin="0,4,4,4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                  ItemsSource="{Binding SalesFunnel, IsAsync=True, Mode=OneWay}" 
+                                  SelectedItem="{Binding SelectedProject}"
+                                  loc:MouseDoubleClick.Command="{Binding OpenProject}" 
+                                  loc:MouseDoubleClick.CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"                                                                                                                                              
+                                  AutoGeneratingColumn="ReportGrid_AutoGeneratingColumn"                                                                                                                                                                                                 
+                                  Style="{StaticResource dgautogenstyle}">
+                            <DataGrid.Resources>
+                                <Style TargetType="{x:Type DataGridRow}">
+                                    <Style.Setters>
+                                        <Setter Property="Background" Value="{Binding ProjectTypeColour}"/>
+                                        <Setter Property="Foreground" Value="Black"/>
+                                        <Setter Property="FontWeight" Value="Normal" />
+                                        <Setter Property="Height" Value="24"/>
+
+                                        <Setter Property="ToolTip">
+                                            <Setter.Value>
+                                                <ToolTip Style="{StaticResource ttStyle}" Content="{Binding }" Background="LemonChiffon"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style.Setters>
+                                    
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="LightCyan" />
+                                            <Setter Property="Foreground" Value="Blue"/>
+                                            <Setter Property="FontWeight" Value="DemiBold" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                    
                                 </Style>
-                            </ListView.Resources>
-                            <ListView.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <VirtualizingStackPanel />
-                                </ItemsPanelTemplate>
-                            </ListView.ItemsPanel>
-                        </ListView>
-                    </TabItem>
-                </TabControl>
+                                <Style TargetType="{x:Type DataGridCell}">
+                                    <Style.Triggers>
+                                        <Trigger Property="DataGridCell.IsSelected" Value="True">
+                                            <Setter Property="Background" Value="LemonChiffon" />
+                                            <Setter Property="Foreground" Value="Blue" />
+                                            <Setter Property="FontWeight" Value="Bold" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                                
+                            </DataGrid.Resources>
+                        </DataGrid>
+                    <!--</TabItem>-->
+                 
+                <!--</TabControl>-->
             </Grid>
         </DockPanel>
     </Grid>

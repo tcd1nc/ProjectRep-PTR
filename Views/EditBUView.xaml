@@ -1,0 +1,86 @@
+﻿<Window x:Class="PTR.Views.EditBUView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        xmlns:loc="clr-namespace:PTR"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="SingleBorderWindow"
+        loc:WindowBehavior.WindowClosing="{Binding WindowClosing}" 
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" 
+        Title="Business Units" Height="500" Width="680" >
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+    <Grid>
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Top" Height="32" >
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Template="{StaticResource CRUDButton}" Tag="Add" Content="Add" ToolTip="Add" Command="{Binding AddNew}" />
+                    <Button IsEnabled="{Binding IsSelected}" Template="{StaticResource CRUDButton}" Tag="Delete" Content="Delete" ToolTip="Delete" Command="{Binding Delete}" />
+                </StackPanel>
+            </Grid>
+
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="130"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="2" Content="Save and Close" Command="{Binding Save}" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ToolTip="Save changes and close window"/>
+                <TextBlock Grid.Column="1" Text="{Binding DataMissingLabel}" Style="{StaticResource ErrorMessageLbl}" Visibility="{Binding InvalidField, Converter={StaticResource BoolToVis}, UpdateSourceTrigger=PropertyChanged}" />
+            </Grid>
+
+            <Grid VerticalAlignment="Top" HorizontalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="550"/>
+                    <ColumnDefinition Width="2*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="380"/>
+                </Grid.RowDefinitions>
+                <DataGrid Grid.Column="1" ItemsSource="{Binding BUs, IsAsync=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True}"        					  
+                          SelectedItem="{Binding SelectedSalesDivision}"     
+                          Style="{StaticResource dgstyle}" >
+                    <DataGrid.Resources>
+                        <ContextMenu Height="0" Width="0" x:Key="contextmenu" >
+                            <TextBox>No menu</TextBox>
+                        </ContextMenu>
+                    </DataGrid.Resources>
+                    
+                    <DataGrid.Columns>
+
+                        <DataGridTemplateColumn Width="50" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsEnabled="{Binding IsEnabled}" IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" 
+                                              HorizontalContentAlignment="Center"  HorizontalAlignment="Center" 
+                                              Style="{StaticResource chkbox}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+
+                        <DataGridTemplateColumn Width="200" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical"  >
+                                        <TextBlock Text="Business Units" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Left" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+              
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>

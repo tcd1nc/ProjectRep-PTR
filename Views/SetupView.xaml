@@ -1,0 +1,122 @@
+﻿<Window x:Class="PTR.Views.SetupView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:loc="clr-namespace:PTR"        
+        xmlns:ctrls="clr-namespace:PTR.Controls"
+        mc:Ignorable="d"
+        Icon="/PTR;component/Images/Tools.ico"
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" 
+        loc:WindowBehavior.WindowClosing="{Binding WindowClosing}" 
+        WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow" ResizeMode="NoResize"
+        Title="Setup" Height="650" Width="800">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+    <Grid>
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Top" Height="0" />
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="120"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Save" Command="{Binding Save}" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ToolTip="Save changes"/>
+                <TextBlock Grid.Column="1" Text="{Binding DataErrorLabel}" Style="{StaticResource gridtextlabel}" 
+                        TextAlignment="Center" VerticalAlignment="Stretch" Padding="0,2,0,0"
+                        Foreground="GreenYellow" Background="Gray" Visibility="{Binding InvalidField, Converter={StaticResource BoolToVis}}" />
+                <Button Grid.Column="2" Content="Close" Command="{Binding Cancel}" TextBlock.TextAlignment="Center" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Center" ToolTip="Close window"/>
+            </Grid>
+            <Grid Margin="4,4,4,4">
+                <Grid.Resources>
+                    <ContextMenu Height="0" Width="0" x:Key="contextmenu" >
+                        <TextBox>No menu</TextBox>
+                    </ContextMenu>
+                </Grid.Resources>
+                
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="32"/>
+                    <RowDefinition Height="32"/>
+                    <RowDefinition Height="32"/>
+                    <RowDefinition Height="32"/>
+                    <RowDefinition Height="32"/>
+                    <RowDefinition Height="32"/>
+                    <RowDefinition Height="32"/>
+                    <RowDefinition Height="32"/>
+                    <RowDefinition Height="32"/>
+                    <RowDefinition Height="32"/>
+                    <RowDefinition Height="130"/>
+                    <RowDefinition Height="32"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="250"/>
+                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="170"/>
+                </Grid.ColumnDefinitions>
+  
+                <TextBlock Grid.Row="0" Text="Email format:" Style="{StaticResource gridtextlabel}"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SetUp.Emailformat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource gridtextbox}"/>
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Default is ^([a-zA-Z_.0-9]+)$" Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left"/>
+                <TextBlock Grid.Row="1" Text="Domain:" Style="{StaticResource gridtextlabel}"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SetUp.Domain, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource gridtextbox}"/>
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="Default is buckman.com" Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left"/>
+                <TextBlock Grid.Row="2" Text="Maximum Project Name Length:" Style="{StaticResource gridtextlabel}"/>
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="Default is 25" Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left"/>
+
+                <ctrls:IntegerUpDown Grid.Row="2" Grid.Column="1" Height="28" Margin="2,2,2,2" HorizontalAlignment="Left" Width="60"
+                                     Step="1" Minimum="10" Maximum="255" ContextMenu="{StaticResource contextmenu}"
+                                     Value="{Binding SetUp.MaxProjectNameLength, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
+                <TextBlock Grid.Row="3" Text="Evaluation Plan Required:" Style="{StaticResource gridtextlabel}"/>
+                <CheckBox Grid.Row="3" Grid.Column="1" IsChecked="{Binding SetUp.EPRequired, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource chkbox}"/>
+                <TextBlock Grid.Row="3" Grid.Column="2" Text="Default is unchecked" Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left"/>
+
+                <TextBlock Grid.Row="4" Text="Status ID for Trials:" Style="{StaticResource gridtextlabel}"/>
+
+                <ctrls:IntegerUpDown Grid.Row="4" Grid.Column="1" Height="28" Margin="2,2,2,2" HorizontalAlignment="Left" Width="60"
+                                     Minimum="1" Maximum="10" ContextMenu="{StaticResource contextmenu}"
+                                     Step="1" Value="{Binding SetUp.StatusIDforTrials, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
+                <TextBlock Grid.Row="4" Grid.Column="2" Text="Default is 9" Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left"/>
+                
+                <TextBlock Grid.Row="5" Text="Default Trial Status ID:" Style="{StaticResource gridtextlabel}"/>
+
+                <ctrls:IntegerUpDown Grid.Row="5" Grid.Column="1" Height="28" Margin="2,2,2,2" HorizontalAlignment="Left" Width="60"
+                                     Minimum="1" Maximum="10" ContextMenu="{StaticResource contextmenu}"
+                                     Step="1" Value="{Binding SetUp.DefaultTrialStatusID, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
+                <TextBlock Grid.Row="5" Grid.Column="2" Text="Default is 3" Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left"/>
+                
+                <TextBlock Grid.Row="6" Text="Validate Products:" Style="{StaticResource gridtextlabel}"/>
+                <CheckBox Grid.Row="6" Grid.Column="1" IsChecked="{Binding SetUp.ValidateProducts, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource chkbox}"/>
+                <TextBlock Grid.Row="6" Grid.Column="2" Text="Default is checked" Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left"/>
+
+                <TextBlock Grid.Row="7" Text="Product Delimiter:" Style="{StaticResource gridtextlabel}"/>
+                <ComboBox Grid.Row="7" Grid.Column="1" SelectedValuePath="Content" HorizontalAlignment="Left" Width="60" Background="White" SelectedValue="{Binding SetUp.ProductDelimiter, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource gridcombo}">
+                    <ComboBoxItem Padding="2,2,2,2">;</ComboBoxItem>
+                    <ComboBoxItem Padding="2,2,2,2">,</ComboBoxItem>
+                </ComboBox>
+                <TextBlock Grid.Row="7" Grid.Column="2" Text="Default is ," Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left"/>
+
+                <TextBlock Grid.Row="8" Text="Default Masterlist Start Month:" Style="{StaticResource gridtextlabel}"/>
+                <ctrls:MonthUpDown Grid.Row="8" Grid.Column="1" Style="{StaticResource monthpicker}" HorizontalAlignment="Left"   
+                                   Value="{Binding SetUp.DefaultMasterListStartMonth, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
+                              
+                <TextBlock Grid.Row="9" Text="Colourise Playbook Report:" Style="{StaticResource gridtextlabel}"/>
+                <CheckBox Grid.Row="9" Grid.Column="1" IsChecked="{Binding SetUp.ColourisePlaybookReport, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource chkbox}"/>
+                <TextBlock Grid.Row="9" Grid.Column="2" Text="Default is checked" Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left"/>
+                <TextBlock Grid.Row="10" Grid.Column="0" Text="Default Playbook Sales Statuses:" Style="{StaticResource gridtextlabel}" VerticalAlignment="Center" ToolTip="Select divisions that user belongs to"  />
+                <ListBox Grid.Row="10" Grid.Column="1" ItemsSource="{Binding DefaultPBSalesStatuses}" Background="Beige" Style="{StaticResource lstbox}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Content="{Binding Name}" IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <TextBlock Grid.Row="11" Text="Disable Editing of Previous Months:" Style="{StaticResource gridtextlabel}"/>
+                <CheckBox Grid.Row="11" Grid.Column="1" IsChecked="{Binding SetUp.DisablePreviousMonths, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource chkbox}"/>
+                <TextBlock Grid.Row="11" Grid.Column="2" Text="Default is unchecked" Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left"/>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>

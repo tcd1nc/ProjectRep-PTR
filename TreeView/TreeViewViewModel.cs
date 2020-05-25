@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using static PTR.DatabaseQueries;
 using PTR.Models;
 using System.Collections.ObjectModel;
@@ -77,9 +76,15 @@ namespace PTR.TV
                             salesregionnode.Children.Add(customer);                             
                         }                     
                     }
+                    //NEW
+                    countrynode.Children.ItemPropertyChanged += SalesRegion_ItemPropertyChanged;
                 }
+                //NEW
+                opconode.Children.ItemPropertyChanged += Country_ItemPropertyChanged;
             }
             Nodes = partialtreenodes;
+            //NEW
+            Nodes.ItemPropertyChanged += Nodes_ItemPropertyChanged;
         }
                 
         public void DestroyEventHandlers()
@@ -212,14 +217,36 @@ namespace PTR.TV
             Nodes = partialtreenodes;
         }
 
+        public void LoadCustomerTreeWithSelection(int id)
+        {
+            FullyObservableCollection<TreeViewNodeModel> customernodes = GetAllTVCustomers();
+            foreach (TreeViewNodeModel opconode in partialtreenodes)
+            {
+                foreach (TreeViewNodeModel countrynode in opconode.Children)
+                {
+                    foreach (TreeViewNodeModel salesregionnode in countrynode.Children)
+                    {
+                        salesregionnode.Children = new FullyObservableCollection<TreeViewNodeModel>();
+                        var customers = (from node in customernodes where node.ParentID == salesregionnode.ID select node).ToList();
+                        foreach (TreeViewNodeModel customer in customers)
+                        {
+                            customer.IsSelected = (customer.ID == id);
+                            salesregionnode.Children.Add(customer);
+                        }
+                    }
+                }
+            }
+            Nodes = partialtreenodes;
+        }
+
     }
 
     public class MenuTreeViewViewModel : ViewModelBase
     {
         public MenuTreeViewViewModel() { }
 
-        FullyObservableCollection<Models.TreeViewNodeModel> nodes;
-        public FullyObservableCollection<Models.TreeViewNodeModel> Nodes
+        FullyObservableCollection<TreeViewNodeModel> nodes;
+        public FullyObservableCollection<TreeViewNodeModel> Nodes
         {
             get { return nodes; }
             set { SetField(ref nodes, value); }
@@ -228,13 +255,13 @@ namespace PTR.TV
         public void LoadMenuTree()
         {
             Nodes?.Clear();
-            FullyObservableCollection<Models.TreeViewNodeModel> opconodes = new FullyObservableCollection<Models.TreeViewNodeModel>();
+            FullyObservableCollection<TreeViewNodeModel> opconodes = new FullyObservableCollection<TreeViewNodeModel>();
             opconodes = GetTVOperatingCompanies();
 
-            foreach (Models.TreeViewNodeModel opconode in opconodes)
+            foreach (TreeViewNodeModel opconode in opconodes)
             {
                 opconode.Children = GetTVCountries(opconode.ID);
-                foreach (Models.TreeViewNodeModel countrynode in opconode.Children)
+                foreach (TreeViewNodeModel countrynode in opconode.Children)
                 {
                     countrynode.Children = GetTVSalesRegions(countrynode.ID);
                     if(countrynode.Children.Count>0)
@@ -255,16 +282,16 @@ namespace PTR.TV
 
         private void Country_ItemPropertyChanged(object sender, ItemPropertyChangedEventArgs e)
         {
-            foreach (Models.TreeViewNodeModel n in (sender as FullyObservableCollection<Models.TreeViewNodeModel>)[e.CollectionIndex].Children)
-                n.IsChecked = (sender as FullyObservableCollection<Models.TreeViewNodeModel>)[e.CollectionIndex].IsChecked;
+            foreach (TreeViewNodeModel n in (sender as FullyObservableCollection<TreeViewNodeModel>)[e.CollectionIndex].Children)
+                n.IsChecked = (sender as FullyObservableCollection<TreeViewNodeModel>)[e.CollectionIndex].IsChecked;
 
             RaiseNodeChangeEvent("Country");
         }
 
         private void SalesRegion_ItemPropertyChanged(object sender, ItemPropertyChangedEventArgs e)
         {
-            foreach (Models.TreeViewNodeModel n in (sender as FullyObservableCollection<Models.TreeViewNodeModel>)[e.CollectionIndex].Children)
-                n.IsChecked = (sender as FullyObservableCollection<Models.TreeViewNodeModel>)[e.CollectionIndex].IsChecked;
+            foreach (TreeViewNodeModel n in (sender as FullyObservableCollection<TreeViewNodeModel>)[e.CollectionIndex].Children)
+                n.IsChecked = (sender as FullyObservableCollection<TreeViewNodeModel>)[e.CollectionIndex].IsChecked;
 
             RaiseNodeChangeEvent("Sales Region");
         }
@@ -279,16 +306,16 @@ namespace PTR.TV
         public class NodeChangeEventArgs
         {
             public NodeChangeEventArgs(string s) { Text = s; }
-            public String Text { get; } // readonly
+            public string Text { get; } // readonly
         }
 
         public void DestroyEventHandlers()
         {
             if (Nodes != null)
             {
-                foreach (Models.TreeViewNodeModel opconode in Nodes)
+                foreach (TreeViewNodeModel opconode in Nodes)
                 {
-                    foreach (Models.TreeViewNodeModel countrynode in opconode.Children)
+                    foreach (TreeViewNodeModel countrynode in opconode.Children)
                     {
                         countrynode.Children.ItemPropertyChanged -= SalesRegion_ItemPropertyChanged;
                     }

@@ -3,9 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:PTR.SplashScreen"
         mc:Ignorable="d" WindowStartupLocation="CenterScreen"  
-         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" 
+        
         Title="SplashScreen" Height="250" Width="300">
     <Window.Style>
         <Style TargetType="Window">
@@ -33,12 +32,11 @@
                     <TextBlock x:Name="version" Margin="4,0,10,0" FontSize="10" FontWeight="Bold" Padding="2,2,2,2"/>
                 </StackPanel>
 
-                <TextBlock x:Name="msg" Margin="2,14,10,0" Height="34" VerticalAlignment="Top"  FontSize="12"  FontWeight="DemiBold" Foreground="Red" Padding="2,2,2,2" />
+                <TextBlock x:Name="msg" Margin="2,10,2,0" Height="66" VerticalAlignment="Top"  FontSize="12" FontWeight="DemiBold" Foreground="Red" Padding="2,2,2,2" />
 
                 <Border  BorderThickness="0.5"  Margin="2,2,10,0">
-                    <!--<ProgressBar x:Name="progbar"  HorizontalAlignment="Left" Height="18" IsIndeterminate="True"  Margin="0,0,0,0" />-->
-
-                    <xctk:BusyIndicator x:Name="progbar" BorderThickness="0"    
+                    <TextBlock Text="Loading..." Padding="4,0,0,0" FontSize="14"/>
+                    <!--<xctk:BusyIndicator x:Name="progbar" BorderThickness="0"    
                                         Background="{Binding Path=Background, ElementName=frame}" IsBusy="True" BusyContent="" Height="18"  >
                     
                         <xctk:BusyIndicator.OverlayStyle>
@@ -54,7 +52,7 @@
                             </Style>
                         </xctk:BusyIndicator.ProgressBarStyle>
                         
-                    </xctk:BusyIndicator>
+                    </xctk:BusyIndicator>-->
                 </Border>
 
             </StackPanel>

@@ -18,16 +18,12 @@
             <Grid DockPanel.Dock="Top" Height="10"/>
             <Grid DockPanel.Dock="Bottom" Height="32">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/>
                     <ColumnDefinition/>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
+                    <ColumnDefinition Width="130"/>
                 </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Content="Save" Command="{Binding Save}" Margin="20,0,0,0" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Left" ToolTip="Save changes"/>
-                <Button Grid.Column="2" Content="Close" Command="{Binding Cancel}" Margin="0,0,20,0" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Right" ToolTip="Close"/>
-            </Grid>
-            <Grid DockPanel.Dock="Bottom" Height="28">
-                <TextBlock Text="{Binding DataMissingLabel}" Style="{StaticResource gridtextlabel}" TextAlignment="Center" VerticalAlignment="Center" Padding="0,2,0,0"
-                   HorizontalAlignment="Center" Foreground="GreenYellow" Width="400" Background="Gray" Visibility="{Binding InvalidField, Converter={StaticResource BoolToVis}}" />
+                <Button Grid.Column="2" Content="Save and Close" Command="{Binding Save}" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ToolTip="Save changes and close window"/>
+                <TextBlock Grid.Column="1" Text="{Binding DataMissingLabel}" Style="{StaticResource ErrorMessageLbl}" Visibility="{Binding InvalidField, Converter={StaticResource BoolToVis}, UpdateSourceTrigger=PropertyChanged}" />
             </Grid>
             
             <Grid VerticalAlignment="Top" HorizontalAlignment="Center">
@@ -40,43 +36,50 @@
                     <RowDefinition Height="380"/>
                 </Grid.RowDefinitions>
 
-                <loc:ExtendedGrid Grid.Row="0" Grid.Column="1"        
+                <DataGrid Grid.Row="0" Grid.Column="1"        
                                         ItemsSource="{Binding Countries, IsAsync=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True}"        					  
-                                        SelectedItem="{Binding Country}"                                         
-                                        loc:GridScrollHelper.ScrollToSelectedItem="{Binding ScrollToSelectedItem}" 
-                                        AlternationCount="1000"                                                                                                                                        
-						                AutoGenerateColumns="False" 
-						                AllowDrop="False"                                                                                                                                                  
-						                CanUserAddRows="False" 
-						                CanUserDeleteRows="False"						               
-						                GridLinesVisibility="All"
-						                BorderBrush="Gray"
-						                BorderThickness="1"
-						                CanUserReorderColumns="False"
-						                CanUserSortColumns = "False"
-						                HorizontalScrollBarVisibility="Hidden"
-						                VerticalScrollBarVisibility="Visible"
-                                        SelectionUnit="Cell"
-						                SelectionMode="Single"
-						                ScrollViewer.VerticalScrollBarVisibility="Visible"              
-						                FrozenColumnCount="0"  >
+                                        SelectedItem="{Binding Country}"                                                                                                                                                                                                                   
+						                Style="{StaticResource dgstyle}" >
+                    <DataGrid.Resources>
+                        <ContextMenu Height="0" Width="0" x:Key="contextmenu" >
+                            <TextBox>No menu</TextBox>
+                        </ContextMenu>
+                    </DataGrid.Resources>
                     
-                    <loc:ExtendedGrid.Columns>
-                        <DataGridTemplateColumn Width="210" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
-                            <DataGridTemplateColumn.HeaderTemplate>
+                    <DataGrid.Columns>
+                        
+                        <DataGridTextColumn Width="210" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}"
+                                Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" >
+                            <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="Country" />
+                                    <TextBlock Text="Country" Style="{StaticResource gridtextlabel}" />
                                 </DataTemplate>
-                            </DataGridTemplateColumn.HeaderTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource textlabel}">
+                                    <Setter Property="Padding" Value="2,2,0,0" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
 
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBox Text="{Binding GOM.Name, UpdateSourceTrigger=PropertyChanged}" 
-                                             AcceptsReturn="False" AcceptsTab="False" AllowDrop="False" IsTabStop="False" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                                                        
-                        </DataGridTemplateColumn>
+                            <DataGridTextColumn.EditingElementStyle>
+                                <Style TargetType="{x:Type TextBox}">
+                                    <Setter Property="Padding" Value="2,2,0,0" />
+                                    <Setter Property="ContextMenu" Value="{StaticResource contextmenu}"/>
+                                </Style>
+                            </DataGridTextColumn.EditingElementStyle>
+
+                            <DataGridTextColumn.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Background" Value="White"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="Blue"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGridTextColumn.CellStyle>
+                        </DataGridTextColumn>
+
                         <DataGridTemplateColumn Width="120" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
                             <DataGridTemplateColumn.HeaderTemplate>
                                 <DataTemplate>
@@ -109,7 +112,7 @@
                                         <ComboBox ItemsSource="{Binding DataContext.AvailableCodes, RelativeSource={RelativeSource AncestorType=Window}}" 
                                                   DisplayMemberPath="Description" 
                                                   SelectedValuePath="Description"
-                                                  SelectedValue="{Binding CultureCode, UpdateSourceTrigger=PropertyChanged}"  ItemContainerStyle="{StaticResource ddstyle}"/>
+                                                  SelectedValue="{Binding CultureCode, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}"/>
                                         
                                     </StackPanel>
                                 </DataTemplate>
@@ -132,8 +135,8 @@
                             </DataGridTemplateColumn.CellTemplate>
 
                         </DataGridTemplateColumn>
-                    </loc:ExtendedGrid.Columns>
-                </loc:ExtendedGrid>
+                    </DataGrid.Columns>
+                </DataGrid>
                 <StackPanel Grid.Column="2" Grid.Row="0" Orientation="Vertical" VerticalAlignment="Top" >
                     <Button Template="{StaticResource CRUDButton}" Tag="Add" Content="Add" ToolTip="Add New Country" Command="{Binding AddNew}"/>
                 </StackPanel>

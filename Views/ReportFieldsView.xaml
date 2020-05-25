@@ -1,0 +1,305 @@
+﻿<Window x:Class="PTR.Views.ReportFieldsView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PTR.Views"
+        mc:Ignorable="d"
+        xmlns:loc="clr-namespace:PTR"
+        Icon="/PTR;component/Images/Tools.ico"
+        WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow" ResizeMode="NoResize"
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" 
+        loc:WindowBehavior.WindowClosing="{Binding WindowClosing}"          
+        Title="Report Fields" Height="650" Width="1000">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+
+    <Grid>
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Top" Height="32" >
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Template="{StaticResource CRUDButton}" Tag="Add" Content="Add" ToolTip="Add" Command="{Binding AddNew}" />
+                    <Button IsEnabled="{Binding IsSelected}" Template="{StaticResource CRUDButton}" Tag="Delete" Content="Delete" ToolTip="Delete" Command="{Binding Delete}" />
+                </StackPanel>
+            </Grid>
+
+            <Grid DockPanel.Dock="Top" Height="32" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="200"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBlock Text="Report Name:" Style="{StaticResource gridtextlabel}" />
+                <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" Style="{StaticResource gridcombo}"
+                          ItemsSource="{Binding ReportNames}" 
+                          SelectedItem="{Binding SelectedReportName}" 
+                          DisplayMemberPath="Name" />
+            </Grid>
+            
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="120"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Save" Command="{Binding Save}" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ToolTip="Save changes"/>
+                <TextBlock Grid.Column="1" Text="{Binding DataMissingLabel}" Style="{StaticResource ErrorMessageLbl}" Visibility="{Binding InvalidField, Converter={StaticResource BoolToVis}}" />
+                <Button Grid.Column="2" Content="Close" Command="{Binding Cancel}" TextBlock.TextAlignment="Center" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Center" ToolTip="Close window"/>
+            </Grid>
+            <Grid>
+                <DataGrid Margin="2,2,2,2"
+                           ItemsSource="{Binding ReportFields, IsAsync=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True}"        					  
+                                         loc:GridScroll.SelectingItem="{Binding ScrollToIndex}"                                                                                                                                                                                               
+						                AutoGenerateColumns="False" 
+						                AllowDrop="False"                                                                                                                                                  
+						                CanUserAddRows="False" 
+						                CanUserDeleteRows="False"						               
+						                GridLinesVisibility="All"
+						                BorderBrush="Gray"
+						                BorderThickness="1"
+						                CanUserReorderColumns="False"
+						                CanUserSortColumns = "False"
+                                        CanUserResizeRows="False"
+						                HorizontalScrollBarVisibility="Hidden"
+						                VerticalScrollBarVisibility="Visible"
+                                        SelectionUnit="Cell"
+						                SelectionMode="Single"
+						                ScrollViewer.VerticalScrollBarVisibility="Visible"              
+						                FrozenColumnCount="0" >
+
+                    <DataGrid.Resources>
+                        <ContextMenu Height="0" Width="0" x:Key="contextmenu" >
+                            <TextBox>No menu</TextBox>
+                        </ContextMenu>
+                    </DataGrid.Resources>
+
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="50" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" 
+                                              HorizontalContentAlignment="Center"  HorizontalAlignment="Center"  >
+                                        <CheckBox.Style>
+                                            <Style TargetType="CheckBox" BasedOn="{StaticResource chkbox}">
+                                                <Setter Property="IsEnabled" Value="True"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding System}" Value="True">
+                                                        <Setter Property="IsEnabled" Value="False"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </CheckBox.Style>
+                                    </CheckBox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+            
+                        <DataGridTextColumn Width="200" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}"
+                                Binding="{Binding Caption, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" >
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="Header" Style="{StaticResource gridtextlabel}" />
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource textlabel}">
+                                    <Setter Property="Padding" Value="2,2,0,0" />
+                                    <Setter Property="IsEnabled" Value="True"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding System}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+
+                            <DataGridTextColumn.EditingElementStyle>
+                                <Style TargetType="{x:Type TextBox}">
+                                    <Setter Property="Padding" Value="2,2,0,0" />
+                                    <Setter Property="ContextMenu" Value="{StaticResource contextmenu}"/>
+                                </Style>
+                            </DataGridTextColumn.EditingElementStyle>
+
+                            <DataGridTextColumn.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Background" Value="White"/>
+                                    <Setter Property="IsEnabled" Value="True"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="Blue"/>
+                                        </Trigger>
+                                        <DataTrigger Binding="{Binding System}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGridTextColumn.CellStyle>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Width="160" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}"
+                                Binding="{Binding FieldName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" >
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="Column Name" Style="{StaticResource gridtextlabel}" />
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource textlabel}">
+                                    <Setter Property="Padding" Value="2,2,0,0" />
+                                    <Setter Property="IsEnabled" Value="True"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding System}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+
+                            <DataGridTextColumn.EditingElementStyle>
+                                <Style TargetType="{x:Type TextBox}">
+                                    <Setter Property="Padding" Value="2,2,0,0" />
+                                    <Setter Property="ContextMenu" Value="{StaticResource contextmenu}"/>
+                                </Style>
+                            </DataGridTextColumn.EditingElementStyle>
+
+                            <DataGridTextColumn.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Background" Value="White"/>
+                                    <Setter Property="IsEnabled" Value="True"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="Blue"/>
+                                        </Trigger>
+                                        <DataTrigger Binding="{Binding System}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGridTextColumn.CellStyle>
+                        </DataGridTextColumn>
+
+                        <DataGridTemplateColumn Width="180" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="Data Type" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ComboBox ItemsSource="{Binding DataContext.DataTypes, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"  
+                                        SelectedValuePath="ID"  
+                                        SelectedValue="{Binding DataTypeID, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}">
+                                        <ComboBox.Style>
+                                            <Style TargetType="ComboBox" BasedOn="{StaticResource gridcombo}">
+                                                <Setter Property="IsEnabled" Value="True"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding System}" Value="True">
+                                                        <Setter Property="IsEnabled" Value="False"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ComboBox.Style>
+
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding DataType}" Foreground="Green" />
+                                                    <TextBlock Text="{Binding DataFormat}" Foreground="Red" Margin="4,0,0,0"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+
+                                    </ComboBox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                      
+                        <DataGridTemplateColumn Width="150" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="Field Type" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ComboBox DisplayMemberPath="FieldName"
+                                        ItemsSource="{Binding DataContext.FieldTypes, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"  
+                                        SelectedValuePath="FieldType"  
+                                        SelectedValue="{Binding FieldType, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}">
+                                        <ComboBox.Style>
+                                            <Style TargetType="ComboBox" BasedOn="{StaticResource gridcombo}">
+                                                <Setter Property="IsEnabled" Value="True"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding System}" Value="True">
+                                                        <Setter Property="IsEnabled" Value="False"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ComboBox.Style>
+                                    </ComboBox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="100" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="Alignment" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ComboBox DisplayMemberPath="Name"
+                                        ItemsSource="{Binding DataContext.AlignmentTypes, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"  
+                                        SelectedValuePath="Name"  
+                                        SelectedValue="{Binding Alignment, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}">
+                                        <ComboBox.Style>
+                                            <Style TargetType="ComboBox" BasedOn="{StaticResource gridcombo}">
+                                                <Setter Property="IsEnabled" Value="True"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding System}" Value="True">
+                                                        <Setter Property="IsEnabled" Value="False"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ComboBox.Style>
+                                    </ComboBox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="100" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="Reserved" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock HorizontalAlignment="Center" >
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource gridtextlabel}">
+                                                <Setter Property="Text" Value="No"/>
+                                                
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding System}" Value="True">
+                                                        <Setter Property="Text" Value="Yes"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>

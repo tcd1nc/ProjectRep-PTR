@@ -1,0 +1,243 @@
+﻿<Window x:Class="Project_Tracker.Views.AtRiskView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Project_Tracker.Views"
+        mc:Ignorable="d"
+        xmlns:xceed="http://schemas.xceed.com/wpf/xaml/toolkit"
+        xmlns:loc="clr-namespace:Project_Tracker"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="SingleBorderWindow"
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" Height="620" Width="900"
+        Title="At Risk Business" >
+
+    <Window.Resources>
+        <loc:CustomerIDToNameConverter x:Key="CustomerIDToNameConverter"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <Style x:Key="ttStyle" TargetType="ToolTip">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="HasDropShadow" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border BorderThickness="1" CornerRadius="2" BorderBrush="Blue" Padding="2,2,2,2" Background="LemonChiffon">
+                            <TextBlock TextAlignment="Left" Text="Required data" Foreground="Black"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ttproductsStyle" TargetType="ToolTip">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="HasDropShadow" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border BorderThickness="1" CornerRadius="2" BorderBrush="Blue" Padding="2,2,2,2" Background="LemonChiffon">
+                            <TextBlock TextAlignment="Left" Text="Product names should be capitalized and multiple products must be separated by commas&#10;e.g: BUSAN 1009, BUSAN 1455" Foreground="Black" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <ToolTip x:Key="asterixTT" Style="{StaticResource ttStyle}"  />
+        <ToolTip x:Key="productstt" Style="{StaticResource ttproductsStyle}" />
+
+        <Style TargetType="ToolTip">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="HasDropShadow" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border BorderThickness="1" CornerRadius="2" BorderBrush="Blue" Padding="2,2,2,2" Background="LemonChiffon">
+                            <ContentPresenter TextBlock.Foreground="Black"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="requiredtt" TargetType="TextBlock">
+            <Setter Property="Text" Value="*"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Foreground" Value="Red"/>
+            <Setter Property="ToolTip" Value="Required Data"/>
+        </Style>
+
+    </Window.Resources>
+    <Grid>
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Top" Height="2"/>
+
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Save" Command="{Binding SaveAndClose}" Margin="0,0,0,0"  Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Left" ToolTip="Save changes"/>
+                <Button Grid.Column="3" Content="Close" Command="{Binding Cancel}" Margin="0,0,0,0" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Right" ToolTip="Close without saving"/>
+            </Grid>
+            <Grid DockPanel.Dock="Bottom" Height="28">
+                <TextBlock Text="{Binding DataMissingLabel}" Style="{StaticResource gridtextlabel}" TextAlignment="Center" VerticalAlignment="Center" Padding="0,2,0,0"
+                   HorizontalAlignment="Center" Foreground="GreenYellow" Width="400" Background="Gray" Visibility="{Binding InvalidField, Converter={StaticResource BoolToVis}}" />
+            </Grid>
+            <Grid DockPanel.Dock="Right" Width="110">
+                <StackPanel Grid.Column="5" Orientation="Vertical" VerticalAlignment="Top" Margin="0,10,0,0">
+                    <Button Template="{StaticResource CRUDAddButton}" ToolTip="Add New At Risk Business" Command="{Binding AddNew}"/>
+                    <Button Template="{StaticResource CRUDDelButton}" ToolTip="Delete At Risk Business" Command="{Binding Delete}"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid VerticalAlignment="Top" Margin="10,10,10,0"  IsEnabled="{Binding HasAtRiskBusiness}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="170"/>
+                    <ColumnDefinition Width="170"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="230"/>
+                    <ColumnDefinition Width="80*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="160" />
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="At Risk:" VerticalAlignment="Top" Style="{StaticResource gridtextlabel}"/>
+                <ListBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="4" x:Name="lstatrisk" Margin="2,0,2,0"
+                         ItemsSource="{Binding AtRiskBusiness}" 
+                         SelectedItem="{Binding AtRisk}" 
+                         loc:LBScrollHelper.ScrollToSelectedItem="{Binding ScrollToSelectedItem}"  
+                         IsEnabled="{Binding ListEnabled}"
+                         IsSynchronizedWithCurrentItem="True"  >
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding CustomerID, Converter={StaticResource CustomerIDToNameConverter}}" Style="{StaticResource textlabel}"/>
+                                        <TextBlock Text="{Binding ProgramName}" Style="{StaticResource textlabel}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Customer:" Style="{StaticResource gridtextlabel}" />
+                <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4"  DisplayMemberPath="CustomerName"  Style="{StaticResource gridcombo}"                                      
+                                        ItemsSource="{Binding Customers}"  SelectedValuePath="ID" 
+                                        SelectedValue="{Binding AtRisk.CustomerID}" />
+                <TextBlock  Grid.Row="1" Grid.Column="5"  Style="{StaticResource requiredtt}"/>
+
+                <TextBlock Grid.Row="2" Grid.Column="0"  Text="Industry:" Style="{StaticResource gridtextlabel}"  />
+                <ComboBox Grid.Row="2" Grid.Column="1" DisplayMemberPath="SalesDivisionName"  Style="{StaticResource gridcombo}"  
+                                        SelectedItem="{Binding SelectedSalesDivision}"
+                                        ItemsSource="{Binding SalesDivisions}"  SelectedValuePath="ID"  
+                                        SelectedValue="{Binding AtRisk.SalesDivisionID}" />
+                <TextBlock  Grid.Row="2" Grid.Column="2"  Style="{StaticResource requiredtt}"/>
+                <TextBlock Grid.Row="2" Grid.Column="3" Text="Associate:" Style="{StaticResource gridtextlabel}"  />
+                <ComboBox Grid.Row="2" Grid.Column="4" DisplayMemberPath="AssociateName"  Style="{StaticResource gridcombo}"  
+                                        ItemsSource="{Binding Associates}"  SelectedValuePath="ID"  
+                                        SelectedValue="{Binding AtRisk.AssociateID}" />
+                
+                <TextBlock  Grid.Row="2" Grid.Column="5"  Style="{StaticResource requiredtt}"/>
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Industry Segment:" Style="{StaticResource gridtextlabel}"/>
+                <ComboBox  Grid.Row="3" Grid.Column="1" DisplayMemberPath="MarketSegment"  Style="{StaticResource gridcombo}"  
+                           SelectedItem="{Binding SelectedIndustrySegment}"             
+                           ItemsSource="{Binding MarketSegments}"  SelectedValuePath="ID"  
+                                        SelectedValue="{Binding AtRisk.MarketSegmentID}" />
+                <TextBlock  Grid.Row="3" Grid.Column="2"  Style="{StaticResource requiredtt}"/>
+                <TextBlock  Grid.Row="3" Grid.Column="3" Text="Application:" Style="{StaticResource gridtextlabel}" />
+                <ComboBox  Grid.Row="3" Grid.Column="4" DisplayMemberPath="Application"  Style="{StaticResource gridcombo}"  
+                                        ItemsSource="{Binding ApplicationCategories}"  SelectedValuePath="ID"  
+                                        SelectedValue="{Binding AtRisk.ApplicationCategoryID}" />
+                <TextBlock  Grid.Row="3" Grid.Column="5"  Style="{StaticResource requiredtt}"/>
+                <TextBlock  Grid.Row="4" Grid.Column="0" Text="Program:" Style="{StaticResource gridtextlabel}" />
+                <TextBox  Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="4" Text="{Binding AtRisk.ProgramName,UpdateSourceTrigger=PropertyChanged, 
+                        NotifyOnTargetUpdated=True, NotifyOnSourceUpdated=True}" Style="{StaticResource gridtextbox}"  />
+                <TextBlock  Grid.Row="4" Grid.Column="5"  Style="{StaticResource requiredtt}"/>
+
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Grade:" Style="{StaticResource gridtextlabel}"/>
+                <TextBox  Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding AtRisk.Grade,UpdateSourceTrigger=PropertyChanged, 
+                        NotifyOnTargetUpdated=True, NotifyOnSourceUpdated=True}"
+                          Style="{StaticResource gridtextbox}"
+                          ToolTip="Paper grade, pulp, DIP etc"  />
+
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="Products:" Style="{StaticResource gridtextlabel}" />
+                <TextBox  Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="4" Text="{Binding AtRisk.Products, UpdateSourceTrigger=PropertyChanged, 
+                    NotifyOnTargetUpdated=True, NotifyOnSourceUpdated=True}"
+                          Style="{StaticResource gridtextbox}"
+                          ToolTip="{StaticResource productstt}" />
+                <TextBlock Grid.Row="6" Grid.Column="5" Style="{StaticResource requiredtt}"/>
+                <TextBlock Grid.Row="6" Grid.Column="5" Text="Error" Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left" Foreground="Red" Visibility="{Binding InValidProduct, Converter={StaticResource BoolToVis}}" ToolTip="Product list formatting or spelling is incorrect"/>
+
+                <TextBlock  Grid.Row="7" Grid.Column="0" Text="Month Emerged:" Style="{StaticResource gridtextlabel}" />
+                <xceed:DateTimeUpDown  Grid.Row="7" Grid.Column="1" Style="{StaticResource monthupdown}" 
+                                       HorizontalAlignment="Left"
+                                       Value="{Binding AtRisk.MonthRiskEmerged, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
+
+                <TextBlock  Grid.Row="7" Grid.Column="3" Text="Estimated Loss Date:" Style="{StaticResource gridtextlabel}" />
+                <StackPanel Grid.Row="7" Grid.Column="4" Orientation="Horizontal">
+                    <xceed:DateTimePicker ToolTip="Start Date"  Style="{StaticResource daypicker}"
+                                        Value="{Binding AtRisk.EstStartDate, UpdateSourceTrigger=PropertyChanged, 
+                                        NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"  />
+                    <TextBlock Style="{StaticResource requiredtt}"/>
+                </StackPanel>
+                <TextBlock  Grid.Row="8" Grid.Column="0" Text="Risk Rating:" Style="{StaticResource gridtextlabel}"  />
+                <ComboBox  Grid.Row="8" Grid.Column="1" DisplayMemberPath="Description" Style="{StaticResource gridcombo}"  
+                                        ItemsSource="{Binding RiskRatings}"  SelectedValuePath="Enumvalue"  
+                                        SelectedValue="{Binding AtRisk.RiskRatingID}" />
+                <CheckBox Grid.Row="8" Grid.Column="3"  Content="Is AMP in place?" HorizontalAlignment="Right" Margin="0,2,0,2" VerticalAlignment="Center"
+                          IsChecked="{Binding AtRisk.AmpInPlace}"  />
+                <TextBlock  Grid.Row="9" Grid.Column="0" Text="Sales:" Style="{StaticResource gridtextlabel}" />
+                <StackPanel Grid.Row="9" Grid.Column="1" Orientation="Horizontal">
+                    <TextBox ToolTip="Annual Sales" Style="{StaticResource gridtextbox}" HorizontalAlignment="Left" Width="100"
+                          Text="{Binding AtRisk.SalesValue, StringFormat={}{0:C0}, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"  />
+                    <TextBlock  Style="{StaticResource requiredtt}"/>
+                </StackPanel>
+                <TextBlock  Grid.Row="9" Grid.Column="3" Text="Estimated Annual MPC:" Style="{StaticResource RAtextlabel}" Width="180" />
+                <StackPanel Grid.Row="9" Grid.Column="4" Orientation="Horizontal">
+                    <TextBox  ToolTip="Estimated Annual MPC" Width="100" HorizontalAlignment="Left"
+                          Style="{StaticResource gridtextbox}" 
+                          Text="{Binding AtRisk.EstimatedAnnualMPC, StringFormat={}{0:C0}, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"  />
+                    <TextBlock  Style="{StaticResource requiredtt}"/>
+                </StackPanel>
+                <TextBlock  Grid.Row="10" Grid.Column="0" Text="Reasons:" Style="{StaticResource gridtextlabel}"/>
+                <TextBox  Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="4" 
+                          Style="{StaticResource gridtextbox}"
+                          Text="{Binding AtRisk.Reasons,UpdateSourceTrigger=PropertyChanged, 
+                            NotifyOnTargetUpdated=True, NotifyOnSourceUpdated=True}"  />
+                <TextBlock Grid.Row="10" Grid.Column="5"  Style="{StaticResource requiredtt}"/>
+                <TextBlock  Grid.Row="11" Grid.Column="0" Text="Actions:" Style="{StaticResource gridtextlabel}"  />
+                <TextBox  Grid.Row="11" Grid.Column="1" Grid.ColumnSpan="4" 
+                          Style="{StaticResource gridtextbox}"
+                          Text="{Binding AtRisk.Actions,UpdateSourceTrigger=PropertyChanged, 
+                            NotifyOnTargetUpdated=True, NotifyOnSourceUpdated=True}"  />
+                <TextBlock Grid.Row="11" Grid.Column="5"  Style="{StaticResource requiredtt}"/>
+                <TextBlock  Grid.Row="12" Grid.Column="0" Text="Action Plan Status:" Style="{StaticResource gridtextlabel}"  />
+                <ComboBox  Grid.Row="12" Grid.Column="1" DisplayMemberPath="Description"  Style="{StaticResource gridcombo}"  
+                                   ItemsSource="{Binding ActionPlanStatusTypesList}"  SelectedValuePath="ID"  
+                                   SelectedValue="{Binding AtRisk.ActionPlanStatusID}" />
+                <TextBlock  Grid.Row="12" Grid.Column="2"  Style="{StaticResource requiredtt}"/>
+                <TextBlock  Grid.Row="12" Grid.Column="3" Text="Action Plan Completion:" Style="{StaticResource gridtextlabel}" />
+                <StackPanel Grid.Row="12" Grid.Column="4" Orientation="Horizontal">
+                    <xceed:DateTimePicker   ToolTip="Estimated Action Completion Date" 
+                                       Value="{Binding AtRisk.ActionPlanCompletionDate, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}" 
+                                       Style="{StaticResource daypicker}" />
+                    <TextBlock  Style="{StaticResource requiredtt}"/>
+                </StackPanel>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>

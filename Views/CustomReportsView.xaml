@@ -1,0 +1,140 @@
+﻿<Window x:Class="PTR.Views.CustomReportsView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                
+        xmlns:System="clr-namespace:System;assembly=mscorlib"
+        xmlns:loc="clr-namespace:PTR"
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}"
+        xmlns:local="clr-namespace:PTR.Views"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow" WindowState="Maximized" ResizeMode="CanResize"
+        Title="Custom Reports" >
+
+    <Window.Resources>
+        <Style x:Key="ColumnHeaderStyle" TargetType="{x:Type DataGridColumnHeader}">
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="4,0,4,0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="BorderThickness" Value="0.5"/>
+            <Setter Property="BorderBrush" Value="Gray"/>
+            <Setter Property="Background">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                        <GradientStop Offset="0" Color="#F5F5F5" />
+                        <GradientStop Offset="1" Color="#DCDCDC" />
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ParameterLBItemStyle" TargetType="{x:Type ListBoxItem}">
+            <Setter Property="Template" Value="{DynamicResource StringTemplate}" />
+            <Setter Property="Height" Value="28"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ParameterType}" Value="String">
+                    <Setter Property="Template" Value="{DynamicResource StringTemplate}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding ParameterType}" Value="DateTime">
+                    <Setter Property="Template" Value="{DynamicResource DateTemplate}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding ParameterType}" Value="Int32">
+                    <Setter Property="Template" Value="{DynamicResource IntTemplate}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding ParameterType}" Value="Decimal">
+                    <Setter Property="Template" Value="{DynamicResource DecTemplate}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding ParameterType}" Value="Bool">
+                    <Setter Property="Template" Value="{DynamicResource BoolTemplate}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+    </Window.Resources>
+                 
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Top" Height="2"/>
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="140"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="140"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Command="{Binding MakeCustomReportCommand}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" Style="{StaticResource filterButtonStyle}" 
+                        TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ToolTip="Export to Excel">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal" ToolTip="Export Custom Report data to Excel" VerticalAlignment="Center">
+                            <Image Source="/PTR;component/Images/export.ico"  Height="16" Width="20"/>
+                            <TextBlock Text="Export Report" FontSize="12" Height="24" Width="100" />
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+
+                <Button Grid.Column="1" Content="Generate Report" Command="{Binding GenerateReportCommand}" Margin="2,0,2,0" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ToolTip="Generate Report"/>
+                <Button Grid.Column="2" Content="Close" Command="{Binding Close}" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ToolTip="Close report form"/>
+            </Grid>
+            <Grid Margin="4,4,4,4">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="150"/>
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="250" />
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="300"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+               
+                <TextBlock Grid.Column="0" Style="{StaticResource gridtextlabel}" VerticalAlignment="Top" Text="Reports:" HorizontalAlignment="Right" Margin="2,2,2,2"/>
+                <ListBox Grid.Column="1" SelectedItem="{Binding SelectedReport}" ItemsSource="{Binding CustomReports}" Style="{StaticResource lstbox}" 
+                            HorizontalContentAlignment="Left">
+                            
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Style="{StaticResource textlabel}" HorizontalAlignment="Stretch" Text="{Binding Name}" Margin="2,2,2,2" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <TextBlock Grid.Column="2" Style="{StaticResource gridtextlabel}" Text="Parameters:" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="2,2,2,2"/>
+                <ListBox Grid.Column="3" ItemsSource="{Binding Parameters}"                         
+                            ItemContainerStyle="{StaticResource ParameterLBItemStyle}" HorizontalContentAlignment="Left"
+                            Style="{StaticResource lstbox}"  />
+         
+                <ListBox x:Name="lstdata" Grid.Row="1" Grid.ColumnSpan="5" Margin="2,2,2,2" ItemsSource="{Binding ReportData.Tables, IsAsync=True, Mode=OneWay}" >
+
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Vertical" Width="{Binding ElementName=lstdata, Path=ActualWidth}" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+
+                    <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DataGrid                                                  
+                                ScrollViewer.CanContentScroll="True"
+                                ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                ScrollViewer.VerticalScrollBarVisibility="Auto"                                                                                
+                                AutoGenerateColumns="True"  
+                                ItemsSource="{Binding}"                                                                                                                  
+                                AllowDrop="False"                                                                                 
+                                Background="White"                                  
+                                CanUserAddRows="False"
+                                CanUserDeleteRows="False"
+                                CanUserReorderColumns="True"
+                                CanUserResizeColumns="True"  
+                                CanUserResizeRows="False"
+                                AutoGeneratingColumn="ReportGrid_AutoGeneratingColumn"                                
+                                AutoGeneratedColumns="ReportGrid_AutoGeneratedColumns" />
+
+                    </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+           
+            </Grid>
+        </DockPanel>
+    
+</Window>

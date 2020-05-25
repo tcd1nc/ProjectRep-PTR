@@ -1,0 +1,93 @@
+﻿<Window x:Class="PTR.Views.IndustrySegmentsApplicationsView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PTR.Views"
+        mc:Ignorable="d"
+        xmlns:loc="clr-namespace:PTR"
+        Icon="/PTR;component/Images/Tools.ico"
+        WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow" ResizeMode="NoResize"
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" 
+        loc:WindowBehavior.WindowClosing="{Binding WindowClosing}"          
+        Title="Industry Segments - Applications" Height="650" Width="700">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+
+    <Grid>
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Top" Height="32" >
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Template="{StaticResource CRUDButton}" Tag="Add" Content="Add" ToolTip="Add" Command="{Binding AddNew}" />
+                    <Button IsEnabled="{Binding IsSelected}" Template="{StaticResource CRUDButton}" Tag="Delete" Content="Delete" ToolTip="Delete" Command="{Binding Delete}" />
+                </StackPanel>
+            </Grid>
+
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="100"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Save" Command="{Binding Save}" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ToolTip="Save changes"/>
+                <TextBlock Grid.Column="1" Text="{Binding DataMissingLabel}" Style="{StaticResource ErrorMessageLbl}" Visibility="{Binding InvalidField, Converter={StaticResource BoolToVis}}" />
+                <Button Grid.Column="2" Content="Close" Command="{Binding Cancel}" TextBlock.TextAlignment="Center" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Center" ToolTip="Close window"/>
+            </Grid>
+            <Grid>
+                <DataGrid Margin="2,2,2,2"
+                           ItemsSource="{Binding IndustrySegmentApplications, IsAsync=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True}"        					  
+                                        loc:GridScroll.SelectingItem="{Binding ScrollToIndex}"                                                                                                                                                                                               
+						                Style="{StaticResource dgstyle}" >                         
+                         
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="50" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsEnabled="{Binding IsEnabled}" IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" 
+                                              HorizontalContentAlignment="Center"  HorizontalAlignment="Center" 
+                                              Style="{StaticResource chkbox}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="300" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="Industry Segment" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ComboBox DisplayMemberPath="Name" Style="{StaticResource gridcombo}"
+                                        ItemsSource="{Binding DataContext.IndustrySegments, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"  
+                                        SelectedValuePath="ID"  
+                                        SelectedValue="{Binding IndustrySegmentID, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="300" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="Application" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ComboBox DisplayMemberPath="Name" Style="{StaticResource gridcombo}"
+                                        ItemsSource="{Binding DataContext.Applications, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"  
+                                        SelectedValuePath="ID"  
+                                        SelectedValue="{Binding ApplicationID, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                                            
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>

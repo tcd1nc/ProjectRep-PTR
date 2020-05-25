@@ -1,0 +1,97 @@
+﻿<Window x:Class="PTR.Views.NewBusinessCategoryView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PTR.Views"
+        mc:Ignorable="d"
+        xmlns:loc="clr-namespace:PTR"
+        Icon="/PTR;component/Images/Tools.ico"
+        loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" 
+        loc:WindowBehavior.WindowClosing="{Binding WindowClosing}" 
+        WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow" ResizeMode="NoResize"
+        Title="New Business Categories" Height="650" Width="500">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+    <Grid>
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Top" Height="32" >
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Template="{StaticResource CRUDButton}" Tag="Add" Content="Add" ToolTip="Add" Command="{Binding AddNew}" />
+                    <Button IsEnabled="{Binding IsSelected}" Template="{StaticResource CRUDButton}" Tag="Delete" Content="Delete" ToolTip="Delete" Command="{Binding Delete}" />
+                </StackPanel>
+            </Grid>
+
+            <Grid DockPanel.Dock="Bottom" Height="32">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="100"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Save" Command="{Binding Save}" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ToolTip="Save changes"/>
+                <TextBlock Grid.Column="1" Text="{Binding DataMissingLabel}" Style="{StaticResource ErrorMessageLbl}" Visibility="{Binding InvalidField, Converter={StaticResource BoolToVis}}" />
+                <Button Grid.Column="2" Content="Close" Command="{Binding Cancel}" TextBlock.TextAlignment="Center" Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Center" ToolTip="Close window"/>
+            </Grid>
+            <Grid>
+                <DataGrid Margin="2,2,2,2"
+                        ItemsSource="{Binding NewBusinessCategories, IsAsync=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True}"        					                                                                                                                                                                                                                                                    						                   
+                        loc:GridScroll.SelectingItem="{Binding ScrollToIndex}"                                               
+                        Style="{StaticResource dgstyle}">  
+                          						
+                    <DataGrid.Resources>
+                        <ContextMenu Height="0" Width="0" x:Key="contextmenu" >
+                            <TextBox>No menu</TextBox>
+                        </ContextMenu>
+                    </DataGrid.Resources>
+
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="50" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsEnabled="{Binding IsEnabled}" IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" 
+                                              HorizontalContentAlignment="Center"  HorizontalAlignment="Center" 
+                                              Style="{StaticResource chkbox}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Width="350" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}"
+                                Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" >
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="Name" Style="{StaticResource gridtextlabel}" />
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource textlabel}">
+                                    <Setter Property="Padding" Value="2,2,0,0" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+
+                            <DataGridTextColumn.EditingElementStyle>
+                                <Style TargetType="{x:Type TextBox}">
+                                    <Setter Property="Padding" Value="2,2,0,0" />
+                                    <Setter Property="ContextMenu" Value="{StaticResource contextmenu}"/>
+                                </Style>
+                            </DataGridTextColumn.EditingElementStyle>
+
+                            <DataGridTextColumn.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Background" Value="White"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="Blue"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGridTextColumn.CellStyle>
+                        </DataGridTextColumn>
+
+
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>

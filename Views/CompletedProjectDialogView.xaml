@@ -3,55 +3,61 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:xceed="http://schemas.xceed.com/wpf/xaml/toolkit"
+        
         mc:Ignorable="d"
         xmlns:loc="clr-namespace:PTR"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="None" BorderBrush="Blue" BorderThickness="1"  
         loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" KeyDown="Window_KeyDown"
-        loc:DialogCloser.ObjectDialogResult="{Binding ReturnObject}"
-        loc:DialogCloser.DialogResult="{Binding SaveFlag}"
-        Title="Completed Project" Height="154" Width="300">
+        loc:DialogCloser.ObjectDialogResult="{Binding ReturnObject}"      
+        Title="Completed Project" Height="164" Width="300">
+
     <Window.Resources>
-        <loc:CultureFormatConverter x:Key="CultConv" />
+        <loc:DecCheckConverter x:Key="DecCheckConv"/>
     </Window.Resources>
     
     <Grid>
         <DockPanel LastChildFill="True">
-            <Grid DockPanel.Dock="Top" Height="20"/>
+            <Grid DockPanel.Dock="Top" Height="10"/>
 
             <Grid DockPanel.Dock="Bottom" Height="32">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="50"/>
+                    <ColumnDefinition Width="60"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="50"/>
+                    <ColumnDefinition Width="60"/>
                 </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Margin="10,0,0,0" Content="Save"  ToolTip="Close and Save changes" Command="{Binding SaveAndClose}" 
-                        Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Left"/>
-                <Button Grid.Column="2" Margin="0,0,10,0" Content="Close" ToolTip="Close window without Saving changes" Command="{Binding CancelProjectCompletion}"
-                        Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Right" />
+                <Button Grid.Column="2" Content="Close" ToolTip="Close window" Command="{Binding SaveAndClose}"
+                        Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Center" />
             </Grid>
-            <StackPanel Orientation="Vertical">
-                <TextBlock Text="Please confirm the Targeted Sales Amount and the date when commercial Sales commence" TextWrapping="Wrap"
-                           Width="250"
-                           HorizontalAlignment="Center" Margin="2,2,2,8"/>
-                <StackPanel Style="{StaticResource stkpanel}" Margin="8,0,8,0" VerticalAlignment="Top" 
-                            ToolTip="Please enter the updated Sales Forecasted for this completed project">
-                    <TextBlock Text="Actual Sales:" Width="80" HorizontalAlignment="Right" TextAlignment="Right" Style="{StaticResource textlabel}" Height="18" />
-                    <TextBox Width="90" ToolTip="Sales for 12 month period" Style="{StaticResource textbox}"  >
-                        <TextBox.Text>
-                            <MultiBinding Converter="{StaticResource CultConv}" UpdateSourceTrigger="PropertyChanged">
-                                <Binding Mode="TwoWay" Path="ActualSalesForecast" />
-                                <Binding Mode="OneWay" Path="CultureCode" />
-                            </MultiBinding>
-                        </TextBox.Text>
-                    </TextBox>
-                </StackPanel>
-                <StackPanel Style="{StaticResource stkpanel}" Margin="8,0,8,0" VerticalAlignment="Top" 
-                            ToolTip="Please confirm the start date for commercial sales.&#10;">
-                    <TextBlock Text="Sales Start:" Width="80" HorizontalAlignment="Right" TextAlignment="Right" Style="{StaticResource textlabel}" Height="18" />
-                    <xceed:DateTimePicker Value="{Binding EstDateFirstSales, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource daypicker}"/> 
-                </StackPanel>
-            </StackPanel>
+            
+                <Grid Margin="8,2,4,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="160"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="50"/>
+                        <RowDefinition Height="32"/>
+                        <RowDefinition Height="32"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Padding="24,2,2,2" Text="Please confirm the estimated 12 month Sales Value and the Sales Start for when commercial sales begin." TextWrapping="Wrap"/>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Sales Value:" Style="{StaticResource gridtextlabel}" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource gridtextlabel}" Text="{Binding CurrencySymbol}"/>
+                    <loc:NumericTextBox Grid.Row="1" Grid.Column="2" Style="{StaticResource gridtextbox}" ToolTip="Sales estimate for 12 months"  
+                        NumericalError="{Binding EstimatedSalesError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                        BackgroundErrorColor="Red" Text="{Binding ActualSalesForecast, StringFormat={}{0:N0}, Converter={StaticResource DecCheckConv}, UpdateSourceTrigger=PropertyChanged}" />
+ 
+                    <TextBlock Grid.Row="2" Text="Sales Start:" Style="{StaticResource gridtextlabel}" />
+                <DatePicker Grid.Row="2" Grid.Column="2" DisplayDateStart="{Binding StatusMonth}" 
+                            SelectedDate="{Binding EstDateFirstSales, UpdateSourceTrigger=PropertyChanged}" 
+                            Style="{StaticResource datepicker}"
+                            HorizontalAlignment="Left"  Width="110"  ToolTip="Date can only be equal to or later than the month that the project was created"
+                                          />
+
+            </Grid>
+                              
         </DockPanel>
     </Grid>
 </Window>

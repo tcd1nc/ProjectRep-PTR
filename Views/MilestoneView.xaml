@@ -3,13 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:xceed="http://schemas.xceed.com/wpf/xaml/toolkit"
+        
         mc:Ignorable="d"
         xmlns:loc="clr-namespace:PTR"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="SingleBorderWindow" 
         loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" KeyDown="Window_KeyDown"
         loc:DialogCloser.ObjectDialogResult="{Binding ReturnObject}"
-        loc:DialogCloser.DialogResult="{Binding SaveFlag}"
         loc:WindowBehavior.WindowClosing="{Binding WindowClosing}"
         Title="{Binding WindowTitle}" Height="554" Width="800">
     <Window.Resources>
@@ -21,8 +20,14 @@
             <Grid DockPanel.Dock="Top" Height="0"/>
 
             <Grid DockPanel.Dock="Bottom" Height="32">
-                <Button Content="Close" Width="42" Command="{Binding CancelConfirmation}"  Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Right" ToolTip="Close"/>
-                <Button Grid.Column="0" Content="Save" Visibility="{Binding IsEnabled, Converter={StaticResource BoolToVis}}" Command="{Binding Save}" ToolTip="Save changes" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" Margin="20,0,0,0" HorizontalAlignment="Left"/>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="130"/>
+                </Grid.ColumnDefinitions>
+
+                <!--<Button Content="Close" Width="42" Command="{Binding CancelConfirmation}"  Style="{StaticResource filterButtonStyle}" HorizontalAlignment="Right" ToolTip="Close"/>-->
+                <Button Grid.Column="2" Content="Save and Close" Visibility="{Binding IsEnabled, Converter={StaticResource BoolToVis}}" Command="{Binding Save}" ToolTip="Save changes and close form" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Center"/>
             </Grid>
             <GroupBox Header="Milestone Details" Style="{StaticResource grpbox}" Margin="4,10,4,4" >
                 <Grid Margin="0,2,0,0" IsEnabled="{Binding IsEnabled}">
@@ -55,27 +60,26 @@
                                      AcceptsTab="True" 
                                      AcceptsReturn="True" 
                                      TextAlignment="Left"                                     
-                                     Text="{Binding Milestone.GOM.Description, UpdateSourceTrigger=PropertyChanged}"  
+                                     Text="{Binding Milestone.Description, UpdateSourceTrigger=PropertyChanged}"  
                                      Style="{StaticResource gridtextbox}"/>
 
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Owner:" Style="{StaticResource gridtextlabel}"/>
-                    <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Width="200" HorizontalAlignment="Left" DisplayMemberPath="GOM.Name" Style="{StaticResource gridcombo}"
+                    <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Width="200" HorizontalAlignment="Left" DisplayMemberPath="Name" Style="{StaticResource gridcombo}"
                                         ItemsSource="{Binding Users}"  
-                                        SelectedValuePath="GOM.ID"  
+                                        SelectedValuePath="ID"  
                                         SelectedValue="{Binding Milestone.UserID}" ItemContainerStyle="{StaticResource ddstyle}" />
 
-                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Target Date:" Style="{StaticResource gridtextlabel}"/>
-                    <xceed:DateTimePicker Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"  
-                                                  Value="{Binding Milestone.TargetDate, UpdateSourceTrigger=PropertyChanged}" 
-                                           
-                                          Style="{StaticResource daypicker}"
-                                                  ToolTip="The target date for this Milestone"/>
-                   
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Due Date:" Style="{StaticResource gridtextlabel}"/>
+                    <DatePicker Grid.Row="3" Grid.Column="1"  Style="{StaticResource datepicker}"
+                                          SelectedDate="{Binding Milestone.TargetDate, UpdateSourceTrigger=PropertyChanged}"                                            
+                                         
+                                          ToolTip="The target date for this Milestone"/>
+
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Completed:" Style="{StaticResource gridtextlabel}"/>
-                    <xceed:DateTimePicker Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"  
-                                                  Value="{Binding Milestone.CompletedDate, UpdateSourceTrigger=PropertyChanged}" 
-                                                  Style="{StaticResource daypicker}"
-                                           Text="{Binding SelectedCompletedDate, Mode=OneWayToSource}"
+                    <DatePicker Grid.Row="4" Grid.Column="1" Style="{StaticResource datepicker}"
+                                          SelectedDate="{Binding Milestone.CompletedDate, UpdateSourceTrigger=PropertyChanged}" 
+                                         
+                                         
                                                   ToolTip="The date when this Milestone was completed"/>
                     <Button Grid.Row="4" Grid.Column="2" Content="Clear" VerticalAlignment="Center" Style="{StaticResource LinkButton}" Command="{Binding ClearCompletedDate}"/>
                 </Grid>

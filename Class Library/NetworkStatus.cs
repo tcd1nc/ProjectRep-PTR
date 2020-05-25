@@ -117,7 +117,7 @@ namespace PTR
 
 							if ((statistics.BytesReceived > 0) && (statistics.BytesSent > 0))
 							{
-                                //if(CanSeeBuckmanConnect())
+                               
 								    return true;
 							}
 						}
@@ -158,27 +158,7 @@ namespace PTR
 		}
 
 
-        //public static bool CanSeeBuckmanConnect()
-        //{
-        //    WebClient client = new WebClient();
-        //    try
-        //    {
-        //        if (!string.IsNullOrEmpty(Application.Current.Resources["BuckmanConnectURL"].ToString()))
-        //        {
-        //            using (client.OpenRead(Application.Current.Resources["BuckmanConnectURL"].ToString()))
-        //            {
-        //            }
-        //            return true;
-        //        }
-        //        else
-        //            return false;
-        //    }
-        //    catch (WebException)
-        //    {
-        //        return false;
-        //    }
-        //}
-
+       
     }
 
     //********************************************************************************************

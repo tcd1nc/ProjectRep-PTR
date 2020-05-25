@@ -1,36 +1,43 @@
 ﻿using System.Linq;
 using static PTR.DatabaseQueries;
 using PTR.Models;
+using System.Windows.Input;
+using System.Collections.ObjectModel;
 
 namespace PTR.ViewModels
 {
-    public class SalesRegionViewModel : ObjectCRUDViewModel
+    public class SalesRegionViewModel : ViewModelBase
     {
+        public bool canexecutesave = true;
+        public bool canexecuteadd = true;
+        bool canexecutedelete = false;
+        public ICommand AddNew { get; set; }
+        public ICommand Cancel { get; set; }
+        public ICommand Save { get; set; }
+
         FullyObservableCollection<CountryModel> countries;
         FullyObservableCollection<SalesRegionModel> salesregions;
-        bool isloaded = false;
-        bool isdirty = false;
 
+        bool isdirty = false;
+        
         public SalesRegionViewModel()
         {
-            ExCloseWindow = ExecuteClosing;
-            countries = StaticCollections.Countries;
+            countries = GetCountries();
             if (Countries.Count > 0)
             {
                 Country = Countries[0];                
-                FilterSalesRegions(Countries[0].GOM.ID);
+                FilterSalesRegions(Countries[0].ID);
             }
 
             Save = new RelayCommand(ExecuteSave, CanExecuteSave);
             Cancel = new RelayCommand(ExecuteCancel, CanExecute);
-            AddNew = new RelayCommand(ExecuteAddNew, CanExecuteAddNew);          
-            Delete = new RelayCommand(ExecuteDelete, CanExecuteDelete);
-            
-            canexecutedelete = false;
-            isloaded = true;
+            AddNew = new RelayCommand(ExecuteAddNew, CanExecuteAddNew);
+            canexecutesave = false;
         }
 
         #region Private functions
+
+
 
         private void FilterSalesRegions(int countryid)
         {
@@ -45,7 +52,8 @@ namespace PTR.ViewModels
                     ID = sd.ID,
                     CountryID = sd.CountryID,
                     Name = sd.Name,
-                    IsEnabled = IsDeletableSalesRegion(sd.ID)
+                    IsChecked = false,
+                    IsEnabled = sd.IsEnabled
                 };
                 newsalesregions.Add(sm);
             }
@@ -60,8 +68,12 @@ namespace PTR.ViewModels
 
         private void SalesRegions_ItemPropertyChanged(object sender, ItemPropertyChangedEventArgs e)
         {
-           CheckFieldValidation();
-           canexecutedelete = IsItemsSelected();
+            if (e.PropertyName != "IsChecked")
+            {
+                CheckValidation();
+                isdirty = true;
+            }
+            IsSelected = SalesRegions.Where(x => x.IsChecked).Count() > 0;
         }
 
         #endregion
@@ -89,8 +101,8 @@ namespace PTR.ViewModels
 
                 if (selectedCountry != null)
                 {
-                    if (!InvalidField && isloaded)                    
-                        SaveSalesRegions();
+                    if (!InvalidField)                    
+                        SaveAll();
                     
                     InvalidField = false;
                     canexecuteadd = true;
@@ -98,7 +110,7 @@ namespace PTR.ViewModels
                                       
                 if (value != null)
                 {                   
-                    FilterSalesRegions(value.GOM.ID);              
+                    FilterSalesRegions(value.ID);              
                 }
                 SetField(ref selectedCountry, value);
             }
@@ -110,25 +122,28 @@ namespace PTR.ViewModels
             set { SetField(ref countries, value); }
         }
 
+        bool isselected = false;
+        public bool IsSelected
+        {
+            get { return isselected; }
+            set { SetField(ref isselected, value); }
+        }
+
         #endregion
 
         #region Validation
-        
-        private void CheckFieldValidation()
+
+        private void CheckValidation()
         {
             bool DuplicateSalesRegion = IsDuplicateSalesRegion();
             bool MissingSalesRegionName = IsMissingSalesRegion();
-            isdirty = true;
             InvalidField = (DuplicateSalesRegion || MissingSalesRegionName);
                
             if (DuplicateSalesRegion)
                 DataMissingLabel = "Duplicate Sales Region";
             else
                 if(MissingSalesRegionName)
-                    DataMissingLabel = "Missing Sales Region Name";
-
-            canexecuteadd = !InvalidField;
-            canexecutesave = !InvalidField;            
+                    DataMissingLabel = "Missing Sales Region Name";          
         }
 
         private bool IsDuplicateSalesRegion()
@@ -166,6 +181,8 @@ namespace PTR.ViewModels
 
         private bool CanExecuteAddNew(object obj)
         {
+            if(InvalidField)
+                return false;
             return canexecuteadd;
         }
 
@@ -175,9 +192,11 @@ namespace PTR.ViewModels
             {
                 ID = 0,
                 Name = string.Empty,
-                CountryID = Country.GOM.ID
+                CountryID = Country.ID,
+                IsEnabled = true,
+                IsChecked = false
             });
-            canexecutesave = false;
+            CheckValidation();
         }
                       
         private void ExecuteCancel(object parameter)
@@ -187,16 +206,20 @@ namespace PTR.ViewModels
        
         //save
         private bool CanExecuteSave(object obj)
-        {  
+        {
+            if (InvalidField)
+                return false;
+            if (isdirty)
+                return true;
             return canexecutesave;
         }
 
         private void ExecuteSave(object parameter)
-        {                          
-            SaveSalesRegions();            
+        {
+            SaveAll();           
         }
 
-        private void SaveSalesRegions()
+        private void SaveAll()
         {
             if (isdirty)
             {
@@ -205,57 +228,110 @@ namespace PTR.ViewModels
                     if (em.ID == 0)
                         em.ID = AddSalesRegion(em);
                     else
-                        UpdateSalesRegion(em);
-                }
-                FilterSalesRegions(Country.GOM.ID);            
-                isdirty = false;
+                        UpdateSalesRegion(em);                    
+                }       
+                isdirty = false;               
             }
         }
-       
+
+        ICommand delete;
+        public ICommand Delete
+        {
+            get
+            {
+                if (delete == null)
+                    delete = new DelegateCommand(CanExecuteDelete, ExecuteDelete);
+                return delete;
+            }
+        }
+
         private bool CanExecuteDelete(object obj)
-        {            
+        {
+            if (IsSelected)
+                return true;
             return canexecutedelete;
         }
+
+        Collection<SalesRegionModel> deleteditems = new Collection<SalesRegionModel>();
 
         private void ExecuteDelete(object parameter)
         {
             IMessageBoxService msg = new MessageBoxService();
-            if (msg.ShowMessage("Do you want to delete this sales region?", "Deleting Sales Region", GenericMessageBoxButton.OKCancel, GenericMessageBoxIcon.Question).Equals(GenericMessageBoxResult.OK))
+            string title = "Deleting Sales Region";
+            string confirmtxt = "Do you want to delete the selected item";
+            if (SalesRegions.Where(x => x.IsChecked).Count() > 1)
+            {
+                title = title + "s";
+                confirmtxt = confirmtxt + "s";
+            }
+            if (msg.ShowMessage(confirmtxt + "?", title, GenericMessageBoxButton.OKCancel, GenericMessageBoxIcon.Question).Equals(GenericMessageBoxResult.OK))
             {
                 foreach(SalesRegionModel sd in SalesRegions)
                 {
-                    if (sd.IsSelected)                    
-                        DeleteSalesRegion(sd.ID);                                            
+                    if (sd.IsChecked)
+                    {
+                        if (sd.ID > 0)
+                            DeleteSalesRegion(sd.ID);
+                        deleteditems.Add(sd);
+                    }
+                }              
+                foreach (SalesRegionModel pm in deleteditems)
+                {
+                    SalesRegions.Remove(pm);
                 }
-                FilterSalesRegions(Country.GOM.ID);
+                deleteditems.Clear();
+                CheckValidation();
             }
             msg = null;                     
-            canexecutedelete = (salesregions.Count > 0);
-            canexecutesave = false;
         }
-
-        private bool IsDeletableSalesRegion(int id)
-        {
-            return (GetCountSalesRegionCustomers(id) == 0);                              
-        }
-
-        private bool IsItemsSelected()
-        {
-            foreach (SalesRegionModel sd in SalesRegions)
-            {
-                if (sd.IsSelected)
-                    return true;
-            }
-            return false;
-        }
-             
+              
+               
         private void ExecuteClosing(object parameter)
         {
-            SaveSalesRegions();
-            if (SalesRegions != null)
-                SalesRegions.ItemPropertyChanged -= SalesRegions_ItemPropertyChanged;
-            //refresh sales regions list
-            StaticCollections.SalesRegions = DatabaseQueries.GetSalesRegions();
+        }
+
+        ICommand windowclosing;
+
+        private bool CanCloseWindow(object obj)
+        {
+            if (isdirty)
+            {
+                if (!InvalidField)
+                {
+                    IMessageBoxService msg = new MessageBoxService();
+                    var result = msg.ShowMessage("There are unsaved changes. Do you want to save these?", "Unsaved Changes", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
+                    msg = null;
+                    if (result.Equals(GenericMessageBoxResult.Yes))
+                    {
+                        SaveAll();
+                        return true;
+                    }
+                    else                    
+                        return true;                    
+                }
+                else
+                {
+                    IMessageBoxService msg = new MessageBoxService();
+                    var result = msg.ShowMessage("There are unsaved changes with errors. Do you want to correct and then save these?", "Unsaved Changes with Errors", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
+                    msg = null;
+                    if (result.Equals(GenericMessageBoxResult.Yes))
+                        return false;
+                    else                                            
+                        return true;                    
+                }
+            }
+            else
+                return true;
+        }
+
+        public ICommand WindowClosing
+        {
+            get
+            {
+                if (windowclosing == null)
+                    windowclosing = new DelegateCommand(CanCloseWindow, ExecuteClosing);
+                return windowclosing;
+            }
         }
 
 

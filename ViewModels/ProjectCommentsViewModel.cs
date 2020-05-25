@@ -1,20 +1,20 @@
 ﻿using System.Windows.Input;
 using static PTR.DatabaseQueries;
-using PTR.Models;
 using System.Windows;
+using System.Data;
 
 namespace PTR.ViewModels
 {
     public class ProjectCommentsViewModel : FilterModule
     {
-        private const string title = "Project Comments";              
-        ProjectReportSummary project;
+        private const string title = "Project Comments";
+        DataRowView selectedproject;
         
         private readonly Window windowref;
 
         public ProjectCommentsViewModel(Window winref, int projectid)
         {
-            project = GetSimpleProjectDetails(projectid);
+            selectedproject = GetBasicProjectDetails(projectid, StaticCollections.CurrentUser.ID);
 
             if (projectid == 0)
                 WindowTitle = title;
@@ -24,13 +24,14 @@ namespace PTR.ViewModels
             windowref = winref;
 
         }
+        
 
         #region View Properties
 
-        public ProjectReportSummary SelectedProject
+        public DataRowView SelectedProject
         {
-            get { return project; }
-            set { SetField(ref project, value); }
+            get { return selectedproject; }
+            set { SetField(ref selectedproject, value); }
         }
         
         bool clearactivities;
@@ -71,16 +72,30 @@ namespace PTR.ViewModels
         {
             get { return returnobject; }
             set { SetField(ref returnobject, value); }
-        }              
+        }
+
+        bool isdirtydata = false;
+        public bool IsDirtyData
+        {
+            get { return isdirtydata; }
+            set { SetField(ref isdirtydata, value); }
+        }
+
+        bool cansave = false;
+        public bool CanSave
+        {
+            get { return cansave; }
+            set { SetField(ref cansave, value); }
+        }
+
 
         #endregion
-        
+
         #region Commands
-       
-        bool canexecutesave = true;
+      
         private bool CanExecuteSave(object obj)
         {        
-            return canexecutesave;
+            return true;
         }
 
         //save
@@ -97,7 +112,7 @@ namespace PTR.ViewModels
 
         private void ExecuteSaveComments(object parameter)
         {        
-           // ExecuteUpdateActivities();
+            ExecuteUpdateActivities();
 
             SaveCommentsFlag = true;
             CloseWindowFlag = true;
@@ -130,11 +145,47 @@ namespace PTR.ViewModels
         //    set { wref1 = value; }
         //}
 
+        //ICommand windowclosing;
+        //bool canclosewindow = true;
+        //private bool CanCloseWindow(object obj)
+        //{
+        //    return canclosewindow;
+        //}
+
+        //public ICommand WindowClosing
+        //{
+        //    get
+        //    {
+        //        if (windowclosing == null)
+        //            windowclosing = new DelegateCommand(CanCloseWindow, ExCloseWindow);
+        //        return windowclosing;
+        //    }
+        //}
+        //private void ExCloseWindow(object parameter)
+        //{
+        //    //ExecuteUpdateActivities();
+        //}
+
+
+
         ICommand windowclosing;
-        bool canclosewindow = true;
+
         private bool CanCloseWindow(object obj)
         {
-            return canclosewindow;
+            if (IsDirtyData)
+            {                
+                IMessageBoxService msg = new MessageBoxService();
+                GenericMessageBoxResult result = msg.ShowMessage("There are unsaved changes. Do you want to save these?", "Unsaved Changes", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
+                msg = null;
+                if (result.Equals(GenericMessageBoxResult.Yes))
+                {
+                    ExecuteUpdateActivities();
+                    SaveCommentsFlag = true;
+                }
+                return true;                               
+            }
+            else
+                return true;
         }
 
         public ICommand WindowClosing
@@ -142,14 +193,38 @@ namespace PTR.ViewModels
             get
             {
                 if (windowclosing == null)
-                    windowclosing = new DelegateCommand(CanCloseWindow, ExCloseWindow);
+                    windowclosing = new DelegateCommand(CanCloseWindow, ExecuteClosing);
                 return windowclosing;
             }
         }
-        private void ExCloseWindow(object parameter)
-        {
-            ExecuteUpdateActivities();
+
+        private void ExecuteClosing(object parameter)
+        {           
         }
+
+        ICommand windowcancelclosing;     
+        private bool CanCancelCloseWindow(object obj)
+        {
+            return true;
+        }
+
+        public ICommand CancelClosingCommand
+        {
+            get
+            {
+                if (windowcancelclosing == null)
+                {
+                    windowcancelclosing = new DelegateCommand(CanCancelCloseWindow, CancelWindowClosing);
+                }
+                return windowcancelclosing;
+            }
+        }
+
+        private void CancelWindowClosing(object parameter)
+        {
+
+        }
+
 
     }
 }

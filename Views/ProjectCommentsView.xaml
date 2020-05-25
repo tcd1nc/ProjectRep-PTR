@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Icon="/PTR;component/Images/calendar-day.ico"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="SingleBorderWindow"
-        Title="{Binding WindowTitle}" Height="430" Width="750"
+        Title="{Binding WindowTitle}" Height="430" Width="950"
         loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" KeyDown="Window_KeyDown"
         loc:DialogCloser.DialogResult="{Binding SaveCommentsFlag}"
         loc:WindowBehavior.WindowClosing="{Binding WindowClosing}">
@@ -22,19 +22,22 @@
         <DockPanel LastChildFill="True" Margin="4,4,4,4">
             <Grid DockPanel.Dock="Bottom" Height="32" >
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="120"/>
                     <ColumnDefinition/>
-                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="130"/>
                 </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Content="Save" IsEnabled="{Binding EnableActivities}" Visibility="{Binding EnableActivities, Converter={StaticResource BoolToVis}}" 
-                        Command="{Binding SaveComments}" ToolTip="Save changes and close form" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" Margin="20,0,0,0" HorizontalAlignment="Left"/>
-                <Button Grid.Column="2" Content="Close" Command="{Binding CancelUpdate}" ToolTip="Close form" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" Margin="0,0,20,0" HorizontalAlignment="Right"/>
+                <Button Grid.Column="2" Content="Save and Close" IsEnabled="{Binding IsDirtyData}" Visibility="{Binding IsDirtyData, Converter={StaticResource BoolToVis}}" 
+                        Command="{Binding SaveComments}" ToolTip="Save changes and close form" Style="{StaticResource filterButtonStyle}" TextBlock.TextAlignment="Center" HorizontalAlignment="Center"/>
+               
             </Grid>
 
             <ctrl:ActivitiesControl x:Name="activities" Grid.Row="2" 
-                ClearActivities ="{Binding ClearActivities}"
-                UpdateMonthlyActivities ="{Binding UpdateActivities}"
-                SelectedProjectItem="{Binding SelectedProject}"/>
+                 IsDirtyData = "{Binding IsDirtyData, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                 CanSave="{Binding CanSave, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                                                                                                                
+                 ClearActivities ="{Binding ClearActivities}"
+                 UpdateMonthlyActivities ="{Binding UpdateActivities}"      
+                 SelectedProjectItem="{Binding SelectedProject, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}"/>
+        
 
         </DockPanel>
     </Grid>

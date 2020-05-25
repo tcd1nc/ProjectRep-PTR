@@ -1,5 +1,6 @@
 # PTR is a fully opensource program for projects or tasks management. 
-No license is required and you can use the code in any way you see fit.
+Licensed under GNU Public License Version 3.
+
 No warranty is provided or implied.
 
 Some of the code modules are not used but are included in the repository.

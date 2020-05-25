@@ -61,7 +61,7 @@
                 <TextBlock Grid.Row="0" Grid.Column="2" Text="Default is ^([a-zA-Z_.0-9]+)$" Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left"/>
                 <TextBlock Grid.Row="1" Text="Domain:" Style="{StaticResource gridtextlabel}"/>
                 <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SetUp.Domain, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource gridtextbox}"/>
-                <TextBlock Grid.Row="1" Grid.Column="2" Text="Default is buckman.com" Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left"/>
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="Default is xxxxxx.com" Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left"/>
                 <TextBlock Grid.Row="2" Text="Maximum Project Name Length:" Style="{StaticResource gridtextlabel}"/>
                 <TextBlock Grid.Row="2" Grid.Column="2" Text="Default is 25" Style="{StaticResource gridtextlabel}" HorizontalAlignment="Left"/>
 

@@ -3,19 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:loc="clr-namespace:PTR"
-             xmlns:xceed="http://schemas.xceed.com/wpf/xaml/toolkit"
+             
              mc:Ignorable="d" 
+              xmlns:loc="clr-namespace:PTR"
              d:DesignHeight="450" d:DesignWidth="800">
-        
-    <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis" />
-    </UserControl.Resources>
 
-    <loc:ExtendedGrid x:Name="stats"   
+    <DataGrid x:Name="stats" 
             Margin="2,4,2,4"                                                                                                                                                           
-            ItemsSource="{Binding MonthlyData, IsAsync=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True}"        					  
-            AlternationCount="1000"          
+            ItemsSource="{Binding MonthlyData, IsAsync=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True}"        					                
             Background="White"                                                                                                                                 
 			AutoGenerateColumns="False" 
 			AllowDrop="False"                                                                                                                                                  
@@ -27,25 +22,125 @@
 			BorderThickness="1"
 			CanUserReorderColumns="False"
 			CanUserSortColumns = "False"
+            CanUserResizeRows="False"
 			HorizontalScrollBarVisibility="Auto"
 			VerticalScrollBarVisibility="Auto"             
 			SelectionMode="Single"						                
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
 			FrozenColumnCount="1" 
-			SelectionUnit="Cell" >
+			SelectionUnit="Cell"                                  
+            EnableRowVirtualization="False"   
+            EnableColumnVirtualization="False"
+            RowHeight="30">
+            
 
-        <loc:ExtendedGrid.ItemContainerStyle>
+        <DataGrid.ItemContainerStyle>
             <Style TargetType="{x:Type DataGridRow}">
-                <Setter Property="IsEnabled" Value="{Binding DataContext.EnableActivities, ElementName=stats}"/>
+                <Setter Property="IsEnabled" Value="False"/>
+                <Setter Property="IsHitTestVisible" Value="False"/>
+                <Style.Triggers>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding IsEnabled}" Value="true"/>
+                            <Condition Binding="{Binding DataContext.EnableActivities, ElementName=stats}" Value="true"/>
+                        </MultiDataTrigger.Conditions>
+                        <MultiDataTrigger.Setters>
+                            <Setter Property="IsEnabled" Value="True"/>
+                            <Setter Property="IsHitTestVisible" Value="True"/>
+                        </MultiDataTrigger.Setters>
+                    </MultiDataTrigger>
+                </Style.Triggers>
             </Style>
-        </loc:ExtendedGrid.ItemContainerStyle>
+        </DataGrid.ItemContainerStyle>
 
-        <loc:ExtendedGrid.Columns>
-            <DataGridTemplateColumn x:Name="Month" Width="90" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+        <DataGrid.Resources>
+            <ContextMenu Height="0" Width="0" x:Key="contextmenu" >
+                <TextBox>No menu</TextBox>
+            </ContextMenu>
+        </DataGrid.Resources>
+        
+        <DataGrid.Columns>
+         
+            <DataGridTemplateColumn x:Name="Month" Width="76" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
                 <DataGridTemplateColumn.HeaderTemplate>
                     <DataTemplate>
-                        <TextBlock Text="Month" />
+                        <TextBlock Text="Month" ToolTip="Status Month"/>
+                    </DataTemplate>
+                </DataGridTemplateColumn.HeaderTemplate>
+                <DataGridTemplateColumn.CellStyle>
+                    <Style TargetType="{x:Type DataGridCell}">
+                        <Setter Property="Focusable" Value="False" />
+                        <Setter Property="IsHitTestVisible" Value="False"/>
+                    </Style>
+                </DataGridTemplateColumn.CellStyle>
+                <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <Grid VerticalAlignment="Center">
+                            <TextBlock Text="{Binding StatusMonth,StringFormat=\{0:MMM-yy\}}" TextAlignment="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <DataGridTemplateColumn x:Name="Status" Width="250" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                <DataGridTemplateColumn.HeaderTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="Sales Funnel Stage" HorizontalAlignment="Center" TextAlignment="Center" ToolTip="Monthly Activity Status" />
+                    </DataTemplate>
+                </DataGridTemplateColumn.HeaderTemplate>
+               
+                <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <ComboBox ItemsSource="{Binding DataContext.StatusCodes, ElementName=stats}" Width="Auto"                              
+                                  ToolTip="{Binding Path=SelectedItem.Description, RelativeSource={RelativeSource Self}}"
+                                  SelectedValuePath="ID"          
+                                  VerticalContentAlignment="Stretch"                                     
+                                  SelectedValue="{Binding StatusID, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay, NotifyOnSourceUpdated=True}"
+                                  HorizontalAlignment="Stretch" >
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="{x:Type ComboBoxItem}">
+                                    <Setter Property="Height" Value="24"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ID}" Value="10">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding DataContext.ShowStatus10, RelativeSource={RelativeSource AncestorType=ComboBox, Mode=FindAncestor}}" Value="true"/>
+                                                <Condition Binding="{Binding ID}" Value="10"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <MultiDataTrigger.Setters>
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Setter Property="IsHitTestVisible" Value="True"/>
+                                            </MultiDataTrigger.Setters>
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding PlaybookDescription}" 
+                                              Width="{Binding ActualWidth,RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ComboBox}}}"
+                                              ToolTip="{Binding Description}" 
+                                              Padding="6,2,2,0"                                                           
+                                              TextAlignment="Left"                                                                                    
+                                              Background="{Binding Colour}" 
+                                              HorizontalAlignment="Stretch"/>
+                                 
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <DataGridTemplateColumn x:Name="ExpectedDateFirstSales" Width="110" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                <DataGridTemplateColumn.HeaderTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="Sales Start" ToolTip="Estimated date on which commercial sales will start.&#10;This date must be in or after the current month" />
                     </DataTemplate>
                 </DataGridTemplateColumn.HeaderTemplate>
                 <DataGridTemplateColumn.CellStyle>
@@ -55,145 +150,104 @@
                 </DataGridTemplateColumn.CellStyle>
                 <DataGridTemplateColumn.CellTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding StatusMonth,StringFormat=\{0:MMM-yy\}}" Padding="0,3,2,0" Height="24" TextAlignment="Center" />
+                        <DatePicker DisplayDateStart="{Binding StatusMonth}" Width="Auto" 
+                             SelectedDate="{Binding ExpectedDateFirstSales, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                             Style="{StaticResource datepicker}" Margin="0,0,0,0"    
+                             ToolTip="Estimated date on which commercial sales will start.&#10;This date must be in or after the current month" />
                     </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
 
-            <DataGridTemplateColumn x:Name="Status" Width="100" HeaderStyle="{StaticResource ColumnHeaderStyle}">
-                <DataGridTemplateColumn.HeaderTemplate>
+            <DataGridTextColumn x:Name="Comments" Width="350*" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}"
+                                Binding="{Binding Comments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" >
+                <DataGridTextColumn.HeaderTemplate>
                     <DataTemplate>
-                        <TextBlock Text="Status" HorizontalAlignment="Center" TextAlignment="Center" ToolTip="Monthly Activity Status" />
+                        <TextBlock Text="{Binding DataContext.CommentHeading, ElementName=stats}" ToolTip="Monthly Comments" 
+                                   Foreground="{Binding DataContext.CommentErrorColour, ElementName=stats }" />
                     </DataTemplate>
-                </DataGridTemplateColumn.HeaderTemplate>
-                <DataGridTemplateColumn.CellTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal" >
-                            <ComboBox ItemsSource="{Binding DataContext.StatusCodes, ElementName=stats}" Width="76"    
-                                          
-                                                DisplayMemberPath="GOM.ID" ToolTip="{Binding Path=SelectedItem.GOM.Description, RelativeSource={RelativeSource Self}}"
-                                                SelectedValuePath="GOM.ID"                                                                                                 
-                                                SelectedValue="{Binding StatusID, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay, NotifyOnSourceUpdated=True}"
-                                                HorizontalAlignment="Stretch" >
-                                <ComboBox.ItemContainerStyle>
-                                    <Style TargetType="{x:Type ComboBoxItem}">
-                                        <Style.Triggers>
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding GOM.ID}" Value="10"/>
-                                                </MultiDataTrigger.Conditions>
-                                                <MultiDataTrigger.Setters>
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                </MultiDataTrigger.Setters>
-                                            </MultiDataTrigger>
-
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=AlternationIndex}" Value="0"/>
-                                                    <Condition Binding="{Binding GOM.ID}" Value="10"/>
-                                                </MultiDataTrigger.Conditions>
-                                                <MultiDataTrigger.Setters>
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                    <Setter Property="IsHitTestVisible" Value="True"/>
-                                                    <Setter Property="Background" Value="Green"/>
-                                                </MultiDataTrigger.Setters>
-                                            </MultiDataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </ComboBox.ItemContainerStyle>
-
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Background="{Binding Colour}"  Orientation="Vertical" HorizontalAlignment="Stretch" >
-                                            <TextBlock Padding="0,0,4,0" Text="{Binding GOM.ID}" Width="{Binding ActualWidth,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type ComboBox}}}"
-                                                        ToolTip="{Binding GOM.Description}" TextAlignment="Center" Background="{Binding Colour}" HorizontalAlignment="Stretch"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                            <Button Content="X" Foreground="Red" Width="20" ToolTip="Clear Status" Command="{Binding DataContext.ClearStatus, ElementName=stats}" CommandParameter="{Binding }"/>
-                        </StackPanel>
-                    </DataTemplate>
-                </DataGridTemplateColumn.CellTemplate>
-            </DataGridTemplateColumn>
-
-            <DataGridTemplateColumn x:Name="ExpectedDateFirstSales" Width="100" IsReadOnly="True"  KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
-                <DataGridTemplateColumn.HeaderTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="Sales Start" />
-                    </DataTemplate>
-                </DataGridTemplateColumn.HeaderTemplate>
-                <DataGridTemplateColumn.CellStyle>
-                    <Style TargetType="{x:Type DataGridCell}">
-                        <Setter Property="Focusable" Value="False" />
+                </DataGridTextColumn.HeaderTemplate>
+                <DataGridTextColumn.ElementStyle>
+                    <Style TargetType="{x:Type TextBlock}">
+                        <Setter Property="Padding" Value="2,2,0,0" />
                     </Style>
-                </DataGridTemplateColumn.CellStyle>
-                <DataGridTemplateColumn.CellTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Vertical" VerticalAlignment="Top">
-                            <xceed:DateTimePicker Value="{Binding ExpectedDateFirstSales, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource daypicker}"/>
-                        </StackPanel>
-                    </DataTemplate>
-                </DataGridTemplateColumn.CellTemplate>
-            </DataGridTemplateColumn>
-
-            <DataGridTemplateColumn x:Name="Comments" Width="350*" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
-                <DataGridTemplateColumn.HeaderTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding DataContext.CommentHeading, ElementName=stats}" 
-                                            ToolTip="Monthly Comments" 
-                                            Foreground="{Binding DataContext.CommentErrorColour, ElementName=stats }" />
-                    </DataTemplate>
-                </DataGridTemplateColumn.HeaderTemplate>
-                <DataGridTemplateColumn.CellTemplate>
-                    <DataTemplate>
-                        <TextBox Height="24" VerticalContentAlignment="Center" Text="{Binding Comments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="2,0,0,0" />
-                    </DataTemplate>
-                </DataGridTemplateColumn.CellTemplate>
-            </DataGridTemplateColumn>
-
+                </DataGridTextColumn.ElementStyle>
+                                               
+                <DataGridTextColumn.EditingElementStyle>
+                    <Style TargetType="{x:Type TextBox}">
+                        <Setter Property="Padding" Value="2,2,0,0" />
+                        <Setter Property="ContextMenu" Value="{StaticResource contextmenu}"/>
+                    </Style>
+                </DataGridTextColumn.EditingElementStyle>
+                                
+                <DataGridTextColumn.CellStyle>
+                     <Style TargetType="DataGridCell">
+                        <Setter Property="Background" Value="White"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="Blue"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGridTextColumn.CellStyle>
+            
+            </DataGridTextColumn>
+          
             <DataGridTemplateColumn x:Name="TrialStatus" Width="108" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
                 <DataGridTemplateColumn.HeaderTemplate>
                     <DataTemplate>
-                        <TextBlock Text="Trial Status" ToolTip="Trial outcome if trial was run"/>
+                        <TextBlock Text="Trial Status" ToolTip="Trial status only for currently running trials or trials that were run during the month"/>
                     </DataTemplate>
                 </DataGridTemplateColumn.HeaderTemplate>
 
+                <DataGridTemplateColumn.CellStyle>
+                    <Style TargetType="{x:Type DataGridCell}">
+                        <Setter Property="Focusable" Value="False" />
+                        <Setter Property="IsHitTestVisible" Value="False"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding StatusID}" Value="9">
+                                <Setter Property="IsHitTestVisible" Value="True"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGridTemplateColumn.CellStyle>
+                                
                 <DataGridTemplateColumn.CellTemplate>
                     <DataTemplate>
-                        <StackPanel Orientation="Horizontal" >
-                            <StackPanel.Style>
-                                <Style TargetType="StackPanel">
+                        <ComboBox ItemsSource="{Binding DataContext.TrialStatuses, ElementName=stats}" Width="Auto"                                                                                                                                                                                          
+                                  SelectedValuePath="ID"                                                                                          
+                                  SelectedValue="{Binding TrialStatusID, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                  HorizontalAlignment="Stretch" 
+                                  ToolTip="Select from the list. If no trial was Running or was Successful or Failed,&#10;use a different Monthly Activity Status (column 2)">
+
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" >
+                                        <TextBlock Padding="2,2,2,0" Text="{Binding Name}" 
+                                                Width="{Binding ActualWidth,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type ComboBox}}}"
+                                                TextAlignment="Left" HorizontalAlignment="Stretch"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+
+                            <ComboBox.Style>
+                                <Style TargetType="ComboBox">
                                     <Setter Property="Visibility" Value="Hidden"/>
                                     <Setter Property="Focusable" Value="False"/>
-                                    <Setter Property="Background" Value="AliceBlue"/>
+                                    <Setter Property="IsEnabled" Value="False"/>
+
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding ShowTrial}" Value="true">
+                                        <DataTrigger Binding="{Binding StatusID}" Value="9">
                                             <Setter Property="Visibility" Value="Visible"/>
                                             <Setter Property="Focusable" Value="True"/>
+                                            <Setter Property="IsEnabled" Value="True"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
-                            </StackPanel.Style>
-                            <ComboBox ItemsSource="{Binding DataContext.TrialStatuses, ElementName=stats}" Width="82"                                                                                                                                                                                          
-                                        SelectedValuePath="ID"                                                                                                    
-                                        SelectedValue="{Binding TrialStatusID, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                                        HorizontalAlignment="Stretch"   ItemContainerStyle="{StaticResource ddstyle}">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" >
-                                            <TextBlock Padding="2,2,2,0" Text="{Binding Name}" 
-                                                    Width="{Binding ActualWidth,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type ComboBox}}}"
-                                                    TextAlignment="Left" HorizontalAlignment="Stretch"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                            <Button Content="X" Foreground="Red" Width="20" ToolTip="Clear Trial Status" Command="{Binding DataContext.ClearTrialStatus, ElementName=stats}" CommandParameter="{Binding }"/>
-                        </StackPanel>
+                            </ComboBox.Style>
+                        </ComboBox>
                     </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
-        </loc:ExtendedGrid.Columns>
-    </loc:ExtendedGrid>
+        </DataGrid.Columns>
+    </DataGrid>
 </UserControl>

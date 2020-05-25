@@ -31,7 +31,7 @@ namespace PTR
 
      //   public static readonly DependencyProperty ListItemsProperty = DependencyProperty.Register("ListItems", typeof(ObservableCollection<FilterListItem>), typeof(FilterListControl), new FrameworkPropertyMetadata(new PropertyChangedCallback(ListChanged)));
         public static readonly DependencyProperty ListItemsProperty = DependencyProperty.Register("ListItems", typeof(FullyObservableCollection<FilterListItem>), 
-            typeof(FilterListControl), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+            typeof(FilterListControl), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, ListChanged));
         public static readonly DependencyProperty TTipProperty = DependencyProperty.Register("TTip", typeof(string), typeof(FilterListControl));
         public static readonly DependencyProperty HeadingProperty = DependencyProperty.Register("Heading", typeof(string), typeof(FilterListControl));
         public static readonly DependencyProperty SelectedItemsProperty = DependencyProperty.Register("SelectedItems", typeof(string), typeof(FilterListControl));
@@ -49,7 +49,7 @@ namespace PTR
         public static readonly DependencyProperty SelectAllProperty = DependencyProperty.Register("SelectAll", typeof(bool),
             typeof(FilterListControl), new FrameworkPropertyMetadata(false, SelectAllCallback));
         public static readonly DependencyProperty VisibleCountProperty = DependencyProperty.Register("VisibleCount", typeof(int),
-            typeof(FilterListControl));
+            typeof(FilterListControl), new FrameworkPropertyMetadata(12, VisibleCountchanged));
 
         #endregion  Dependency Property Declarations
 
@@ -79,6 +79,14 @@ namespace PTR
             get { return (int)GetValue(VisibleCountProperty); }
             set { SetValue(VisibleCountProperty, value); }
         }
+
+        private static void VisibleCountchanged(DependencyObject source, DependencyPropertyChangedEventArgs args)
+        {
+            //future
+            if ((source as FilterListControl)?.ListItems?.Count <= (int)args.NewValue)
+                (source as FilterListControl).ToggleButtonVisibility = Visibility.Hidden;
+        }
+
 
         public bool ShowAll
         {
@@ -138,6 +146,13 @@ namespace PTR
         {
             get { return (ObservableCollection<FilterListItem>)GetValue(ListItemsProperty); }
             set { SetValue(ListItemsProperty, value); }
+        }
+
+        private static void ListChanged(DependencyObject source, DependencyPropertyChangedEventArgs args)
+        {
+            //future
+            if (((FullyObservableCollection<FilterListItem>)args.NewValue).Count <= (source as FilterListControl)?.VisibleCount)
+                (source as FilterListControl).ToggleButtonVisibility = Visibility.Hidden;
         }
 
         public string SelectedItems

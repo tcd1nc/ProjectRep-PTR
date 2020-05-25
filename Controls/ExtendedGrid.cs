@@ -38,16 +38,15 @@ namespace PTR
     /// </summary>
     public class ExtendedGrid : DataGrid
     {
-        /*     static ExGrid()
-             {
-                 DefaultStyleKeyProperty.OverrideMetadata(typeof(ExGrid), new FrameworkPropertyMetadata(typeof(ExGrid)));
-             }
-             */
+        //not needed because default template is used
+        //static ExtendedGrid()
+        //{
+        //    DefaultStyleKeyProperty.OverrideMetadata(typeof(ExtendedGrid), new FrameworkPropertyMetadata(typeof(ExtendedGrid)));
+        //}
+        
 
-              
         public ExtendedGrid() : base()
         {
-            
 
         }
 
@@ -113,77 +112,156 @@ namespace PTR
         protected override void OnPreviewKeyUp(KeyEventArgs e)
         {
             base.OnPreviewKeyUp(e);
-            if (e.Key == Key.Up || e.Key == Key.Down || e.Key == Key.Left || e.Key == Key.Right)
-                CommitEdit();
-            if ((e.Source as ExtendedGrid).CurrentColumn != null)
-            {
-                if ((e.Source as ExtendedGrid).CurrentColumn.GetType().Equals(typeof(DataGridTemplateColumn)))
-                {
-                    if ((e.OriginalSource).GetType().Equals(typeof(TextBox)))
-                    {
-                        //get column or column index
-                        int columnindex = this.Columns.IndexOf(this.CurrentColumn);
-                        //get current row index
-                        DataGridRow rowContainer = (DataGridRow)this.ItemContainerGenerator.ContainerFromItem(this.CurrentItem);
-                        int rowindex = rowContainer.GetIndex();
-                        //navigate to cell
+            //if (e.Key == Key.Up || e.Key == Key.Down || e.Key == Key.Left || e.Key == Key.Right)
+            //    CommitEdit();
+            //if ((e.Source as ExtendedGrid).CurrentColumn != null)
+            //{
+            //    if ((e.Source as ExtendedGrid).CurrentColumn.GetType().Equals(typeof(DataGridTextColumn)))
+            //    {
+            //        //if ((e.OriginalSource).GetType().Equals(typeof(TextBox)))
+            //        {
+            //            //get column or column index
+            //            int columnindex = this.Columns.IndexOf(this.CurrentColumn);
+            //            //get current row index
+            //            DataGridRow rowContainer = (DataGridRow)this.ItemContainerGenerator.ContainerFromItem(this.CurrentItem);
+            //            int rowindex = rowContainer.GetIndex();
+            //            //navigate to cell
 
-                        switch (e.Key)
-                        {
-                            case Key.Up:
-                                if (rowindex > 0)
-                                {
-                                    DataGridCell cell = SelectCellByIndex(this, rowindex - 1, columnindex);
-                                    TextBox tb = FindVisualChild<TextBox>(cell);
-                                    if (tb != null)
-                                    {
-                                        tb.Focus();
-                                        tb.Select(0, tb.Text.Length);
-                                    }
-                                }
-                                break;
-                            case Key.Down:
-                                if (rowindex < this.Items.Count - 1)
-                                {
-                                    DataGridCell cell = SelectCellByIndex(this, rowindex + 1, columnindex);
-                                    TextBox tb = FindVisualChild<TextBox>(cell);
-                                    if (tb != null)
-                                    {
-                                        tb.Focus();
-                                        tb.Select(0, tb.Text.Length);
-                                    }
-                                }
-                                break;
-                            case Key.Left:
-                                if (columnindex > 0)
-                                {
-                                    DataGridCell cell = SelectCellByIndex(this, rowindex, columnindex - 1);
-                                    TextBox tb = FindVisualChild<TextBox>(cell);
-                                    if (tb != null)
-                                    {
-                                        tb.Focus();
-                                        tb.Select(0, tb.Text.Length);
-                                    }
-                                }
-                                break;
-                            case Key.Right:
-                                if (columnindex < this.Columns.Count - 1)
-                                {
-                                    DataGridCell cell = SelectCellByIndex(this, rowindex, columnindex + 1);
-                                    TextBox tb = FindVisualChild<TextBox>(cell);
-                                    if (tb != null)
-                                    {
-                                        tb.Focus();
-                                        tb.Select(0, tb.Text.Length);
-                                    }
-                                }
-                                break;
-                        }
-                    }
-                }
-            }
+            //            switch (e.Key)
+            //            {
+            //                case Key.Up:
+            //                    //if (rowindex >= 0)
+            //                    //{
+            //                    //    DataGridCell cell = SelectCellByIndex(this, rowindex, columnindex);
+            //                    //    cell.SetCurrentValue(FocusableProperty, false);
+
+
+            //                    //    //(cell.Content).Select(0, ((TextBox)cell.Content).Text.Length);
+                                    
+                                    
+            //                    //    //TextBox tb = FindVisualChild<TextBox>(cell);
+            //                    //    //if (tb != null)
+            //                    //    //{
+            //                    //        //tb.Focus();
+            //                    //        //tb.Select(0, tb.Text.Length);
+            //                    //    //}
+            //                    //}
+            //                    break;
+            //                case Key.Down:
+            //                    //if (rowindex < this.Items.Count - 1)
+            //                    //{
+            //                    //    //DataGridCell cell = SelectCellByIndex(this, rowindex, columnindex);
+            //                    //    //TextBox tb = FindVisualChild<TextBox>(cell);
+            //                    //    //if (tb != null)
+            //                    //    //{
+            //                    //    //    tb.Focus();
+            //                    //    //    tb.Select(0, tb.Text.Length);
+            //                    //    //}
+            //                    //}                             
+            //                    break;
+            //                case Key.Left:
+            //                    //if (columnindex > 0)
+            //                    //{
+            //                    //    DataGridCell cell = SelectCellByIndex(this, rowindex, columnindex - 1);
+            //                    //    TextBox tb = FindVisualChild<TextBox>(cell);
+            //                    //    if (tb != null)
+            //                    //    {
+            //                    //        tb.Focus();
+            //                    //        tb.Select(0, tb.Text.Length);
+            //                    //    }
+            //                    //}                               
+            //                    break;
+            //                case Key.Right:
+            //                    //if (columnindex < this.Columns.Count - 1)
+            //                    //{
+            //                    //    DataGridCell cell = SelectCellByIndex(this, rowindex, columnindex + 1);
+            //                    //    TextBox tb = FindVisualChild<TextBox>(cell);
+            //                    //    if (tb != null)
+            //                    //    {
+            //                    //        tb.Focus();
+            //                    //        tb.Select(0, tb.Text.Length);
+            //                    //    }
+            //                    //}
+            //                    break;
+            //            }
+            //        }
+            //    }
+            //}
         }
 
+        //protected override void OnPreviewKeyUp(KeyEventArgs e)
+        //{
+        //    base.OnPreviewKeyUp(e);
+        //    if (e.Key == Key.Up || e.Key == Key.Down || e.Key == Key.Left || e.Key == Key.Right)
+        //        CommitEdit();
+        //    if ((e.Source as ExtendedGrid).CurrentColumn != null)
+        //    {
+        //        if ((e.Source as ExtendedGrid).CurrentColumn.GetType().Equals(typeof(DataGridTemplateColumn)))
+        //        {
+        //            if ((e.OriginalSource).GetType().Equals(typeof(TextBox)))
+        //            {
+        //                //get column or column index
+        //                int columnindex = this.Columns.IndexOf(this.CurrentColumn);
+        //                //get current row index
+        //                DataGridRow rowContainer = (DataGridRow)this.ItemContainerGenerator.ContainerFromItem(this.CurrentItem);
+        //                int rowindex = rowContainer.GetIndex();
+        //                //navigate to cell
+
+        //                switch (e.Key)
+        //                {
+        //                    case Key.Up:
+        //                        if (rowindex > 0)
+        //                        {
+        //                            DataGridCell cell = SelectCellByIndex(this, rowindex - 1, columnindex);
+        //                            TextBox tb = FindVisualChild<TextBox>(cell);
+        //                            if (tb != null)
+        //                            {
+        //                                tb.Focus();
+        //                                tb.Select(0, tb.Text.Length);
+        //                            }
+        //                        }
+        //                        break;
+        //                    case Key.Down:
+        //                        if (rowindex < this.Items.Count - 1)
+        //                        {
+        //                            DataGridCell cell = SelectCellByIndex(this, rowindex + 1, columnindex);
+        //                            TextBox tb = FindVisualChild<TextBox>(cell);
+        //                            if (tb != null)
+        //                            {
+        //                                tb.Focus();
+        //                                tb.Select(0, tb.Text.Length);
+        //                            }
+        //                        }
+        //                        break;
+        //                    case Key.Left:
+        //                        //if (columnindex > 0)
+        //                        //{
+        //                        //    DataGridCell cell = SelectCellByIndex(this, rowindex, columnindex - 1);
+        //                        //    TextBox tb = FindVisualChild<TextBox>(cell);
+        //                        //    if (tb != null)
+        //                        //    {
+        //                        //        tb.Focus();
+        //                        //        tb.Select(0, tb.Text.Length);
+        //                        //    }
+        //                        //}                               
+        //                        break;
+        //                    case Key.Right:
+        //                        //if (columnindex < this.Columns.Count - 1)
+        //                        //{
+        //                        //    DataGridCell cell = SelectCellByIndex(this, rowindex, columnindex + 1);
+        //                        //    TextBox tb = FindVisualChild<TextBox>(cell);
+        //                        //    if (tb != null)
+        //                        //    {
+        //                        //        tb.Focus();
+        //                        //        tb.Select(0, tb.Text.Length);
+        //                        //    }
+        //                        //}
+        //                        break;
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
 
         public static DataGridCell SelectCellByIndex(DataGrid dataGrid, int rowIndex, int columnIndex)
             {

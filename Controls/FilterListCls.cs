@@ -1,9 +1,8 @@
 ﻿using System.ComponentModel;
-using System.Windows.Media;
 
 namespace PTR
 {
-   
+
     public class FilterListItem : INotifyPropertyChanged
     {
         private bool isSelected;       

@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:local="clr-namespace:PTR" 
-             x:Name="usercontrol1"                      
+             x:Name="usercontrol1"                                            
              mc:Ignorable="d"  SnapsToDevicePixels="True"
              d:DesignHeight="300" d:DesignWidth="250">
     
@@ -16,12 +16,20 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="Focusable" Value="False"/>
-            <Setter Property="Margin" Value="1,2,2,0"/>
+            <!--<Setter Property="Margin" Value="1,2,2,0"/>-->
+            <Setter Property="Cursor" Value="Hand"/>
         </Style>
         
         <DataTemplate x:Key="ListBoxItemTemplate" >
-            <StackPanel Orientation="Horizontal" Background="{Binding Colour}">
-                <CheckBox IsChecked="{Binding IsSelected}" Cursor="Hand" Style="{StaticResource chkStyle}" Background="{Binding Colour}" Content="{Binding Name}" Width="{Binding Width, RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBox}}" />
+            <StackPanel Orientation="Horizontal" Background="{Binding Colour}" >
+                <!--<CheckBox IsChecked="{Binding IsSelected}" Style="{StaticResource chkStyle}" Background="{Binding Colour, FallbackValue=White}" Content="{Binding Name}" 
+                          Width="{Binding Width, RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBox}}" />-->
+
+                <CheckBox IsChecked="{Binding IsSelected}" Style="{StaticResource chkStyle}" Background="{Binding Colour, FallbackValue=White}"  
+                          Width="{Binding ActualWidth, RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem}}" >
+                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Padding="0,1,0,0"/>
+                </CheckBox>
+
             </StackPanel>
         </DataTemplate>
         
@@ -29,6 +37,7 @@
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontFamily" Value="Arial"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
         </Style>
 
         <Style x:Key="HeadingStyle" TargetType="TextBlock">
@@ -40,51 +49,56 @@
 
     </UserControl.Resources>
 
-    <Grid DataContext="{Binding ElementName=usercontrol1}">
-        <StackPanel Orientation="Vertical" HorizontalAlignment="Left" >
-            <Grid>
+    <Grid DataContext="{Binding ElementName=usercontrol1}" >                  
+           
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="20" />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="24"/>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition />
+                    <RowDefinition Height="32"/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Column="0" Grid.Row="0" x:Name="ChklistHeading" Text="{Binding Heading}" Style="{StaticResource HeadingStyle}" ToolTip="{Binding TTip}"/>
-                <Button Grid.Column="1" Grid.Row="0" Command="{Binding SelectAllButtonCommand}" CommandParameter="{Binding SelectAllButtonParameter}" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Right" Content="*" Width="16" Height="16" Background="AliceBlue" ToolTip="Select/Deselect All" Cursor="Hand"/>
-                <ListBox x:Name="myList" Grid.Row="1" ItemsSource="{Binding ListItems}" ItemTemplate="{DynamicResource ListBoxItemTemplate}"
-                         Width="{Binding Width}"
-                         MaxHeight="400"  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <Button Grid.Column="1" Grid.Row="0" Command="{Binding SelectAllButtonCommand}" CommandParameter="{Binding SelectAllButtonParameter}" 
+                        VerticalContentAlignment="Center" HorizontalContentAlignment="Center"  Content="*" Width="16" Height="16" Background="AliceBlue" ToolTip="Select/Deselect All" Cursor="Hand"/>
+
+                <ListBox x:Name="myList" Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding ListItems}" ItemTemplate="{DynamicResource ListBoxItemTemplate}"
+                         Width="{Binding Width}"     MaxHeight="500"                                                      
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Vertical"/>
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="{x:Type ListBoxItem}">
-                            <Setter Property="Visibility" Value="{Binding VisibleState}"/>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
-                </ListBox>
-                <Button Grid.Column="0" Grid.Row="2" x:Name="btnclear" BorderThickness="0" Command="{Binding ExpandButtonCommand}" Height="30"  Cursor="Hand"
-                    Background="Transparent" Visibility="{Binding ToggleButtonVisibility}" 
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="{x:Type ListBoxItem}" >
+                                <Setter Property="Visibility" Value="{Binding VisibleState}"/>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+               
+                <Button Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2" x:Name="btnclear" BorderThickness="0" Command="{Binding ExpandButtonCommand}" 
+                        Height="30" Width="30"  Cursor="Hand"
+                        Background="Transparent" Visibility="{Binding ToggleButtonVisibility}"
                         HorizontalAlignment="Right"
-                        HorizontalContentAlignment="Center" Margin="0,2"  >
+                        HorizontalContentAlignment="Center" Margin="0,2" Padding="2,0,2,0" >
                     <Button.Resources>
                         <DataTemplate x:Key="MoreTemplate" >
                             <StackPanel Orientation="Vertical" Height="30" HorizontalAlignment="Center" >
-                                <TextBlock x:Name="moretext" Text="More" Style="{StaticResource lblStyle}" HorizontalAlignment="Center"/>
-                                <Border BorderBrush="Transparent" BorderThickness="1" ToolTip="Show More"  >
+                                <TextBlock x:Name="moretext" Text="More" Style="{StaticResource lblStyle}" />
+                                <Border BorderBrush="Transparent" BorderThickness="1"  >
                                     <Path HorizontalAlignment="Center" Fill="Red" Data="M 0 0 L 6 6 L 12 0 Z" />
                                 </Border>
                             </StackPanel>
                         </DataTemplate>
 
                         <DataTemplate x:Key="LessTemplate" >
-                            <StackPanel Orientation="Vertical" Height="30" HorizontalAlignment="Center" >
-                                <TextBlock x:Name="lesstext" Text="Less"  Style="{StaticResource lblStyle}" HorizontalAlignment="Center"/>
-                                <Border BorderBrush="Transparent" BorderThickness="1" ToolTip="Show Less" >
+                            <StackPanel Orientation="Vertical" Height="30" HorizontalAlignment="Center"   >
+                                <TextBlock x:Name="lesstext" Text="Less" Style="{StaticResource lblStyle}" />
+                                <Border BorderBrush="Transparent" BorderThickness="1" >
                                     <Path HorizontalAlignment="Center" Fill="DeepSkyBlue" Data="M 0 6 L 12 6 L 6 0 Z"/>
                                 </Border>
                             </StackPanel>
@@ -94,17 +108,18 @@
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Path=ShowAll}" Value="true">
                                     <Setter Property="ContentTemplate" Value="{StaticResource LessTemplate}"/>
+                                    <Setter Property="ToolTip" Value="Show Less"/>
                                 </DataTrigger>
 
                                 <DataTrigger Binding="{Binding Path=ShowAll}" Value="false">
                                     <Setter Property="ContentTemplate" Value="{StaticResource MoreTemplate}"/>
-                                </DataTrigger>
+                                <Setter Property="ToolTip" Value="Show More"/>
+                            </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Button.Resources>
                 </Button>
-            </Grid>
-        </StackPanel>
+           
     </Grid>
     
 </UserControl>

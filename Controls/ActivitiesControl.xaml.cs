@@ -1,7 +1,7 @@
 ﻿using PTR.ViewModels;
-using PTR.Models;
 using System.Windows;
 using System.Windows.Controls;
+using System.Data;
 
 namespace PTR.Controls
 {
@@ -14,31 +14,48 @@ namespace PTR.Controls
         {
             InitializeComponent();
             stats.DataContext = new ActivitiesViewModel();
-            ((ActivitiesViewModel)(stats.DataContext)).CanSave += ActivitiesControl_CanSave;
+            ((ActivitiesViewModel)stats.DataContext).CanSave += ActivitiesControl_CanSave;
+            ((ActivitiesViewModel)stats.DataContext).IsDirtyData += ActivitiesControl_IsDirtyData;
+            ((ActivitiesViewModel)stats.DataContext).ProjectStatus += ActivitiesControl_ProjectStatus;           
+        }              
 
-           // Window w = (Window)this.Parent;
-        }
 
-	//outgoing event ... tell parent control if it is Ok to save
-        private void ActivitiesControl_CanSave(bool param)
+        private void ActivitiesControl_ProjectStatus(object sender, ActivitiesViewModel.ProjectStatusEventArgs e)
         {
-            CanSave = param;
+            ProjectStatus = e.ProjectStatus;
         }
 
-        public ProjectReportSummary SelectedProjectItem
+        private void ActivitiesControl_IsDirtyData(object sender, ActivitiesViewModel.IsDirtyDataEventArgs e)
         {
-            get { return (ProjectReportSummary)GetValue(SelectedProjectItemProperty); }
-            set { SetValue(SelectedProjectItemProperty, value); }
+            IsDirtyData = e.IsDirtyData;
         }
+
+        private void ActivitiesControl_CanSave(object sender, ActivitiesViewModel.CanSaveEventArgs e)
+        {
+            CanSave = e.CanSave;
+        }
+              
 
         public static readonly DependencyProperty SelectedProjectItemProperty =
-            DependencyProperty.Register("SelectedProjectItem", typeof(ProjectReportSummary), typeof(ActivitiesControl), new PropertyMetadata(null, ProjectChanged));
+         DependencyProperty.RegisterAttached("SelectedProjectItem", typeof(DataRowView), typeof(ActivitiesControl),
+             new FrameworkPropertyMetadata(null, ProjectChanged));
 
+        public static void SetSelectedProjectItem(DependencyObject target, DataRowView value)
+        {
+            target.SetValue(SelectedProjectItemProperty, null);
+        }
+
+        public static DataRowView GetSelectedProjectItem(DependencyObject target)
+        {
+            return (DataRowView)target.GetValue(SelectedProjectItemProperty);
+        }
+               
         private static void ProjectChanged(DependencyObject target, DependencyPropertyChangedEventArgs e)
         {
             if (target is ActivitiesControl ctrl)
             {
-                ((ActivitiesViewModel)((ActivitiesControl)target).stats.DataContext).SelectedProjectItem = (ProjectReportSummary) e.NewValue;
+                if(e.NewValue != null)
+                    ((ActivitiesViewModel)((ActivitiesControl)target).stats.DataContext).SelectedProjectItem = (DataRowView) e.NewValue;
             }
         }
         
@@ -91,8 +108,28 @@ namespace PTR.Controls
             set { SetValue(CanSaveProperty, value); }
         }
 
-        public static readonly DependencyProperty CanSaveProperty =
-            DependencyProperty.Register("CanSave", typeof(bool), typeof(ActivitiesControl), new UIPropertyMetadata(false));
+        public static readonly DependencyProperty CanSaveProperty = DependencyProperty.Register("CanSave", typeof(bool), typeof(ActivitiesControl), new UIPropertyMetadata(false));
+
+
+        public bool IsDirtyData
+        {
+            get { return (bool)GetValue(IsDirtyDataProperty); }
+            set { SetValue(IsDirtyDataProperty, value); }
+        }
+
+        public static readonly DependencyProperty IsDirtyDataProperty = DependencyProperty.Register("IsDirtyData", typeof(bool), typeof(ActivitiesControl), new UIPropertyMetadata(false));
+
+        public ProjectStatusType ProjectStatus
+        {
+            get { return (ProjectStatusType)GetValue(ProjectStatusProperty); }
+            set { SetValue(ProjectStatusProperty, value); }
+        }
+
+        public static readonly DependencyProperty ProjectStatusProperty =
+            DependencyProperty.Register("ProjectStatus", typeof(ProjectStatusType), typeof(ActivitiesControl), new UIPropertyMetadata(ProjectStatusType.Active));
+
+
+
 
 
     }

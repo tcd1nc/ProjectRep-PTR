@@ -1,14 +1,7 @@
 ﻿namespace PTR.Models
 {
-    public class CountryModel : ViewModelBase
+    public class CountryModel : ModelBaseVM
     {
-        GenericObjModel gom;
-        public GenericObjModel GOM
-        {
-            get { return gom; }
-            set { SetField(ref gom, value); }
-        }
-
         int operatingcompanyid;
         public int OperatingCompanyID
         {

@@ -1,10 +1,9 @@
 ﻿
-
 namespace PTR.Models
 {
-    public class GenericObjModel : ViewModelBase
+    public class ZGenericObjModel : ViewModelBase
     {
-        public GenericObjModel()
+        public ZGenericObjModel()
         {
             ID = 0;
             Name = string.Empty;

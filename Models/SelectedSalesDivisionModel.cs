@@ -1,7 +1,7 @@
 ﻿
 namespace PTR.Models
 {
-    public class SelectedSalesDivisionModel : ViewModelBase
+    public class zSelectedSalesDivisionModel : ViewModelBase
     {
 
         int id;

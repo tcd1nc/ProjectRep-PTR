@@ -1,13 +1,8 @@
 ﻿
 namespace PTR.Models
 {
-    public class zTrialStatusModel : ViewModelBase
+    public class TrialStatusModel : ModelBaseVM
     {
-        GenericObjModel gom;
-        public GenericObjModel GOM
-        {
-            get { return gom; }
-            set { SetField(ref gom, value); }
-        }
+       
     }
 }

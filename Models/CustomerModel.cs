@@ -1,16 +1,8 @@
 ﻿
 namespace PTR.Models
 {
-    public class CustomerModel :ViewModelBase
-    {
-
-        GenericObjModel gom;
-        public GenericObjModel GOM
-        {
-            get { return gom; }
-            set { SetField(ref gom, value); }
-        }
-
+    public class CustomerModel : ModelBaseVM
+    {              
         string location;
         public string Location {
             get { return location; }
@@ -43,14 +35,7 @@ namespace PTR.Models
             get { return culturecode; }
             set { SetField(ref culturecode, value); }
         }
-
-        bool isenabled;
-        public bool IsEnabled
-        {
-            get { return isenabled; }
-            set { SetField(ref isenabled, value); }
-        }
-
+               
         int salesregionid;
         public int SalesRegionID
         {
@@ -63,6 +48,13 @@ namespace PTR.Models
         {
             get { return salesregionname; }
             set { SetField(ref salesregionname, value); }
+        }
+
+        string country;
+        public string CountryName
+        {
+            get { return country; }
+            set { SetField(ref country, value); }
         }
     }
 }

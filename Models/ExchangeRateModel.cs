@@ -29,5 +29,13 @@ namespace PTR.Models
             get { return countryid; }
             set { SetField(ref countryid, value); }
         }
+
+        bool isdirty;
+        public bool IsDirty
+        {
+            get { return isdirty; }
+            set { SetField(ref isdirty, value); }
+        }
+
     }
 }

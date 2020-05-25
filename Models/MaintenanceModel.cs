@@ -2,15 +2,9 @@
 
 namespace PTR.Models
 {
-    public class MaintenanceModel : ViewModelBase
+    public class MaintenanceModel : ModelBaseVM
     {
-        int id;
-        public int ID
-        {
-            get { return id; }
-            set { SetField(ref id, value); }
-        }
-
+        
         string username;
         public string UserName
         {
@@ -32,12 +26,12 @@ namespace PTR.Models
             set { SetField(ref email, value); }
         }
 
-        bool selected;
-        public bool Selected
-        {
-            get { return selected; }
-            set { SetField(ref selected, value); }
-        }
+        //bool selected;
+        //public bool Selected
+        //{
+        //    get { return selected; }
+        //    set { SetField(ref selected, value); }
+        //}
 
         bool enabled;
         public bool Enabled

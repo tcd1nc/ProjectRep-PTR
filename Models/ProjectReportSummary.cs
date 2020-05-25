@@ -2,13 +2,10 @@
 
 namespace PTR.Models
 {
-    public class ProjectReportSummary : ViewModelBase
+    public class ProjectReportSummary : ModelBaseVM
     {
-        public int ID { get; set; }
-
+       
         public string ProjectName { get; set; }
-
-        public string Description { get; set; }
 
         public string Customer { get; set; }
 
@@ -21,12 +18,13 @@ namespace PTR.Models
         public decimal EstimatedAnnualMPC { get; set; }
 
         public int TargetedVolume { get; set; }
-
-        public string ProjectStatus { get; set; }
+        
+        string projectstatus;
+        public string ProjectStatus { get { return projectstatus; } set { SetField(ref projectstatus, value); } }               
 
         public string SalesDivision { get; set; }
 
-        public string MarketSegment { get; set; }
+        public string IndustrySegment { get; set; }
 
         public string Products { get; set; }
 
@@ -47,10 +45,12 @@ namespace PTR.Models
         public int UserID { get; set; }
 
         public int ProjectTypeID { get; set; }
+                
+        public string ProjectType {get; set; }
 
-        public string ProjectType { get; set; }
+        public decimal EstimatedAnnualSalesUSD { get; set; }
 
-        public string Colour { get; set; }
+        public string ProjectTypeColour { get; set; }
 
         public bool UseUSD { get; set; }
 
@@ -75,5 +75,7 @@ namespace PTR.Models
         public bool IncompleteEP { get; set; }
 
         public bool RequiringCompletion { get; set; }
+
+        public int AccessID { get; set; }
     }
 }

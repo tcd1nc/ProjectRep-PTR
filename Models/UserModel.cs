@@ -1,17 +1,8 @@
 ﻿
-using System;
-
 namespace PTR.Models
 {
-    public class UserModel :ViewModelBase
+    public class UserModel : ModelBaseVM
     {
-        GenericObjModel gom;
-        public GenericObjModel GOM
-        {
-            get { return gom; }
-            set { SetField(ref gom, value); }
-        }               
-
         string loginname;
         public string LoginName {
             get { return loginname; }
@@ -39,11 +30,11 @@ namespace PTR.Models
             set { SetField(ref showothers, value); }
         }
 
-        string salesdivisions;
-        public string SalesDivisions
+        string businessunits;
+        public string BusinessUnits
         {
-            get { return salesdivisions; }
-            set { SetField(ref salesdivisions, value); }
+            get { return businessunits; }
+            set { SetField(ref businessunits, value); }
         }
 
         string gin;
@@ -53,41 +44,20 @@ namespace PTR.Models
             set { SetField(ref gin, value); }
         }
                 
-        FullyObservableCollection<SelectedSalesDivisionModel> salesdivisionscoll;
-        public FullyObservableCollection<SelectedSalesDivisionModel> SalesDivisionsColl
-        {
-            get { return salesdivisionscoll; }
-            set { SetField(ref salesdivisionscoll, value); }
-        }
+        //FullyObservableCollection<SelectedItemModel> salesdivisionscoll;
+        //public FullyObservableCollection<SelectedItemModel> SalesDivisionsColl
+        //{
+        //    get { return salesdivisionscoll; }
+        //    set { SetField(ref salesdivisionscoll, value); }
+        //}
 
-        FullyObservableCollection<SelectedCountriesModel> countriescoll;
-        public FullyObservableCollection<SelectedCountriesModel> CountriesColl
-        {
-            get { return countriescoll; }
-            set { SetField(ref countriescoll, value); }
-        }
-
-        bool isenabled;
-        public bool IsEnabled
-        {
-            get { return isenabled; }
-            set { SetField(ref isenabled, value); }
-        }
-
-        DateTime? lastaccessed;
-        public DateTime? LastAccessed
-        {
-            get { return lastaccessed; }
-            set { SetField(ref lastaccessed, value); }
-        }
-
-        bool shownag;
-        public bool ShowNagScreen
-        {
-            get { return shownag; }
-            set { SetField(ref shownag, value); }
-        }
-        
+        //FullyObservableCollection<SelectedItemModel> countriescoll;
+        //public FullyObservableCollection<SelectedItemModel> CountriesColl
+        //{
+        //    get { return countriescoll; }
+        //    set { SetField(ref countriescoll, value); }
+        //}
+                       
         string administrationmnu;
         public string AdministrationMnu
         {
@@ -107,26 +77,34 @@ namespace PTR.Models
             set { SetField(ref reportsmnu, value); }
         }
 
-        FullyObservableCollection<SelectedItemModel> administrationmnucoll;
-        public FullyObservableCollection<SelectedItemModel> AdministrationMnuColl
+        //FullyObservableCollection<SelectedItemModel> administrationmnucoll;
+        //public FullyObservableCollection<SelectedItemModel> AdministrationMnuColl
+        //{
+        //    get { return administrationmnucoll; }
+        //    set { SetField(ref administrationmnucoll, value); }
+        //}
+
+        //FullyObservableCollection<SelectedItemModel> projectsmnucoll;
+        //public FullyObservableCollection<SelectedItemModel> ProjectsMnuColl
+        //{
+        //    get { return projectsmnucoll; }
+        //    set { SetField(ref projectsmnucoll, value); }
+        //}
+
+        //FullyObservableCollection<SelectedItemModel> reportsmnucoll;
+        //public FullyObservableCollection<SelectedItemModel> ReportsMnuColl
+        //{
+        //    get { return reportsmnucoll; }
+        //    set { SetField(ref reportsmnucoll, value); }
+        //}
+
+        bool alloweditcompletedcancelled;
+        public bool AllowEditCompletedCancelled
         {
-            get { return administrationmnucoll; }
-            set { SetField(ref administrationmnucoll, value); }
+            get { return alloweditcompletedcancelled; }
+            set { SetField(ref alloweditcompletedcancelled, value); }
         }
 
-        FullyObservableCollection<SelectedItemModel> projectsmnucoll;
-        public FullyObservableCollection<SelectedItemModel> ProjectsMnuColl
-        {
-            get { return projectsmnucoll; }
-            set { SetField(ref projectsmnucoll, value); }
-        }
-
-        FullyObservableCollection<SelectedItemModel> reportsmnucoll;
-        public FullyObservableCollection<SelectedItemModel> ReportsMnuColl
-        {
-            get { return reportsmnucoll; }
-            set { SetField(ref reportsmnucoll, value); }
-        }
     }
     
 }

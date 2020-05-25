@@ -1,21 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PTR.Models
 {
-    public class MilestoneModel : ViewModelBase
+    public class MilestoneModel : ModelBaseVM
     {
-        public int CustomerID { get; set; }
-
-        GenericObjModel gom;
-        public GenericObjModel GOM
-        {
-            get { return gom; }
-            set { SetField(ref gom, value); }
-        }
+        public int CustomerID { get; set; }       
 
         DateTime? targetdate;
         public DateTime? TargetDate

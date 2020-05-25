@@ -1,12 +1,7 @@
 ﻿namespace PTR.Models
 {
-    public class zSalesDivisionModel :ViewModelBase
+    public class BUModel : ModelBaseVM
     {
-        GenericObjModel gom;
-        public GenericObjModel GOM
-        {
-            get { return gom; }
-            set { SetField(ref gom, value); }
-        }
+        
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace PTR.Models
 {
-    public class MarketSegmentModel : ModelBaseVM
+    public class IndustrySegmentModel : ModelBaseVM
     {       
         int industryid;
         public int IndustryID

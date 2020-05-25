@@ -1,7 +1,7 @@
 ﻿
 namespace PTR.Models
 {
-    public class ApplicationCategoriesModel : ModelBaseVM
+    public class ApplicationModel : ModelBaseVM
     {
         int industryid;
         public int IndustryID {

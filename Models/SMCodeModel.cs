@@ -1,20 +1,14 @@
 ﻿namespace PTR.Models
 {
-    public class SMCodeModel : ViewModelBase
+    public class SMCodeModel : ModelBaseVM
     {
-        int salesdivisionid;
-        
-        GenericObjModel gom;
-        public GenericObjModel GOM
+        int industryid;
+
+        public int IndustryID
         {
-            get { return gom; }
-            set { SetField(ref gom, value); }
+            get { return industryid; }
+            set { SetField(ref industryid, value); }
         }
 
-        public int SalesDivisionID
-        {
-            get { return salesdivisionid; }
-            set { SetField(ref salesdivisionid, value); }
-        }
     }
 }

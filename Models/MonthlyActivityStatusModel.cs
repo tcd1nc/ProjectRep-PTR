@@ -2,15 +2,8 @@
 
 namespace PTR.Models
 {
-    public class MonthlyActivityStatusModel : ViewModelBase
+    public class MonthlyActivityStatusModel : ModelBaseVM
     {
-        int id;
-        public int ID
-        {
-            get { return id; }
-            set { SetField(ref id, value); }
-        }
-
         int projectid;
         public int ProjectID {
             get { return projectid; }
@@ -48,19 +41,26 @@ namespace PTR.Models
             get { return trialstatusid; }
             set { SetField(ref trialstatusid, value); }
         }
-
-        bool showtrial;
-        public bool ShowTrial
-        {
-            get { return showtrial; }
-            set { SetField(ref showtrial, value); }
-        }
         
         bool isdirty;
         public bool IsDirty
         {
             get { return isdirty; }
             set { SetField(ref isdirty, value); }
+        }
+
+        bool showstatus10;
+        public bool ShowStatus10
+        {
+            get { return showstatus10; }
+            set { SetField(ref showstatus10, value); }
+        }       
+
+        decimal estimatedannualsales;
+        public decimal EstimatedAnnualSales
+        {
+            get { return estimatedannualsales; }
+            set { SetField(ref estimatedannualsales, value); }
         }
 
     }

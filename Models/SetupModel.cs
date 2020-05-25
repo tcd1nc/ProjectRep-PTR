@@ -1,30 +1,34 @@
 ﻿
+using System;
+
 namespace PTR.Models
 {
-    public class SetupModel
+    public class SetupModel : ViewModelBase
     {
-        public string Emailformat { get; set; }
-        public string Domain { get; set; }
-        public string RequiringCompletionEMTitle { get; set; }
-        public string RequiringCompletionEMMessage { get; set; }
-        public string OverdueEMTitle { get; set; }
-        public string OverdueEMMessage { get; set; }
-        public string IncompleteEPsEMTitle { get; set; }
-        public string IncompleteEPsEMMessage { get; set; }
-        public string MissingEPsEMTitle { get; set; }
-        public string MissingEPsEMMessage { get; set; }
-        public string MilestoneDueEMTitle { get; set; }
-        public string MilestoneDueEMMessage { get; set; }
-        public string SMTP { get; set; }
-        public string TargetName { get; set; }
-        public int Port { get; set; }
-        public bool EnableSSL { get; set; }
-        public bool UseExtEMCredentials { get; set; }
-        public bool UseDefaultCredentials { get; set; }
-        public string EMUser { get; set; }
-        public string EMPWD { get; set; }
-        public bool IsBodyHtml { get; set; }
-        public bool UseEmail { get; set; }
-        public string Productformat { get; set; }
+        string emailformat;
+        string domain;
+        int maxProjectNameLength;
+        bool ePRequired;
+        int defaultTrialStatusID;
+        int statusIDforTrials;
+        bool validateProducts;
+        bool colouriseplaybookreport;
+        string defaultsalesstatuses;
+        char productdelimiter;
+        DateTime defaultmasterliststartmonth;
+        bool disablepreviousmonths;
+        public string Emailformat { get { return emailformat;} set { SetField(ref emailformat, value); }}
+        public string Domain { get { return domain; } set { SetField(ref domain, value); } }
+        public int MaxProjectNameLength { get { return maxProjectNameLength; } set { SetField(ref maxProjectNameLength, value); } }
+        public bool EPRequired { get { return ePRequired; } set { SetField(ref ePRequired, value); } }
+        public int DefaultTrialStatusID { get { return defaultTrialStatusID; } set { SetField(ref defaultTrialStatusID, value); } }
+        public int StatusIDforTrials { get { return statusIDforTrials; } set { SetField(ref statusIDforTrials, value); } }
+        public bool ValidateProducts { get { return validateProducts; } set { SetField(ref validateProducts, value); } }
+        public bool ColourisePlaybookReport { get { return colouriseplaybookreport; } set { SetField(ref colouriseplaybookreport, value); } }
+        public string DefaultSalesStatuses { get { return defaultsalesstatuses; } set { SetField(ref defaultsalesstatuses, value); } }
+        public char ProductDelimiter { get { return productdelimiter; } set { SetField(ref productdelimiter, value); } }
+        public DateTime DefaultMasterListStartMonth { get { return defaultmasterliststartmonth; } set { SetField(ref defaultmasterliststartmonth, value); } }
+        public bool DisablePreviousMonths { get { return disablepreviousmonths; } set { SetField(ref disablepreviousmonths, value); } }
+
     }
 }

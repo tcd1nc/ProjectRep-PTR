@@ -2,7 +2,7 @@
 
 namespace PTR.Models
 {
-    public class ProjectModel :ViewModelBase
+    public class ProjectModel : ModelBaseVM
     {
         
         #region Child Models
@@ -21,6 +21,13 @@ namespace PTR.Models
             set { SetField(ref ownerid, value); }
         }
 
+        int creatorid;
+        public int CreatorID
+        {
+            get { return creatorid; }
+            set { SetField(ref creatorid, value); }
+        }
+
         int salesdivisionid;
         public int SalesDivisionID
         {
@@ -28,11 +35,11 @@ namespace PTR.Models
             set { SetField(ref salesdivisionid, value); }
         }
               
-        int marketsegmentid;
-        public int MarketSegmentID
+        int industrysegmentid;
+        public int IndustrySegmentID
         {
-            get { return marketsegmentid; }
-            set { SetField(ref marketsegmentid, value); }
+            get { return industrysegmentid; }
+            set { SetField(ref industrysegmentid, value); }
         }
 
         int applicationid;
@@ -43,14 +50,7 @@ namespace PTR.Models
         }
 
         #endregion
-
-
-        GenericObjModel gom;
-        public GenericObjModel GOM
-        {
-            get { return gom; }
-            set { SetField(ref gom, value); }
-        }
+                      
               
         decimal estimatedannualsales;
         public decimal EstimatedAnnualSales
@@ -100,26 +100,12 @@ namespace PTR.Models
             get { return completeddate; }
             set { SetField(ref completeddate, value); }
         }
-        
-        bool salesforecastconfirmed;
-        public bool SalesForecastConfirmed
-        {
-            get { return salesforecastconfirmed; }
-            set { SetField(ref salesforecastconfirmed, value); }
-        }
 
         int targetedvolume;
         public int TargetedVolume
         {
             get { return targetedvolume; }
             set { SetField(ref targetedvolume, value); }
-        }
-
-        DateTime? expecteddatefirstsales;
-        public DateTime? ExpectedDateFirstSales
-        {
-            get { return expecteddatefirstsales; }
-            set { SetField(ref expecteddatefirstsales, value); }
         }
 
         int newbusinesscategoryid;
@@ -177,13 +163,6 @@ namespace PTR.Models
             get { return eprequired; }
             set { SetField(ref eprequired, value); }
         }
-                
-        int cdpccpid;
-        public int CDPCCPID
-        {
-            get { return cdpccpid; }
-            set { SetField(ref cdpccpid, value); }
-        }
 
         bool differentiatedtechnology;
         public bool DifferentiatedTechnology
@@ -205,6 +184,68 @@ namespace PTR.Models
             get { return eps; }
             set { SetField(ref eps, value); }
         }
+              
+        string comments;
+        public string Comments
+        {
+            get { return comments; }
+            set { SetField(ref comments, value); }
+        }
+
+        bool isnewbusiness;
+        public bool IsNewBusiness
+        {
+            get { return isnewbusiness; }
+            set { SetField(ref isnewbusiness, value); }
+        }
+                
+        int incompletereasonid;
+        public int IncompleteReasonID
+        {
+            get { return incompletereasonid; }
+            set { SetField(ref incompletereasonid, value); }
+        }
+
+        int priorityid;
+        public int PriorityID
+        {
+            get { return priorityid; }
+            set { SetField(ref priorityid, value); }
+        }
+
+        int sponsorid;
+        public int SponsorID
+        {
+            get { return sponsorid; }
+            set { SetField(ref sponsorid, value); }
+        }
+
+        int miscdataid;
+        public int MiscDataID
+        {
+            get { return miscdataid; }
+            set { SetField(ref miscdataid, value); }
+        }
+
+        bool allownonowneredits;
+        public bool AllowNonOwnerEdits
+        {
+            get { return allownonowneredits; }
+            set { SetField(ref allownonowneredits, value); }
+        }
         
+        bool allownonownermilestoneaccess;
+        public bool AllowNonOwnerMileStoneAccess
+        {
+            get { return allownonownermilestoneaccess; }
+            set { SetField(ref allownonownermilestoneaccess, value); }
+        }
+
+        decimal unitcost;
+        public decimal UnitCost
+        {
+            get { return unitcost; }
+            set { SetField(ref unitcost, value); }
+        }
     }
 }

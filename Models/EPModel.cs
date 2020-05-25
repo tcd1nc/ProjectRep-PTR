@@ -2,18 +2,11 @@
 
 namespace PTR.Models
 {
-    public class EPModel : ViewModelBase
+    public class EPModel : ModelBaseVM
     {        
         public int ProjectID { get; set; }
         public int CustomerID { get; set; }
-
-        GenericObjModel gom;
-        public GenericObjModel GOM
-        {
-            get { return gom; }
-            set { SetField(ref gom, value); }
-        }       
-       
+             
         string objectives;
         public string Objectives
         {

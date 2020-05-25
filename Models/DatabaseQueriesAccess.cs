@@ -2,27 +2,31 @@
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
 using static PTR.StaticCollections;
 using static PTR.Constants;
 using System.Runtime.CompilerServices;
-using System.Globalization;
 using System.Diagnostics;
 using System.Reflection;
 using PTR.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PTR
 {
     static class DatabaseQueries
-    {
-        const int datefieldlen = 15;
+    {        
         const int multipleidslen = 255;
-        const int projectnamelength = 25;
         const int namefieldlen = 50;
         const int descrfieldlen = 255;
         const int maxdescrlen = 2000;
         const int culturecodelen = 10;
         const int ginlen = 10;
+        const int colourlen = 20;
+        const string spprefix = "PTR";
+        const int commentslen = 500;
+        //const int datatypelen = 20;
+        const int alignmentlen = 20;
+        //const int reportfieldformatlen = 20;
 
         #region Get Queries
 
@@ -35,7 +39,7 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetSetup";
+                    oc.CommandText = spprefix + "GetSetup";
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
@@ -43,81 +47,18 @@ namespace PTR
                             setup = new SetupModel()
                             {
                                 Domain = or["Domain"].ToString() ?? string.Empty,
-                                Emailformat = or["Emailformat"].ToString() ?? string.Empty,
-                                IncompleteEPsEMMessage = or["IncompleteEPsEMMessage"].ToString() ?? string.Empty,
-                                IncompleteEPsEMTitle = or["IncompleteEPsEMTitle"].ToString() ?? string.Empty,
-                                MissingEPsEMMessage = or["MissingEPsEMMessage"].ToString() ?? string.Empty,
-                                MissingEPsEMTitle = or["MissingEPsEMTitle"].ToString() ?? string.Empty,
-                                OverdueEMMessage = or["OverdueEMMessage"].ToString() ?? string.Empty,
-                                OverdueEMTitle = or["OverdueEMTitle"].ToString() ?? string.Empty,
-                                RequiringCompletionEMMessage = or["RequiringCompletionEMMessage"].ToString() ?? string.Empty,
-                                RequiringCompletionEMTitle = or["RequiringCompletionEMTitle"].ToString() ?? string.Empty,
-                                MilestoneDueEMMessage = or["MilestoneDueEMMessage"].ToString() ?? string.Empty,
-                                MilestoneDueEMTitle = or["MilestoneDueEMTitle"].ToString() ?? string.Empty,
-                                IsBodyHtml = ConvertObjToBool(or["IsBodyHtml"]),
-                                EnableSSL = ConvertObjToBool(or["EnableSSL"]),
-                                SMTP = or["SMTP"].ToString() ?? string.Empty,
-                                Port = ConvertObjToInt(or["Port"]),
-                                UseDefaultCredentials = ConvertObjToBool(or["UseDefaultCredentials"]),
-                                UseExtEMCredentials = ConvertObjToBool(or["UseExtEMCredentials"]),
-                                EMPWD = or["EMPWD"].ToString() ?? string.Empty,
-                                EMUser = or["EMUser"].ToString() ?? string.Empty,
-                                TargetName = or["TargetName"].ToString() ?? string.Empty,
-                                UseEmail = ConvertObjToBool(or["UseEmail"]),
-                                Productformat = or["Productformat"].ToString() ?? string.Empty
+                                Emailformat = or["Emailformat"].ToString() ?? string.Empty,                                
+                                MaxProjectNameLength = ConvertObjToInt(or["MaxProjectNameLength"]),
+                                EPRequired = ConvertObjToBool(or["EPRequired"]),
+                                DefaultTrialStatusID = ConvertObjToInt(or["DefaultTrialStatusID"]),
+                                StatusIDforTrials = ConvertObjToInt(or["StatusIDforTrials"]),
+                                ValidateProducts = ConvertObjToBool(or["ValidateProducts"]),
+                                ColourisePlaybookReport = ConvertObjToBool(or["ColourisePlaybookReport"]),
+                                DefaultSalesStatuses = or["DefaultSalesStatuses"].ToString() ?? string.Empty,
+                                ProductDelimiter = ConvertObjToChar(or["ProductDelimiter"]),
+                                DefaultMasterListStartMonth = (DateTime)ConvertObjToDate(or["DefaultMasterListStartMonth"]),
+                                DisablePreviousMonths = ConvertObjToBool(or["DisablePreviousMonths"])
                             };
-                        }
-                    }                    
-                }
-            }
-            catch (SqlException sqle)
-            {
-                HandleSQLError(sqle);
-            }
-            catch (Exception e)
-            {
-                ShowError(e);
-            }
-            return setup;
-        }
-               
-        public static FullyObservableCollection<ProjectReportSummary> GetProjectList(string countries, string projecttypes, string associates, string projectstatuses, int salesdivisionid)
-        {
-            FullyObservableCollection<ProjectReportSummary> projects = new FullyObservableCollection<ProjectReportSummary>();
-            try
-            {               
-                using (SqlCommand oc = new SqlCommand())
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetProjectList";
-                    oc.Parameters.Add("@countries", SqlDbType.NVarChar, multipleidslen).Value = countries ?? string.Empty;                    
-                    oc.Parameters.Add("@projecttypes", SqlDbType.NVarChar, multipleidslen).Value = projecttypes ?? string.Empty;
-                    oc.Parameters.Add("@projectstatuses", SqlDbType.NVarChar, multipleidslen).Value = projectstatuses ?? string.Empty;
-                    oc.Parameters.Add("@users", SqlDbType.NVarChar, multipleidslen).Value = associates ?? string.Empty;
-                    oc.Parameters.Add("@salesdivisionid", SqlDbType.Int).Value = salesdivisionid;
-                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.GOM.ID;
-                    using (SqlDataReader or = oc.ExecuteReader())
-                    {
-                        while (or.Read())
-                        {
-                            projects.Add(new ProjectReportSummary()
-                            {
-                                ID = ConvertObjToInt(or["ProjectID"]),
-                                ProjectName = or["ProjectName"].ToString() ?? string.Empty,
-                                EstimatedAnnualSales = ConvertObjToDecimal(or["EstimatedAnnualSales"]),
-                                SalesForecastConfirmed = ConvertObjToBool(or["SalesForecastConfirmed"]),
-                                Associate = or["UserName"].ToString() ?? string.Empty,
-                                SalesDivision = or["SalesDivision"].ToString() ?? string.Empty,
-                                Customer = or["CustomerName"].ToString() ?? string.Empty,
-                                CultureCode = (ConvertObjToBool(or["UseUSD"])) ? "en-US" : or["CultureCode"].ToString() ?? string.Empty,
-                                ProjectStatus = GetProjectStatusFromID(or["ProjectStatusID"]),
-                                ExpectedDateNewSales = ConvertObjToDate(or["ExpectedDateFirstSales"]),
-                                CustomerID = ConvertObjToInt(or["CustomerID"]),
-                                ProjectType = or["ProjectType"].ToString() ?? string.Empty,
-                                KPM = ConvertObjToBool(or["KPM"]),
-                                Colour = or["Colour"].ToString() ?? string.Empty
-                            });
                         }
                     }
                 }
@@ -130,19 +71,52 @@ namespace PTR
             {
                 ShowError(e);
             }
-            return projects;
+            return setup;
         }
-                
-        public static ProjectModel GetSingleProject(int projectid)
-        {
-            ProjectModel newproject = new ProjectModel();
+
+        public static DataTable GetProjectList(string countries, string associates)
+        {            
+            DataTable dt = new DataTable(UserProjectList);
             try
-            { 
+            {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetSingleProject";
+                    oc.CommandText = spprefix + "GetProjectList";
+                    oc.Parameters.Add("@countries", SqlDbType.NVarChar, multipleidslen).Value = countries ?? string.Empty;
+                    oc.Parameters.Add("@users", SqlDbType.NVarChar, multipleidslen).Value = associates ?? string.Empty;
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.ID;
+                    
+                    using (SqlDataAdapter da = new SqlDataAdapter(oc))
+                    {
+                        da.Fill(dt);
+                    }
+
+                    ProcessReportColumns(ref dt, dt.TableName);
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return dt;
+        }
+
+        public static ProjectModel GetSingleProject(int projectid)
+        {
+            ProjectModel newproject = new ProjectModel();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetSingleProject";
                     oc.Parameters.Add("@projectid", SqlDbType.Int).Value = projectid;
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
@@ -150,22 +124,17 @@ namespace PTR
                         {
                             newproject = new ProjectModel
                             {
-                                GOM = new GenericObjModel()
-                                {
-                                    ID = projectid,
-                                    Name = or["Name"].ToString() ?? string.Empty,
-                                    Description = or["Description"].ToString() ?? string.Empty
-                                },
+                                ID = projectid,
+                                Name = or["Name"].ToString() ?? string.Empty,
+                                Description = or["Description"].ToString() ?? string.Empty,
                                 CustomerID = ConvertObjToInt(or["CustomerID"]),
-                                MarketSegmentID = ConvertObjToInt(or["MarketSegmentID"]),
+                                IndustrySegmentID = ConvertObjToInt(or["IndustrySegmentID"]),
                                 SalesDivisionID = ConvertObjToInt(or["SalesDivisionID"]),
                                 OwnerID = ConvertObjToInt(or["OwnerID"]),
                                 EstimatedAnnualSales = ConvertObjToDecimal(or["EstimatedAnnualSales"]),
-                                SalesForecastConfirmed = ConvertObjToBool(or["SalesForecastConfirmed"]),
                                 Products = or["Products"].ToString() ?? string.Empty,
                                 Resources = or["Resources"].ToString() ?? string.Empty,
-                                ProjectStatusID = ConvertObjToInt(or["ProjectStatusID"]),
-                                ExpectedDateFirstSales = ConvertObjToDate(or["ExpectedDateFirstSales"]),
+                                ProjectStatusID = ConvertObjToInt(or["ProjectStatusID"]),                              
                                 CompletedDate = ConvertObjToDate(or["CompletedDate"]),
                                 TargetedVolume = ConvertObjToInt(or["TargetedVolume"]),
                                 ApplicationID = ConvertObjToInt(or["ApplicationID"]),
@@ -176,10 +145,18 @@ namespace PTR
                                 SMCodeID = ConvertObjToInt(or["SMCodeID"]),
                                 ProjectTypeID = ConvertObjToInt(or["ProjectTypeID"]),
                                 KPM = ConvertObjToBool(or["KPM"]),
-                                EPRequired = ConvertObjToBool(or["EPRequired"]),
-                                CDPCCPID = ConvertObjToInt(or["CDPCCPID"]),
-                                DifferentiatedTechnology = ConvertObjToBool(or["DifferentiatedTechnology"])
-
+                                EPRequired = ConvertObjToBool(or["EPRequired"]),                               
+                                DifferentiatedTechnology = ConvertObjToBool(or["DifferentiatedTechnology"]),
+                                Comments = or["Comments"].ToString() ?? string.Empty,
+                                IsNewBusiness = ConvertObjToBool(or["IsNewBusiness"]),
+                                IncompleteReasonID = ConvertObjToInt(or["IncompleteReasonID"]),
+                                PriorityID = ConvertObjToInt(or["PriorityID"]),
+                                SponsorID = ConvertObjToInt(or["SponsorID"]),
+                                MiscDataID = ConvertObjToInt(or["MiscellaneousDataID"]),
+                                AllowNonOwnerEdits = ConvertObjToBool(or["AllowNonOwnerEdits"]),
+                                AllowNonOwnerMileStoneAccess = ConvertObjToBool(or["AllowNonOwnerMilestoneAccess"]),
+                                CreatorID = ConvertObjToInt(or["CreatorID"]),
+                                UnitCost = ConvertObjToDecimal(or["UnitCost"])
                             };
                         }
                     }
@@ -196,33 +173,26 @@ namespace PTR
             return newproject;
         }
 
-        public static ProjectReportSummary GetSimpleProjectDetails(int projectid)
+        public static DataRowView GetBasicProjectDetails(int projectid, int userid)
         {
-            ProjectReportSummary project = new ProjectReportSummary();
+            DataTable project = new DataTable(BasicProjectDetails);
+            DataRowView dr = null;           
             try
             {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetSimpleProjectDetails";
+                    oc.CommandText = spprefix + "GetSimpleProjectDetails";
                     oc.Parameters.Add("@projectid", SqlDbType.Int).Value = projectid;
-                    using (SqlDataReader or = oc.ExecuteReader())
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = userid;
+                    
+                    using (SqlDataAdapter da = new SqlDataAdapter(oc))
                     {
-                        while (or.Read())
-                        {
-                            project = new ProjectReportSummary()
-                            {
-                                ID = projectid,
-                                ProjectName = or["ProjectName"].ToString() ?? string.Empty,
-                                EstimatedAnnualSales = ConvertObjToDecimal(or["EstimatedAnnualSales"]),
-                                SalesForecastConfirmed = ConvertObjToBool(or["SalesForecastConfirmed"]),
-                                CultureCode = or["CultureCode"].ToString() ?? string.Empty,
-                                ExpectedDateNewSales = ConvertObjToDate(or["ExpectedDateFirstSales"]),
-                                CustomerID = ConvertObjToInt(or["CustomerID"])
-                            };
-                        }
+                        da.Fill(project);
                     }
+                    
+                    dr = project.DefaultView[0];
                 }
             }
             catch (SqlException sqle)
@@ -233,7 +203,7 @@ namespace PTR
             {
                 ShowError(e);
             }
-            return project;
+            return dr;
         }
 
         public static EPModel GetEvaluationPlan(int id)
@@ -245,7 +215,7 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetEvaluationPlan";
+                    oc.CommandText = spprefix + "GetEvaluationPlan";
                     oc.Parameters.AddWithValue("@id", id);
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
@@ -253,11 +223,8 @@ namespace PTR
                         {
                             ep = new EPModel()
                             {
-                                GOM = new GenericObjModel()
-                                {
-                                    ID = id,
-                                    Description = or["Title"].ToString() ?? string.Empty
-                                },
+                                ID = id,
+                                Description = or["Title"].ToString() ?? string.Empty,                               
                                 ProjectID = ConvertObjToInt(or["ProjectID"]),
                                 Strategy = or["Strategy"].ToString() ?? string.Empty,
                                 Objectives = or["Objectives"].ToString() ?? string.Empty,
@@ -265,7 +232,7 @@ namespace PTR
                                 Discussed = ConvertObjToDate(or["Discussed"]),
                                 CustomerID = ConvertObjToInt(or["CustomerID"])
                             };
-                        }                        
+                        }
                     }
                 }
             }
@@ -289,7 +256,7 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetProjectEvaluationPlans";
+                    oc.CommandText = spprefix + "GetProjectEvaluationPlans";
                     oc.Parameters.AddWithValue("@projectid", projectid);
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
@@ -297,11 +264,9 @@ namespace PTR
                         {
                             eps.Add(new EPModel()
                             {
-                                GOM = new GenericObjModel()
-                                {
-                                    ID = ConvertObjToInt(or["ID"]),
-                                    Description = or["Title"].ToString() ?? string.Empty
-                                },
+                                ID = ConvertObjToInt(or["ID"]),
+                                Description = or["Title"].ToString() ?? string.Empty,
+                                ProjectID = projectid,
                                 Strategy = or["Strategy"].ToString() ?? string.Empty,
                                 Objectives = or["Objectives"].ToString() ?? string.Empty,
                                 Created = ConvertObjToDate(or["Created"]),
@@ -322,134 +287,56 @@ namespace PTR
             return eps;
         }
 
-        public static FullyObservableCollection<MonthlyActivityStatusModel> GetMonthlyProjectStatuses(int projectid)
-        {            
-            FullyObservableCollection<MonthlyActivityStatusModel> projectstatuses = new FullyObservableCollection<MonthlyActivityStatusModel>();
-            try
-            { 
-                using (SqlCommand oc = new SqlCommand())
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetProjectActivities";
-                    oc.Parameters.AddWithValue("@projectid", projectid);
-                    using (SqlDataReader or = oc.ExecuteReader())
-                    {
-                        while (or.Read())
-                        {
-                            projectstatuses.Add(new MonthlyActivityStatusModel()
-                            {
-                                ID = ConvertObjToInt(or["ID"]),
-                                Comments = or["Comments"].ToString() ?? string.Empty,
-                                ProjectID = projectid,
-                                StatusID = ConvertObjToInt(or["StatusID"]),
-                                StatusMonth = ConvertObjToDate(or["StatusMonth"]),
-                                TrialStatusID = ConvertObjToInt(or["TrialStatusID"]),
-                                ExpectedDateFirstSales = ConvertObjToDate(or["ExpectedDateFirstSales"])
-                            });
-                        }
-                    }
-                }
-            }
-            catch (SqlException sqle)
-            {
-                HandleSQLError(sqle);
-            }
-            catch (Exception e)
-            {
-                ShowError(e);
-            }            
-            return projectstatuses;
-        }
-
-        public static ProjectMonthRange GetFirstLastMonths()
-        {
-            ProjectMonthRange projectrange = new ProjectMonthRange();
-            try
-            {
-                using (SqlCommand oc = new SqlCommand())
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetFirstLastMonths";
-                    using (SqlDataReader or = oc.ExecuteReader())
-                    {
-                        while (or.Read())
-                        {
-                            projectrange.StartDate = ConvertObjToDate(or["FirstMonth"]);
-                            projectrange.LastDate = ConvertObjToDate(or["LastMonth"]);
-                        }
-                    }
-                }
-            }
-            catch (SqlException sqle)
-            {
-                HandleSQLError(sqle);
-            }
-            catch (Exception e)
-            {
-                ShowError(e);
-            }
-            return projectrange;
-        }
-
-        public static decimal GetExchangeRate(int countryid, DateTime mth)
-        {
-            decimal exchangerate = 1;
-            Collection<ExchangeRateModel> exchangeratescoll = new Collection<ExchangeRateModel>();
-            try
-            { 
-                using(SqlCommand oc = new SqlCommand())
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetExchangeRates";
-                    oc.Parameters.AddWithValue("@countryid", countryid);
-                    using (SqlDataReader or = oc.ExecuteReader())
-                    {
-                        while (or.Read())
-                        {
-                            exchangeratescoll.Add(new ExchangeRateModel()
-                            {
-                                ID = ConvertObjToInt(or["ID"]),
-                                ExRateMonth = ConvertObjToDate(or["ExRateMonth"]),
-                                ExRate = ConvertObjToDecimal(or["ExRate"])
-                            });
-                        }
-                    }
-                }
-                
-                foreach (ExchangeRateModel er in exchangeratescoll)
-                {
-                    exchangerate = Convert.ToDecimal(er.ExRate);
-                    if (ConvertDateToMonthInt(er.ExRateMonth) == ConvertDateToMonthInt(mth))
-                        break;
-                }
-
-                if (exchangerate <= 0)
-                    exchangerate = 1;
-            }
-            catch (SqlException sqle)
-            {
-                HandleSQLError(sqle);
-            }
-            catch (Exception e)
-            {
-                ShowError(e);
-            }
-            return 1/exchangerate;
-        }
+        //public static FullyObservableCollection<MonthlyActivityStatusModel> GetMonthlyProjectStatuses(int projectid)
+        //{
+        //    FullyObservableCollection<MonthlyActivityStatusModel> projectstatuses = new FullyObservableCollection<MonthlyActivityStatusModel>();
+        //    try
+        //    {
+        //        using (SqlCommand oc = new SqlCommand())
+        //        {
+        //            oc.Connection = Conn;
+        //            oc.CommandType = CommandType.StoredProcedure;
+        //            oc.CommandText = spprefix + "GetProjectActivities";
+        //            oc.Parameters.AddWithValue("@projectid", projectid);
+        //            using (SqlDataReader or = oc.ExecuteReader())
+        //            {
+        //                while (or.Read())
+        //                {
+        //                    projectstatuses.Add(new MonthlyActivityStatusModel()
+        //                    {
+        //                        ID = ConvertObjToInt(or["ID"]),
+        //                        Comments = or["Comments"].ToString() ?? string.Empty,
+        //                        ProjectID = projectid,
+        //                        StatusID = ConvertObjToInt(or["StatusID"]),
+        //                        StatusMonth = ConvertObjToDate(or["StatusMonth"]),
+        //                        TrialStatusID = ConvertObjToInt(or["TrialStatusID"]),
+        //                        ExpectedDateFirstSales = ConvertObjToDate(or["ExpectedDateFirstSales"])                                
+        //                    });
+        //                }
+        //            }
+        //        }
+        //    }
+        //    catch (SqlException sqle)
+        //    {
+        //        HandleSQLError(sqle);
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        ShowError(e);
+        //    }
+        //    return projectstatuses;
+        //}                     
 
         public static FullyObservableCollection<ExchangeRateModel> GetExchangeRates(int countryid)
         {
             FullyObservableCollection<ExchangeRateModel> exchangeratescoll = new FullyObservableCollection<ExchangeRateModel>();
             try
-            { 
+            {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetExchangeRates";
+                    oc.CommandText = spprefix + "GetExchangeRates";
                     oc.Parameters.AddWithValue("@countryid", countryid);
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
@@ -460,7 +347,8 @@ namespace PTR
                                 ID = ConvertObjToInt(or["ID"]),
                                 ExRateMonth = ConvertObjToDate(or["ExRateMonth"]),
                                 ExRate = ConvertObjToDecimal(or["ExRate"]),
-                                CountryID = countryid
+                                CountryID = countryid,
+                                IsDirty = false
                             });
                         }
                     }
@@ -475,99 +363,35 @@ namespace PTR
                 ShowError(e);
             }
             return exchangeratescoll;
-        }
-
-        private static ProjectMonthRange GetFirstLastMonthsForProject(int projectid)
-        {
-            ProjectMonthRange projectrange = new ProjectMonthRange();
-            try
-            { 
-                using (SqlCommand oc = new SqlCommand())
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetFirstLastMonthsForProject";
-                    oc.Parameters.AddWithValue("@projectid", projectid);
-                    using (SqlDataReader or = oc.ExecuteReader())
-                    {
-                        while (or.Read())
-                        {
-                            projectrange.StartDate = ConvertObjToDate(or["FirstMonth"]);
-                            projectrange.LastDate = ConvertObjToDate(or["LastMonth"]);
-                        }
-                    }
-                }
-            }
-            catch (SqlException sqle)
-            {
-                HandleSQLError(sqle);
-            }
-            catch (Exception e)
-            {
-                ShowError(e);
-            }
-            return projectrange;
-        }
-
-        public static DateTime? GetProjectActivatedDate(int projectid)
-        {
-            DateTime? activated = null;
-            try
-            { 
-                using (SqlCommand oc = new SqlCommand())
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetProjectActivatedDate";
-                    oc.Parameters.AddWithValue("@projectid", projectid);
-                    using (SqlDataReader or = oc.ExecuteReader())
-                    {
-                        while (or.Read())
-                        {
-                            activated = ConvertObjToDate(or["ActivatedDate"]);
-                        }
-                    }
-                }
-            }
-            catch (SqlException sqle)
-            {
-                HandleSQLError(sqle);
-            }
-            catch (Exception e)
-            {
-                ShowError(e);
-            }
-            return activated;
-        }        
-
+        }               
+        
         public static FullyObservableCollection<CustomerModel> GetCustomers()
         {
             FullyObservableCollection<CustomerModel> customers = new FullyObservableCollection<CustomerModel>();
             try
-            { 
+            {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetCustomers";
+                    oc.CommandText = spprefix + "GetCustomers";
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
                             customers.Add(new CustomerModel
-                            {
-                                GOM = new GenericObjModel()
-                                {
-                                    ID = ConvertObjToInt(or["ID"]),
-                                    Name = or["Name"].ToString() ?? string.Empty,
-                                    Deleted = ConvertObjToBool(or["Deleted"])
-                                },
+                            {                                
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty,
+                                Deleted = ConvertObjToBool(or["Deleted"]),
                                 Number = or["Number"].ToString() ?? string.Empty,
                                 Location = or["Location"].ToString() ?? string.Empty,
                                 CountryID = ConvertObjToInt(or["CountryID"]),
                                 CultureCode = or["CultureCode"].ToString() ?? string.Empty,
                                 SalesRegionID = ConvertObjToInt(or["SalesRegionID"]),
-                                SalesRegionName = or["SalesRegionName"].ToString() ?? string.Empty
+                                SalesRegionName = or["SalesRegionName"].ToString() ?? string.Empty,
+                                CountryName = or["Country"].ToString() ?? string.Empty,
+                                IsEnabled = ConvertObjToBool(or["IsDeletable"])
                             });
                         }
                     }
@@ -583,39 +407,36 @@ namespace PTR
             }
             return customers;
         }
-               
+
         public static FullyObservableCollection<UserModel> GetUsers()
         {
             FullyObservableCollection<UserModel> users = new FullyObservableCollection<UserModel>();
             try
-            { 
+            {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetUsers";
+                    oc.CommandText = spprefix + "GetUsers";
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
                             users.Add(new UserModel
                             {
-                                GOM = new GenericObjModel()
-                                {
-                                    ID = ConvertObjToInt(or["ID"]),
-                                    Name = or["Name"].ToString() ?? string.Empty,
-                                    Deleted = ConvertObjToBool(or["Deleted"])
-                                },
-                                Administrator = ConvertObjToBool(or["Administrator"]),                               
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty,
+                                Deleted = ConvertObjToBool(or["Deleted"]),
+                                Administrator = ConvertObjToBool(or["Administrator"]),
                                 AdministrationMnu = or["AdministrationMnu"].ToString() ?? string.Empty,
                                 ProjectsMnu = or["ProjectsMnu"].ToString() ?? string.Empty,
                                 ReportsMnu = or["ReportsMnu"].ToString() ?? string.Empty,
                                 ShowOthers = ConvertObjToBool(or["ShowOthers"]),
                                 LoginName = or["LoginName"].ToString() ?? string.Empty,
                                 GIN = or["GIN"].ToString() ?? string.Empty,
-                                SalesDivisions = or["SalesDivisions"].ToString() ?? string.Empty,
-                                Email = or["Email"].ToString() ?? string.Empty,
-                                ShowNagScreen = ConvertObjToBool(or["ShowNag"])
+                                BusinessUnits = or["SalesDivisions"].ToString() ?? string.Empty,
+                                Email = or["Email"].ToString() ?? string.Empty,                                
+                                AllowEditCompletedCancelled = ConvertObjToBool(or["AllowEditCompletedCancelled"])
                             });
                         }
                     }
@@ -630,81 +451,67 @@ namespace PTR
                 ShowError(e);
             }
             return users;
-        }               
+        }
 
         public static UserModel GetUserFromLogin(string loginname)
         {
-            UserModel user = new UserModel
-            {
-                GOM = new GenericObjModel() { }
-            };
-
+            UserModel user = new UserModel();
             try
-            { 
+            {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetUserFromLogin";
-                    oc.Parameters.Add("@loginname", SqlDbType.NVarChar, 50).Value = loginname;
+                    oc.CommandText = spprefix + "GetUserFromLogin";
+                    oc.Parameters.Add("@loginname", SqlDbType.NVarChar, namefieldlen).Value = loginname;
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
-                            user.GOM = new GenericObjModel()
-                            {
-                                ID = ConvertObjToInt(or["ID"]),
-                                Name = or["Name"].ToString() ?? string.Empty,
-                                Deleted = ConvertObjToBool(or["Deleted"])
-                            };
+                            user.ID = ConvertObjToInt(or["ID"]);
+                            user.Name = or["Name"].ToString() ?? string.Empty;
+                            user.Deleted = ConvertObjToBool(or["Deleted"]);
                             user.GIN = or["GIN"].ToString() ?? string.Empty;
-                            user.SalesDivisions = or["SalesDivisions"].ToString() ?? string.Empty;
-                            user.Administrator = ConvertObjToBool(or["Administrator"]);                          
+                            user.BusinessUnits = or["SalesDivisions"].ToString() ?? string.Empty;
+                            user.Administrator = ConvertObjToBool(or["Administrator"]);
                             user.AdministrationMnu = or["AdministrationMnu"].ToString() ?? string.Empty;
                             user.ProjectsMnu = or["ProjectsMnu"].ToString() ?? string.Empty;
                             user.ReportsMnu = or["ReportsMnu"].ToString() ?? string.Empty;
                             user.ShowOthers = ConvertObjToBool(or["ShowOthers"]);
-                            user.Email = or["Email"].ToString() ?? string.Empty;
-                            user.LastAccessed = ConvertObjToDate(or["AccessDate"]);
-                            user.ShowNagScreen = ConvertObjToBool(or["ShowNag"]);
+                            user.Email = or["Email"].ToString() ?? string.Empty;                      
+                            user.AllowEditCompletedCancelled = ConvertObjToBool(or["AllowEditCompletedCancelled"]);
                         }
                     }
                 }
             }
-            catch (SqlException sqle)
+            catch
             {
-               HandleSQLError(sqle);               
-            }
-            catch (Exception e)
-            {
-                ShowError(e);
+                user.ID = 0;
             }
             return user;
         }
-               
-        public static FullyObservableCollection<MarketSegmentModel> GetMarketSegments()
+
+        public static FullyObservableCollection<IndustrySegmentModel> GetIndustrySegments()
         {
-            FullyObservableCollection<MarketSegmentModel> marketsegments = new FullyObservableCollection<MarketSegmentModel>();
+            FullyObservableCollection<IndustrySegmentModel> industrysegments = new FullyObservableCollection<IndustrySegmentModel>();
             try
-            { 
+            {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetMarketSegments";
+                    oc.CommandText = spprefix + "GetIndustrySegments";
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
-                            marketsegments.Add(new MarketSegmentModel
+                            industrysegments.Add(new IndustrySegmentModel
                             {
-                                GOM = new GenericObjModel()
-                                {
-                                    ID = ConvertObjToInt(or["ID"]),
-                                    Name = or["Name"].ToString() ?? string.Empty,
-                                    Deleted = ConvertObjToBool(or["Deleted"])
-                                },
-                                IndustryID = ConvertObjToInt(or["IndustryID"])
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty,
+                                IndustryID = ConvertObjToInt(or["IndustryID"]),
+                                IsChecked = false,
+                                IsEnabled = ConvertObjToBool(or["IsDeletable"])
                             });
                         }
                     }
@@ -718,7 +525,7 @@ namespace PTR
             {
                 ShowError(e);
             }
-            return marketsegments;
+            return industrysegments;
         }
 
         public static Collection<ActivityStatusCodesModel> GetActivityStatusCodes()
@@ -730,28 +537,23 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetActivityStatusCodes";
+                    oc.CommandText = spprefix + "GetActivityStatusCodes";
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
                             activitystatuscodes.Add(new ActivityStatusCodesModel
                             {
-                                GOM = new GenericObjModel()
-                                {
-                                    ID = ConvertObjToInt(or["ID"]),
-                                    Name = or["Status"].ToString() ?? string.Empty,
-                                    Description = or["Description"].ToString() ?? string.Empty,
-                                    Deleted = ConvertObjToBool(or["Deleted"])
-                                },
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Status"].ToString() ?? string.Empty,
+                                Description = or["Description"].ToString() ?? string.Empty,
                                 Colour = or["Colour"].ToString() ?? string.Empty,
-                                PlaybookDescription = or["PlaybookDescription"].ToString() ?? string.Empty,
-                                ReqTrialStatus = ConvertObjToBool(or["ReqTrialStatus"])
+                                PlaybookDescription = or["PlaybookDescription"].ToString() ?? string.Empty
                             });
                         }
                     }
                 }
-            }
+            }           
             catch (SqlException sqle)
             {
                 HandleSQLError(sqle);
@@ -762,30 +564,27 @@ namespace PTR
             }
             return activitystatuscodes;
         }
-        
-        public static FullyObservableCollection<ApplicationCategoriesModel> GetApplicationCategories()
+
+        public static FullyObservableCollection<ApplicationModel> GetApplications()
         {
-            FullyObservableCollection<ApplicationCategoriesModel> applicationcategories = new FullyObservableCollection<ApplicationCategoriesModel>();
+            FullyObservableCollection<ApplicationModel> Applications = new FullyObservableCollection<ApplicationModel>();
             try
-            { 
+            {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetApplicationCategories";
+                    oc.CommandText = spprefix + "GetApplications";
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
-                            applicationcategories.Add(new ApplicationCategoriesModel
+                            Applications.Add(new ApplicationModel
                             {
-                                GOM = new GenericObjModel()
-                                {
-                                    ID = ConvertObjToInt(or["ID"]),
-                                    Name = or["Name"].ToString() ?? string.Empty,
-                                    Deleted = ConvertObjToBool(or["Deleted"])
-                                },
-                                IndustryID = ConvertObjToInt(or["IndustryID"])
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty,
+                                IsChecked = false,
+                                IsEnabled = ConvertObjToBool(or["IsDeletable"])
                             });
                         }
                     }
@@ -799,28 +598,101 @@ namespace PTR
             {
                 ShowError(e);
             }
-            return applicationcategories;
+            return Applications;
         }
 
-        public static Collection<GenericObjModel> GetNewBusinessCategories()
+        public static Collection<IndustrySegmentApplicationJoinModel> GetIndustrySegmentApplicationJoin()
         {
-            Collection<GenericObjModel> newbusinesscats = new Collection<GenericObjModel>();
+            Collection<IndustrySegmentApplicationJoinModel> mktsegappcats = new Collection<IndustrySegmentApplicationJoinModel>();
             try
             {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetNewBusinessCategories";
+                    oc.CommandText = spprefix + "GetIndustrySegmentApplicationJoin";
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
-                            newbusinesscats.Add(new GenericObjModel
+                            mktsegappcats.Add(new IndustrySegmentApplicationJoinModel
+                            {
+                                IndustrySegmentID = ConvertObjToInt(or["IndustrySegmentID"]),
+                                ApplicationID = ConvertObjToInt(or["ApplicationID"])                                
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return mktsegappcats;
+        }
+
+        public static FullyObservableCollection<IndustrySegmentApplicationJoinModel> GetIndustrySegmentApplicationJoinCRUD()
+        {
+            FullyObservableCollection<IndustrySegmentApplicationJoinModel> mktsegappcats = new FullyObservableCollection<IndustrySegmentApplicationJoinModel>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetIndustrySegmentApplicationJoinCRUD";
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                        {
+                            mktsegappcats.Add(new IndustrySegmentApplicationJoinModel
+                            {
+                                ID = ConvertObjToInt(or["ID"]),
+                                IndustrySegmentID = ConvertObjToInt(or["IndustrySegmentID"]),
+                                IndustrySegmentIndustryID = ConvertObjToInt(or["IndustrySegmentIndustryID"]),
+                                ApplicationID = ConvertObjToInt(or["ApplicationID"]),
+                                IsChecked = false,
+                                IsEnabled = ConvertObjToBool(or["IsDeletable"])
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return mktsegappcats;
+        }
+
+        public static FullyObservableCollection<ModelBaseVM> GetNewBusinessCategories()
+        {
+            FullyObservableCollection<ModelBaseVM> newbusinesscats = new FullyObservableCollection<ModelBaseVM>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetNewBusinessCategories";
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                        {
+                            newbusinesscats.Add(new ModelBaseVM
                             {
                                 ID = ConvertObjToInt(or["ID"]),
                                 Name = or["Name"].ToString() ?? string.Empty,
-                                Deleted = ConvertObjToBool(or["Deleted"])
+                                IsChecked = false,
+                                IsEnabled = ConvertObjToBool(or["IsDeletable"])
                             });
                         }
                     }
@@ -841,24 +713,20 @@ namespace PTR
         {
             FullyObservableCollection<CountryModel> countries = new FullyObservableCollection<CountryModel>();
             try
-            { 
+            {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetCountries";
+                    oc.CommandText = spprefix + "GetCountries";
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
                             countries.Add(new CountryModel
-                            {
-                                GOM = new GenericObjModel()
-                                {
-                                    ID = ConvertObjToInt(or["ID"]),
-                                    Name = or["Name"].ToString() ?? string.Empty,
-                                    Deleted = ConvertObjToBool(or["Deleted"])
-                                },
+                            {                                
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty,
                                 OperatingCompanyID = ConvertObjToInt(or["OperatingCompanyID"]),
                                 CultureCode = or["CultureCode"].ToString() ?? string.Empty,
                                 UseUSD = ConvertObjToBool(or["UseUSD"])
@@ -877,27 +745,28 @@ namespace PTR
             }
             return countries;
         }
-               
-        public static FullyObservableCollection<GenericObjModel> GetSalesDivisions()
+
+        public static FullyObservableCollection<ModelBaseVM> GetBusinessUnits()
         {
-            FullyObservableCollection<GenericObjModel> salesdivisions = new FullyObservableCollection<GenericObjModel>();
+            FullyObservableCollection<ModelBaseVM> bus = new FullyObservableCollection<ModelBaseVM>();
             try
-            { 
+            {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetSalesDivisions";
+                    oc.CommandText = spprefix + "GetSalesDivisions";
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
-                            salesdivisions.Add(
-                                new GenericObjModel()
+                            bus.Add(
+                                new ModelBaseVM()
                                 {
                                     ID = ConvertObjToInt(or["ID"]),
                                     Name = or["Name"].ToString() ?? string.Empty,
-                                    Deleted = ConvertObjToBool(or["Deleted"])
+                                    IsChecked = false,
+                                    IsEnabled = ConvertObjToBool(or["IsDeletable"])
                                 }
                             );
                         }
@@ -912,7 +781,7 @@ namespace PTR
             {
                 ShowError(e);
             }
-            return salesdivisions;
+            return bus;
         }
 
         public static MilestoneModel GetMilestone(int id)
@@ -924,7 +793,7 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetMilestone";
+                    oc.CommandText = spprefix + "GetMilestone";
                     oc.Parameters.Add("@id", SqlDbType.Int).Value = id;
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
@@ -932,18 +801,14 @@ namespace PTR
                         {
                             milestone = new MilestoneModel()
                             {
-                                GOM = new GenericObjModel()
-                                {
-                                    ID = ConvertObjToInt(or["ID"]),
-                                    Description = or["Description"].ToString() ?? string.Empty
-                                },
+                                ID = ConvertObjToInt(or["ID"]),
+                                Description = or["Description"].ToString() ?? string.Empty,
                                 UserID = ConvertObjToInt(or["UserID"]),
                                 TargetDate = ConvertObjToDate(or["TargetDate"]),
                                 CompletedDate = ConvertObjToDate(or["CompletedDate"]),
                                 ProjectID = ConvertObjToInt(or["ProjectID"]),
                                 CustomerID = ConvertObjToInt(or["CustomerID"]),
                                 UserName = or["UserName"].ToString() ?? string.Empty
-                               
                             };
                         }
                     }
@@ -958,7 +823,7 @@ namespace PTR
                 ShowError(e);
             }
             return milestone;
-        }                             
+        }
 
         public static FullyObservableCollection<MilestoneModel> GetProjectMilestones(int projectid)
         {
@@ -969,23 +834,23 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetProjectMilestones";
+                    oc.CommandText = spprefix + "GetProjectMilestones";
                     oc.Parameters.Add("@projectid", SqlDbType.Int).Value = projectid;
+                    oc.Parameters.Add("@currentuserid", SqlDbType.Int).Value = CurrentUser.ID;
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
                             milestones.Add(new MilestoneModel
                             {
-                                GOM = new GenericObjModel()
-                                {
-                                    ID = ConvertObjToInt(or["ID"]),
-                                    Description = or["Description"].ToString() ?? string.Empty
-                                },
+                                ID = ConvertObjToInt(or["ID"]),
+                                Description = or["Description"].ToString() ?? string.Empty,
+                                ProjectID = projectid,
                                 UserID = ConvertObjToInt(or["UserID"]),
                                 TargetDate = ConvertObjToDate(or["TargetDate"]),
                                 CompletedDate = ConvertObjToDate(or["CompletedDate"]),
-                                UserName = or["UserName"].ToString() ?? string.Empty
+                                UserName = or["UserName"].ToString() ?? string.Empty,
+                                IsEnabled = ConvertObjToBool(or["IsEnabled"])
                             });
                         }
                     }
@@ -1011,9 +876,9 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetOverdueMilestones";
+                    oc.CommandText = spprefix + "GetOverdueMilestones";
                     oc.Parameters.Add("@currentdate", SqlDbType.Date).Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
-                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.GOM.ID;
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.ID;
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
@@ -1044,90 +909,89 @@ namespace PTR
             return milestones;
         }
 
-        public static int GetCountCustomerProjects(int customerid)
-        {
-            int i = 0;
-            try
-            { 
-                using (SqlCommand oc = new SqlCommand())
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetCountCustomerProjects";
-                    oc.Parameters.Add("@customerid", SqlDbType.Int).Value = customerid;
-                    try
-                    {
-                        bool isnumber = int.TryParse(oc.ExecuteScalar().ToString(), out i);
-                    }
-                    catch
-                    {
-                        i = 0;
-                    }
-                }
-            }
-            catch (SqlException sqle)
-            {
-                HandleSQLError(sqle);
-            }
-            catch (Exception e)
-            {
-                ShowError(e);
-            }
-            return i;
-        }
+        //public static int GetCountCustomerProjects(int customerid)
+        //{
+        //    int i = 0;
+        //    try
+        //    {
+        //        using (SqlCommand oc = new SqlCommand())
+        //        {
+        //            oc.Connection = Conn;
+        //            oc.CommandType = CommandType.StoredProcedure;
+        //            oc.CommandText = spprefix + "GetCountCustomerProjects";
+        //            oc.Parameters.Add("@customerid", SqlDbType.Int).Value = customerid;
+        //            try
+        //            {
+        //                bool isnumber = int.TryParse(oc.ExecuteScalar().ToString(), out i);
+        //            }
+        //            catch
+        //            {
+        //                i = 0;
+        //            }
+        //        }
+        //    }
+        //    catch (SqlException sqle)
+        //    {
+        //        HandleSQLError(sqle);
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        ShowError(e);
+        //    }
+        //    return i;
+        //}
 
-        public static int GetCountSalesRegionCustomers(int salesregionid)
-        {
-            int i = 0;
-            try
-            {
-                using (SqlCommand oc = new SqlCommand())
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetCountSalesRegionCustomers";
-                    oc.Parameters.Add("@salesregionid", SqlDbType.Int).Value = salesregionid;
-                    try
-                    {
-                        bool isnumber = int.TryParse(oc.ExecuteScalar().ToString(), out i);
-                    }
-                    catch
-                    {
-                        i = 0;
-                    }
-                }
-            }
-            catch (SqlException sqle)
-            {
-                HandleSQLError(sqle);
-            }
-            catch (Exception e)
-            {
-                ShowError(e);
-            }
-            return i;
-        }
+        //public static int GetCountSalesRegionCustomers(int salesregionid)
+        //{
+        //    int i = 0;
+        //    try
+        //    {
+        //        using (SqlCommand oc = new SqlCommand())
+        //        {
+        //            oc.Connection = Conn;
+        //            oc.CommandType = CommandType.StoredProcedure;
+        //            oc.CommandText = spprefix + "GetCountSalesRegionCustomers";
+        //            oc.Parameters.Add("@salesregionid", SqlDbType.Int).Value = salesregionid;
+        //            try
+        //            {
+        //                bool isnumber = int.TryParse(oc.ExecuteScalar().ToString(), out i);
+        //            }
+        //            catch
+        //            {
+        //                i = 0;
+        //            }
+        //        }
+        //    }
+        //    catch (SqlException sqle)
+        //    {
+        //        HandleSQLError(sqle);
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        ShowError(e);
+        //    }
+        //    return i;
+        //}
 
-        public static FullyObservableCollection<GenericObjModel> GetOperatingCompanies()
+        public static FullyObservableCollection<ModelBaseVM> GetOperatingCompanies()
         {
-            FullyObservableCollection<GenericObjModel> opcos = new FullyObservableCollection<GenericObjModel>();
+            FullyObservableCollection<ModelBaseVM> opcos = new FullyObservableCollection<ModelBaseVM>();
             try
-            { 
+            {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetOperatingCompanies";
+                    oc.CommandText = spprefix + "GetOperatingCompanies";
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
 
                         while (or.Read())
                         {
-                            opcos.Add(new GenericObjModel
+                            opcos.Add(new ModelBaseVM
                             {
                                 ID = ConvertObjToInt(or["ID"]),
-                                Name = or["Name"].ToString() ?? string.Empty,
-                                Deleted = ConvertObjToBool(or["Deleted"])
+                                Name = or["Name"].ToString() ?? string.Empty 
                             });
                         }
                     }
@@ -1153,7 +1017,7 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetSalesRegions";
+                    oc.CommandText = spprefix + "GetSalesRegions";
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
@@ -1162,8 +1026,7 @@ namespace PTR
                             {
                                 ID = ConvertObjToInt(or["ID"]),
                                 Name = or["Name"].ToString() ?? string.Empty,
-                                CountryID = ConvertObjToInt(or["CountryID"]),
-                                Deleted = ConvertObjToBool(or["Deleted"])
+                                CountryID = ConvertObjToInt(or["CountryID"])                                
                             });
                         }
                     }
@@ -1180,9 +1043,6 @@ namespace PTR
             return regions;
         }
 
-
-        //=================================================
-
         public static FullyObservableCollection<SalesRegionModel> GetCountrySalesRegions(int countryid)
         {
             FullyObservableCollection<SalesRegionModel> salesregions = new FullyObservableCollection<SalesRegionModel>();
@@ -1192,7 +1052,7 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetCountrySalesRegions";
+                    oc.CommandText = spprefix + "GetCountrySalesRegions";
                     oc.Parameters.Add("@countryid", SqlDbType.Int).Value = countryid;
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
@@ -1202,7 +1062,9 @@ namespace PTR
                             {
                                 ID = ConvertObjToInt(or["ID"]),
                                 Name = or["Name"].ToString() ?? string.Empty,
-                                CountryID = countryid
+                                CountryID = countryid,
+                                IsChecked = false,
+                                IsEnabled = ConvertObjToBool(or["IsDeletable"])
                             });
                         }
                     }
@@ -1219,27 +1081,26 @@ namespace PTR
             return salesregions;
         }
 
-       
         #region Customers Treeview
         //================================================
         public static FullyObservableCollection<TreeViewNodeModel> GetAllTVOperatingCompanies()
         {
-            return GetAllTVNodes("GetAllTVOperatingCompanies",0);
+            return GetAllTVNodes(spprefix + "GetAllTVOperatingCompanies", 0);
         }
 
         public static FullyObservableCollection<TreeViewNodeModel> GetAllTVCountries()
         {
-            return GetAllTVNodes("GetAllTVCountries",0);
+            return GetAllTVNodes(spprefix + "GetAllTVCountries", 0);
         }
 
         public static FullyObservableCollection<TreeViewNodeModel> GetAllTVSalesRegions()
         {
-            return GetAllTVNodes("GetAllTVSalesRegions",0);
+            return GetAllTVNodes(spprefix + "GetAllTVSalesRegions", 0);
         }
 
         public static FullyObservableCollection<TreeViewNodeModel> GetAllTVCustomers()
         {
-            return GetAllTVNodes("GetAllTVCustomers",1);            
+            return GetAllTVNodes(spprefix + "GetAllTVCustomers", 1);
         }
 
         private static FullyObservableCollection<TreeViewNodeModel> GetAllTVNodes(string sp, int nodetypeid)
@@ -1251,7 +1112,7 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = sp;                  
+                    oc.CommandText = sp;
 
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
@@ -1284,32 +1145,30 @@ namespace PTR
 
         #endregion
 
-        //==================================================
-
         #region User's customer Treeview
 
         public static FullyObservableCollection<TreeViewNodeModel> GetTVOperatingCompanies()
         {
-            return GetTVNodes("GetTVOperatingCompanies");
+            return GetTVNodes(spprefix + "GetTVOperatingCompanies");
         }
 
         public static FullyObservableCollection<TreeViewNodeModel> GetTVCountries(int opcoid)
         {
-            return GetTVNodes("GetTVCountries");
+            return GetTVNodes(spprefix + "GetTVCountries");
         }
 
         public static FullyObservableCollection<TreeViewNodeModel> GetTVSalesRegions(int countryid)
         {
-            return GetTVNodes("GetTVSalesRegions");
+            return GetTVNodes(spprefix + "GetTVSalesRegions");
         }
 
         public static FullyObservableCollection<TreeViewNodeModel> GetTVCustomers(int userid)
         {
-            return GetTVCustomerNodes("GetTVCustomers", userid);
+            return GetTVCustomerNodes(spprefix + "GetTVCustomers", userid);
         }
 
         private static FullyObservableCollection<TreeViewNodeModel> GetTVCustomerNodes(string sp, int userid)
-        {                     
+        {
             FullyObservableCollection<TreeViewNodeModel> nodes = new FullyObservableCollection<TreeViewNodeModel>();
             try
             {
@@ -1317,7 +1176,7 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = sp;             
+                    oc.CommandText = sp;
                     oc.Parameters.Add("@userid", SqlDbType.Int).Value = userid;
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
@@ -1326,15 +1185,13 @@ namespace PTR
                             nodes.Add(new TreeViewNodeModel
                             {
                                 ParentID = ConvertObjToInt(or["ParentID"]),
-                                IsChecked = (ConvertObjToInt(or["AccessID"])>0),
+                                IsChecked = (ConvertObjToInt(or["AccessID"]) > 0),
                                 ID = ConvertObjToInt(or["ID"]),
                                 Name = or["Name"].ToString() ?? string.Empty,
                                 IsExpanded = true,
                                 IsFAChecked = (ConvertObjToInt(or["AccessID"]) == (int)UserPermissionsType.FullAccess),
                                 IsROChecked = (ConvertObjToInt(or["AccessID"]) == (int)UserPermissionsType.ReadOnly),
-
                                 IsEditActChecked = (ConvertObjToInt(or["AccessID"]) == (int)UserPermissionsType.EditAct),
-
                                 AccessID = ConvertObjToInt(or["AccessID"]),
                                 NodeTypeID = 1
                             });
@@ -1351,8 +1208,8 @@ namespace PTR
                 ShowError(e);
             }
             return nodes;
-        }       
-        
+        }
+
         private static FullyObservableCollection<TreeViewNodeModel> GetTVNodes(string sp)
         {
             FullyObservableCollection<TreeViewNodeModel> nodes = new FullyObservableCollection<TreeViewNodeModel>();
@@ -1371,7 +1228,7 @@ namespace PTR
                             {
                                 ParentID = ConvertObjToInt(or["ParentID"]),
                                 ID = ConvertObjToInt(or["ID"]),
-                                Name = or["Name"].ToString() ?? string.Empty,                                
+                                Name = or["Name"].ToString() ?? string.Empty,
                                 IsExpanded = true,
                                 IsEnabled = ConvertObjToBool(or["Deleted"]),
                                 NodeTypeID = 0
@@ -1390,25 +1247,31 @@ namespace PTR
             }
             return nodes;
         }
- 
+
         #endregion
 
-
-        public static Collection<string> GetProductGroupNames()
+        public static FullyObservableCollection<ModelBaseVM> GetProductGroupNames()
         {
-            Collection<string> prodgroupnames = new Collection<string>();
+            FullyObservableCollection<ModelBaseVM> prodgroupnames = new FullyObservableCollection<ModelBaseVM>();
             try
             {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetProductGroupNames";
+                    oc.CommandText = spprefix + "GetProductGroupNames";
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
-                            prodgroupnames.Add(or["Name"].ToString() ?? string.Empty);
+                            prodgroupnames.Add(new ModelBaseVM()
+                            {
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty,
+                                IsChecked = false,
+                                IsEnabled = ConvertObjToBool(or["IsDeletable"]),
+                                IsSelected = ConvertObjToBool(or["UpperCase"])
+                            });                                
                         }
                     }
                 }
@@ -1424,36 +1287,31 @@ namespace PTR
             return prodgroupnames;
         }
 
-       
-
-
-        public static Collection<SMCodeModel> GetSMCodes()
+        public static FullyObservableCollection<SMCodeModel> GetSMCodes()
         {
-            Collection<SMCodeModel> smcodes = new Collection<SMCodeModel>();
+            FullyObservableCollection<SMCodeModel> smcodes = new FullyObservableCollection<SMCodeModel>();
             try
             {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetSMCodes";
+                    oc.CommandText = spprefix + "GetSMCodes";
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
                             smcodes.Add(new SMCodeModel
                             {
-                                GOM = new GenericObjModel()
-                                {
-                                    ID = ConvertObjToInt(or["ID"]),
-                                    Name = or["Name"].ToString() ?? string.Empty,
-                                    Description = or["Description"].ToString() ?? string.Empty,
-                                    Deleted = ConvertObjToBool(or["Deleted"])
-                                },
-                                SalesDivisionID = ConvertObjToInt(or["SalesDivisionID"])
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty,
+                                Description = or["Description"].ToString() ?? string.Empty,
+                                IndustryID = ConvertObjToInt(or["IndustryID"]),
+                                IsChecked = false,
+                                IsEnabled = ConvertObjToBool(or["IsDeletable"])
                             });
                         }
-                    }
+                    }               
                 }
             }
             catch (SqlException sqle)
@@ -1464,8 +1322,9 @@ namespace PTR
             {
                 ShowError(e);
             }
+
             return smcodes;
-        }             
+        }
 
         public static FullyObservableCollection<UserCustomerAccessModel> GetUserCustomerAccess(int userid)
         {
@@ -1476,7 +1335,7 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetUserCustomerAccess";
+                    oc.CommandText = spprefix + "GetUserCustomerAccess";
                     oc.Parameters.Add("@userid", SqlDbType.Int).Value = userid;
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
@@ -1488,7 +1347,7 @@ namespace PTR
                                 UserID = userid,
                                 CustomerID = ConvertObjToInt(or["CustomerID"]),
                                 AccessID = ConvertObjToInt(or["AccessID"]),
-                                CountryID = ConvertObjToInt(or["CountryID"]),
+                                CountryID = ConvertObjToInt(or["CountryID"])
                             });
                         }
                     }
@@ -1503,27 +1362,123 @@ namespace PTR
                 ShowError(e);
             }
             return usercodes;
-        }                
+        }
 
-        public static FullyObservableCollection<GenericObjModel> GetProjectTypes()
+        public static FullyObservableCollection<UserModel> GetCustomerUserAccess(int customerid)
         {
-            FullyObservableCollection<GenericObjModel> projecttypes = new FullyObservableCollection<GenericObjModel>();
+            FullyObservableCollection<UserModel> users = new FullyObservableCollection<UserModel>();
             try
             {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetProjectTypes";
+                    oc.CommandText = spprefix + "GetCustomerUserAccess";
+                    oc.Parameters.Add("@customerid", SqlDbType.Int).Value = customerid;
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
-                            projecttypes.Add(new GenericObjModel
+                            users.Add(new UserModel
                             {
                                 ID = ConvertObjToInt(or["ID"]),
                                 Name = or["Name"].ToString() ?? string.Empty,
-                                Description = or["Colour"].ToString() ?? string.Empty,
+                                Deleted = ConvertObjToBool(or["Deleted"]),
+                                LoginName = or["LoginName"].ToString() ?? string.Empty,
+                                Administrator = ConvertObjToBool(or["Administrator"])
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return users;
+        }
+
+        //public static FullyObservableCollection<UserModel> GetCustomerFullUserAccess(int customerid)
+        //{
+        //    FullyObservableCollection<UserModel> users = new FullyObservableCollection<UserModel>();
+        //    try
+        //    {
+        //        using (SqlCommand oc = new SqlCommand())
+        //        {
+        //            oc.Connection = Conn;
+        //            oc.CommandType = CommandType.StoredProcedure;
+        //            oc.CommandText = "GetCustomerFullUserAccess";
+        //            oc.Parameters.Add("@customerid", SqlDbType.Int).Value = customerid;
+        //            using (SqlDataReader or = oc.ExecuteReader())
+        //            {
+        //                while (or.Read())
+        //                {
+        //                    users.Add(new UserModel
+        //                    {
+        //                        
+        //                        ID = ConvertObjToInt(or["ID"]),
+        //                        Name = or["Name"].ToString() ?? string.Empty,
+        //                        Deleted = ConvertObjToBool(or["Deleted"]),
+        //                        
+        //                        LoginName = or["LoginName"].ToString() ?? string.Empty,
+        //                        Administrator = ConvertObjToBool(or["Administrator"])
+        //                    });
+        //                }
+        //            }
+        //        }
+        //    }
+        //    catch (SqlException sqle)
+        //    {
+        //        HandleSQLError(sqle);
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        ShowError(e);
+        //    }
+        //    return users;
+        //}
+
+        public static FullyObservableCollection<ProjectTypeModel> GetProjectTypes()
+        {
+            FullyObservableCollection<ProjectTypeModel> projecttypes = new FullyObservableCollection<ProjectTypeModel>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetProjectTypes";
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                        {
+                            projecttypes.Add(new ProjectTypeModel
+                            {
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty,
+                                Colour = or["Colour"].ToString() ?? string.Empty,
+                                Description = or["Description"].ToString() ?? string.Empty,                                
+                                IsChecked = false,
+                                IsEnabled = ConvertObjToBool(or["IsDeletable"]),
+                                ShowSponsor = ConvertObjToBool(or["ShowSponsor"]),
+                                MiscellaneousDataLabel = or["MiscellaneousDataLabel"].ToString() ?? string.Empty,
+                                ShowUnitCost = ConvertObjToBool(or["ShowUnitCost"]),
+                                ShowPriority = ConvertObjToBool(or["ShowPriority"]),
+                                ProductRequired = ConvertObjToBool(or["ProductRequired"]),
+                                SalesRequired = ConvertObjToBool(or["SalesRequired"]),
+                                SalesVolumeRequired = ConvertObjToBool(or["SalesVolumeRequired"]),
+                                GMRequired = ConvertObjToBool(or["GMRequired"]),
+                                MPCRequired = ConvertObjToBool(or["MPCRequired"]),
+                                ProbabilityRequired = ConvertObjToBool(or["ProbabilityRequired"]),
+                                OpportunityCatRequired = ConvertObjToBool(or["OpportunityCatRequired"]),
+                                ShowKPM = ConvertObjToBool(or["ShowKPM"]),
+                                ShowDifferentiatedTech = ConvertObjToBool(or["ShowDifferentiatedTech"]),
+                                UnitPriceRequired = ConvertObjToBool(or["UnitPriceRequired"]),
+                                
                             });
                         }
                     }
@@ -1540,42 +1495,6 @@ namespace PTR
             return projecttypes;
         }
 
-        public static FullyObservableCollection<GenericObjModel> GetCDPCCP()
-        {
-            FullyObservableCollection<GenericObjModel> cdpccp = new FullyObservableCollection<GenericObjModel>();
-            try
-            {
-                using (SqlCommand oc = new SqlCommand())
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetCDPCCP";
-                    using (SqlDataReader or = oc.ExecuteReader())
-                    {
-                        cdpccp.Add(new GenericObjModel() { ID = -1, Name = "None" });
-                        while (or.Read())
-                        {
-                            cdpccp.Add(new GenericObjModel
-                            {
-                                ID = ConvertObjToInt(or["ID"]),
-                                Name = or["Name"].ToString() ?? string.Empty,
-                                Description = or["Description"].ToString() ?? string.Empty,
-                            });
-                        }
-                    }
-                }
-            }
-            catch (SqlException sqle)
-            {
-                HandleSQLError(sqle);
-            }
-            catch (Exception e)
-            {
-                ShowError(e);
-            }
-            return cdpccp;
-        }
-
         public static FullyObservableCollection<MaintenanceModel> GetOverdueMonthlyUpdates()
         {
             FullyObservableCollection<MaintenanceModel> overdue = new FullyObservableCollection<MaintenanceModel>();
@@ -1585,9 +1504,9 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetOverdueMonthlyUpdates";
+                    oc.CommandText = spprefix + "GetOverdueMonthlyUpdates";
                     oc.Parameters.Add("@currentmonth", SqlDbType.Date).Value = ConvertDateToMonth(DateTime.Now);
-                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.GOM.ID;
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.ID;
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
@@ -1625,8 +1544,8 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetIncompleteEPs";
-                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.GOM.ID;
+                    oc.CommandText = spprefix + "GetIncompleteEPs";
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.ID;
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
@@ -1655,7 +1574,7 @@ namespace PTR
             }
             return incomplete;
         }
-               
+
         public static FullyObservableCollection<MaintenanceModel> GetMissingEPs()
         {
             FullyObservableCollection<MaintenanceModel> missingeps = new FullyObservableCollection<MaintenanceModel>();
@@ -1665,14 +1584,14 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetMissingEPs";
-                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.GOM.ID;
+                    oc.CommandText = spprefix + "GetMissingEPs";
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.ID;
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
                             missingeps.Add(new MaintenanceModel
-                            {                             
+                            {
                                 ProjectID = ConvertObjToInt(or["ProjectID"]),
                                 UserName = or["UserName"].ToString() ?? string.Empty,
                                 ProjectName = or["Name"].ToString() ?? string.Empty,
@@ -1694,7 +1613,7 @@ namespace PTR
             }
             return missingeps;
         }
-                
+
         public static FullyObservableCollection<MaintenanceModel> GetProjectsRequiringCompletion()
         {
             FullyObservableCollection<MaintenanceModel> overdue = new FullyObservableCollection<MaintenanceModel>();
@@ -1704,9 +1623,9 @@ namespace PTR
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetProjectsRequiringCompletion";
+                    oc.CommandText = spprefix + "GetProjectsRequiringCompletion";
                     oc.Parameters.Add("@currentmonth", SqlDbType.Date).Value = ConvertDateToMonth(DateTime.Now);
-                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.GOM.ID;
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.ID;
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
@@ -1734,29 +1653,33 @@ namespace PTR
             }
             return overdue;
         }
-                
-        public static (bool versionok, bool upgrade ) GetVersion()
+
+        public static (bool versionok, bool upgrade, string url, string executable) GetVersion()
         {
             try
             {
-                string version = string.Empty;
+                string latestversion = string.Empty;
                 string userversion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion;
                 bool mustupgrade = false;
+                string strurl = string.Empty;
+                string executablename = string.Empty;
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetVersion";
+                    oc.CommandText = spprefix + "GetVersion";
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
-                            version = or["VersionNumber"].ToString() ?? string.Empty;
+                            latestversion = or["VersionNumber"].ToString() ?? string.Empty;
                             mustupgrade = ConvertObjToBool(or["MustUpgrade"]);
+                            strurl = or["URL"].ToString() ?? string.Empty;
+                            executablename = or["ExecutableName"].ToString() ?? string.Empty;
                         }
-                    }              
+                    }
                 }
-                return (versionok: (version == userversion), upgrade: mustupgrade);
+                return (versionok: (ConvertVersionToInt(userversion) >= ConvertVersionToInt(latestversion)), upgrade: mustupgrade, url: strurl, executable: executablename);
             }
             catch (SqlException sqle)
             {
@@ -1766,54 +1689,368 @@ namespace PTR
             {
                 ShowError(e);
             }
-            return (versionok: false, upgrade: true);
+            return (versionok: false, upgrade: true, url: string.Empty, executable: string.Empty);
+        }
+                
+        public static FullyObservableCollection<TrialStatusModel> GetTrialStatuses()
+        {
+            FullyObservableCollection<TrialStatusModel> trialstatuses = new FullyObservableCollection<TrialStatusModel>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetTrialStatuses";
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                        {
+                            trialstatuses.Add(new TrialStatusModel
+                            {
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty,
+                                IsChecked = false,
+                                IsEnabled = ConvertObjToBool(or["IsDeletable"])
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return trialstatuses;
+        }
+        
+        public static FullyObservableCollection<ModelBaseVM> GetReasonsForIncompleteProject()
+        {
+            FullyObservableCollection<ModelBaseVM> reasons = new FullyObservableCollection<ModelBaseVM>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetReasonsForIncompleteProject";
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                        {
+                            reasons.Add(new ModelBaseVM
+                            {
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty,
+                                IsChecked = false,
+                                IsEnabled = ConvertObjToBool(or["IsDeletable"])
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return reasons;
         }
 
-        public static DateTime? GetLastUpdatedMonth()
+        public static FullyObservableCollection<ModelBaseVM> GetSalesStatuses()
         {
-            DateTime? updated = null;             
+            FullyObservableCollection<ModelBaseVM> salesstatuses = new FullyObservableCollection<ModelBaseVM>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetSalesStatuses";
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                        {
+                            salesstatuses.Add(new ModelBaseVM
+                            {
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return salesstatuses;
+        }
+
+        public static Collection<ReportFieldsDataTypesModel> GetReportFieldsDataTypes()
+        {
+            Collection<ReportFieldsDataTypesModel> items = new Collection<ReportFieldsDataTypesModel>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetReportFieldsDataTypes";
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                        {
+                            items.Add(new ReportFieldsDataTypesModel
+                            {
+                                ID = ConvertObjToInt(or["ID"]),
+                                DataType = or["DataType"].ToString() ?? string.Empty,
+                                DataFormat = or["DataFormat"].ToString() ?? string.Empty,
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return items;
+        }
+
+        public static FullyObservableCollection<ModelBaseVM> GetReportNames()
+        {
+            FullyObservableCollection<ModelBaseVM> items = new FullyObservableCollection<ModelBaseVM>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetReportNames";
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                        {
+                            items.Add(new ModelBaseVM
+                            {
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return items;
+        }
+
+        public static FullyObservableCollection<ModelBaseVM> GetReportFieldsAlignmentTypes()
+        {
+            FullyObservableCollection<ModelBaseVM> items = new FullyObservableCollection<ModelBaseVM>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetReportFieldsAlignmentTypes";
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                        {
+                            items.Add(new ModelBaseVM
+                            {
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return items;
+        }
+
+        public static Collection<ReportFieldDataTypeModel> GetReportFieldTypes()
+        {
+            Collection<ReportFieldDataTypeModel> items = new Collection<ReportFieldDataTypeModel>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetReportFieldTypes";
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                        {
+                            items.Add(new ReportFieldDataTypeModel
+                            {
+                                ID = ConvertObjToInt(or["ID"]),
+                                FieldType = ConvertObjToInt(or["FieldType"]),
+                                FieldName = or["FieldName"].ToString() ?? string.Empty
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return items;
+        }
+                                             
+        public static Dictionary<string, string> GetSystemConstants()
+        {
+            Dictionary<string, string> dict = new Dictionary<string, string>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetSystemConstants";                  
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                            dict.Add(or["ConstantName"].ToString(), or["ConstantValue"].ToString());                        
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return dict;
+        }
+
+        public static FullyObservableCollection<ModelBaseVM> GetPriorities()
+        {
+            FullyObservableCollection<ModelBaseVM> items = new FullyObservableCollection<ModelBaseVM>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetPriorities";
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                        {
+                            items.Add(new ModelBaseVM
+                            {
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return items;
+        }
+
+        public static FullyObservableCollection<MiscellaneousDataModel> GetMiscellaneousData()
+        {
+            FullyObservableCollection<MiscellaneousDataModel> items = new FullyObservableCollection<MiscellaneousDataModel>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetMiscellaneousData";
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                        {
+                            items.Add(new MiscellaneousDataModel
+                            {
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty,
+                                FKID = ConvertObjToInt(or["FKID"]),
+                                IsChecked = false,
+                                IsEnabled = ConvertObjToBool(or["IsDeletable"])
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return items;
+        }
+        
+        #endregion
+
+        #region Insert Queries
+
+        public static void LogAccess(int userid)
+        {
             using (SqlCommand oc = new SqlCommand())
             {
                 try
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetLastUpdatedMonth";
-                    using (SqlDataReader or = oc.ExecuteReader())
-                    {
-                        while (or.Read())
-                        {
-                            updated = Convert.ToDateTime(or["MAXUPDATEDATE"].ToString());
-                        }
-                    }
-                }
-                catch (SqlException sqle)
-                {
-                    HandleSQLError(sqle);
-                }
-                catch (Exception e)
-                {
-                    ShowError(e);                    
-                }
-            }            
-            return updated;
-        }
-        #endregion
-
-        #region Insert Queries
-       
-        public static void LogAccess(int userid)
-        {                        
-            using (SqlCommand oc = new SqlCommand())
-            {
-            try
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "LogAccess";                  
+                    oc.CommandText = spprefix + "LogAccess";
                     oc.Parameters.Add("@userid", SqlDbType.Int).Value = userid;
                     oc.Parameters.Add("@accessdate", SqlDbType.DateTime).Value = DateTime.Now;
                     oc.ExecuteNonQuery();
@@ -1830,14 +2067,14 @@ namespace PTR
                     {
                         oc.Transaction.Rollback();
                     }
-                    catch 
+                    catch
                     {
-                        throw ;
+                        throw;
                     }
                 }
-            }        
-        }        
-        
+            }
+        }
+
         public static int AddProject(ProjectModel project)
         {
             int insertedid = -1;
@@ -1850,21 +2087,19 @@ namespace PTR
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "AddProject";
+                    oc.CommandText = spprefix + "AddProject";
                     oc.Parameters.Add("@CaseID", SqlDbType.Int);
                     oc.Parameters.Add("@customerid", SqlDbType.Int).Value = project.CustomerID;
-                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = project.GOM.Name ?? string.Empty;
-                    oc.Parameters.Add("@description", SqlDbType.NVarChar, descrfieldlen).Value = project.GOM.Description ?? string.Empty;
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, Config.MaxProjectNameLength).Value = project.Name ?? string.Empty;
+                    oc.Parameters.Add("@description", SqlDbType.NVarChar, descrfieldlen).Value = project.Description ?? string.Empty;
                     oc.Parameters.Add("@salesstatusid", SqlDbType.Int).Value = project.SalesStatusID;
                     oc.Parameters.Add("@estimatedannualsales", SqlDbType.Decimal).Value = project.EstimatedAnnualSales;
-                    oc.Parameters.Add("@salesforecastconfirmed", SqlDbType.Bit).Value = project.SalesForecastConfirmed;
                     oc.Parameters.Add("@ownerid", SqlDbType.Int).Value = project.OwnerID;
                     oc.Parameters.Add("@salesdivisionid", SqlDbType.Int).Value = project.SalesDivisionID;
                     oc.Parameters.Add("@projectstatusid", SqlDbType.Int).Value = project.ProjectStatusID;
-                    oc.Parameters.Add("@marketsegmentid", SqlDbType.Int).Value = project.MarketSegmentID;
-                    oc.Parameters.Add("@products", SqlDbType.NVarChar, multipleidslen).Value = project.Products ?? string.Empty;
-                    oc.Parameters.Add("@resources", SqlDbType.NVarChar, multipleidslen).Value = project.Resources ?? string.Empty;
-                    oc.Parameters.Add("@expecteddatefirstsales", SqlDbType.Date).Value = project.ExpectedDateFirstSales;
+                    oc.Parameters.Add("@industrysegmentid", SqlDbType.Int).Value = project.IndustrySegmentID;
+                    oc.Parameters.Add("@products", SqlDbType.NVarChar, descrfieldlen).Value = project.Products ?? string.Empty;
+                    oc.Parameters.Add("@resources", SqlDbType.NVarChar, descrfieldlen).Value = project.Resources ?? string.Empty;                    
                     oc.Parameters.Add("@activateddate", SqlDbType.Date).Value = project.ActivatedDate;
                     oc.Parameters.Add("@targetedvolume", SqlDbType.Decimal).Value = project.TargetedVolume;
                     oc.Parameters.Add("@applicationid", SqlDbType.Int).Value = project.ApplicationID;
@@ -1876,13 +2111,21 @@ namespace PTR
                     oc.Parameters.Add("@projecttypeid", SqlDbType.Int).Value = project.ProjectTypeID;
                     oc.Parameters.Add("@kpm", SqlDbType.Bit).Value = project.KPM;
                     oc.Parameters.Add("@eprequired", SqlDbType.Bit).Value = project.EPRequired;
-                    oc.Parameters.Add("@cdpccpid", SqlDbType.Int).Value = project.CDPCCPID;
                     oc.Parameters.Add("@differentiatedtechnology", SqlDbType.Bit).Value = project.DifferentiatedTechnology;
+                    oc.Parameters.Add("@comments", SqlDbType.NVarChar, commentslen).Value = project.Comments ?? string.Empty;
+                    oc.Parameters.Add("@incompletereasonid", SqlDbType.Int).Value = project.IncompleteReasonID;
+                    oc.Parameters.Add("@priorityid", SqlDbType.Int).Value = project.PriorityID;
+                    oc.Parameters.Add("@sponsorid", SqlDbType.Int).Value = project.SponsorID;
+                    oc.Parameters.Add("@miscellaneousdataid", SqlDbType.Int).Value = project.MiscDataID;
+                    oc.Parameters.Add("@allownonowneredits", SqlDbType.Bit).Value = project.AllowNonOwnerEdits;
+                    oc.Parameters.Add("@allownonownermilestoneaccess", SqlDbType.Bit).Value = project.AllowNonOwnerMileStoneAccess;
+                    oc.Parameters.Add("@creatorid", SqlDbType.Int).Value =CurrentUser.ID;
+                    oc.Parameters.Add("@unitcost", SqlDbType.Decimal).Value = ConvertObjToDecimal(project.UnitCost);
                     oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
                     oc.ExecuteNonQuery();
 
                     transaction.Commit();
-                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);                
+                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);
                 }
                 catch (SqlException sqle)
                 {
@@ -1896,15 +2139,15 @@ namespace PTR
                     {
                         oc.Transaction.Rollback();
                     }
-                    catch 
+                    catch
                     {
-                        throw ;
+                        throw;
                     }
-                }  
+                }
             }
-            return insertedid;                    
+            return insertedid;
         }
-            
+
         public static int AddCustomer(CustomerModel customer)
         {
             int insertedid = -1;
@@ -1917,11 +2160,11 @@ namespace PTR
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "AddCustomer";
+                    oc.CommandText = spprefix + "AddCustomer";
                     oc.Parameters.Add("@CaseID", SqlDbType.Int);
-                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = customer.GOM.Name ?? string.Empty;
-                    oc.Parameters.Add("@number", SqlDbType.NVarChar, 50).Value = customer.Number ?? string.Empty;
-                    oc.Parameters.Add("@location", SqlDbType.NVarChar, 50).Value = customer.Location;
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = customer.Name ?? string.Empty;
+                    oc.Parameters.Add("@number", SqlDbType.NVarChar, namefieldlen).Value = customer.Number ?? string.Empty;
+                    oc.Parameters.Add("@location", SqlDbType.NVarChar, namefieldlen).Value = customer.Location;
                     oc.Parameters.Add("@salesregionid", SqlDbType.Int).Value = customer.SalesRegionID;
                     oc.Parameters.Add("@countryid", SqlDbType.Int).Value = customer.CountryID;
                     oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
@@ -1940,9 +2183,9 @@ namespace PTR
                     {
                         oc.Transaction.Rollback();
                     }
-                    catch 
+                    catch
                     {
-                        throw ;
+                        throw;
                     }
                 }
             }
@@ -1961,19 +2204,19 @@ namespace PTR
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "AddUser";
+                    oc.CommandText = spprefix + "AddUser";
                     oc.Parameters.Add("@CaseID", SqlDbType.Int);
-                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = user.GOM.Name ?? string.Empty;
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = user.Name ?? string.Empty;
                     oc.Parameters.Add("@loginname", SqlDbType.NVarChar, namefieldlen).Value = user.LoginName ?? string.Empty;
-                    oc.Parameters.Add("@email", SqlDbType.NVarChar, multipleidslen).Value = user.Email ?? string.Empty;
+                    oc.Parameters.Add("@email", SqlDbType.NVarChar, descrfieldlen).Value = user.Email ?? string.Empty;
                     oc.Parameters.Add("@gin", SqlDbType.NVarChar, ginlen).Value = user.GIN ?? string.Empty;
                     oc.Parameters.Add("@administrator", SqlDbType.Bit).Value = user.Administrator;
-                    oc.Parameters.Add("@salesdivisions", SqlDbType.NVarChar, multipleidslen).Value = user.SalesDivisions ?? string.Empty;                    
+                    oc.Parameters.Add("@salesdivisions", SqlDbType.NVarChar, multipleidslen).Value = user.BusinessUnits ?? string.Empty;
                     oc.Parameters.Add("@administrationmnu", SqlDbType.NVarChar, multipleidslen).Value = user.AdministrationMnu ?? string.Empty;
                     oc.Parameters.Add("@projectsmnu", SqlDbType.NVarChar, multipleidslen).Value = user.ProjectsMnu ?? string.Empty;
                     oc.Parameters.Add("@reportsmnu", SqlDbType.NVarChar, multipleidslen).Value = user.ReportsMnu ?? string.Empty;
-                    oc.Parameters.Add("@showothers", SqlDbType.Bit).Value = user.ShowOthers;
-                    oc.Parameters.Add("@shownag", SqlDbType.Bit).Value = user.ShowNagScreen;
+                    oc.Parameters.Add("@showothers", SqlDbType.Bit).Value = user.ShowOthers;                   
+                    oc.Parameters.Add("@alloweditcompletedcancelled", SqlDbType.Bit).Value = user.AllowEditCompletedCancelled;
                     oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
                     oc.ExecuteNonQuery();
                     transaction.Commit();
@@ -1990,9 +2233,9 @@ namespace PTR
                     {
                         oc.Transaction.Rollback();
                     }
-                    catch 
+                    catch
                     {
-                        throw ;
+                        throw;
                     }
                 }
             }
@@ -2001,19 +2244,19 @@ namespace PTR
 
         public static int AddCountry(CountryModel country)
         {
-            int insertedid = -1;                       
+            int insertedid = -1;
             using (SqlCommand oc = new SqlCommand())
             {
                 try
-                {  
+                {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "AddCountry";
+                    oc.CommandText = spprefix + "AddCountry";
                     oc.Parameters.Add("@CaseID", SqlDbType.Int);
-                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = country.GOM.Name ?? string.Empty;
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = country.Name ?? string.Empty;
                     oc.Parameters.Add("@operatingcompanyid", SqlDbType.Int).Value = country.OperatingCompanyID;
                     oc.Parameters.Add("@culturecode", SqlDbType.NVarChar, culturecodelen).Value = country.CultureCode ?? string.Empty;
                     oc.Parameters.Add("@useusd", SqlDbType.Bit).Value = country.UseUSD;
@@ -2033,28 +2276,28 @@ namespace PTR
                     {
                         oc.Transaction.Rollback();
                     }
-                    catch 
+                    catch
                     {
-                        throw ;
+                        throw;
                     }
-                }                
-            }           
+                }
+            }
             return insertedid;
         }
-               
+
         public static int AddExchangeRate(ExchangeRateModel em)
         {
-            int insertedid = -1;                                        
+            int insertedid = -1;
             using (SqlCommand oc = new SqlCommand())
             {
                 try
-                { 
+                {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "AddExchangeRate";
+                    oc.CommandText = spprefix + "AddExchangeRate";
                     oc.Parameters.Add("@CaseID", SqlDbType.Int);
                     oc.Parameters.Add("@countryid", SqlDbType.Int).Value = em.CountryID;
                     oc.Parameters.Add("@exratemonth", SqlDbType.Date).Value = em.ExRateMonth;
@@ -2075,99 +2318,16 @@ namespace PTR
                     {
                         oc.Transaction.Rollback();
                     }
-                    catch 
+                    catch
                     {
-                        throw ;
+                        throw;
                     }
                 }
-            }                       
+            }
             return insertedid;
-        }       
+        }
 
         public static void AddUserCustomerAccess(int customerid, int userid, int accessid)
-        {           
-            using (SqlCommand oc = new SqlCommand())
-            {
-                try
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    SqlTransaction transaction;
-                    transaction = Conn.BeginTransaction("LocalTransaction");
-                    oc.Transaction = transaction;
-                    oc.CommandText = "AddUserCustomerAccess";
-                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = userid;
-                    oc.Parameters.Add("@customerid", SqlDbType.Int).Value = customerid;                    
-                    oc.Parameters.Add("@accessid", SqlDbType.Int).Value = accessid;                    
-                    oc.ExecuteNonQuery();
-                    transaction.Commit();                   
-                }
-                catch (SqlException sqle)
-                {
-                    HandleSQLError(sqle);
-                }
-                catch (Exception e)
-                {
-                    ShowError(e);
-                    try
-                    {
-                        oc.Transaction.Rollback();
-                    }
-                    catch
-                    {
-                        throw;
-                    }
-                }
-            }           
-        }
-
-
-        public static void AddMilestone(MilestoneModel milestone)
-        {          
-            using (SqlCommand oc = new SqlCommand())
-            {
-                try
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    SqlTransaction transaction;
-                    transaction = Conn.BeginTransaction("LocalTransaction");
-                    oc.Transaction = transaction;
-                    oc.CommandText = "AddMilestone";                 
-                    oc.Parameters.Add("@description", SqlDbType.NVarChar, maxdescrlen).Value = milestone.GOM.Description ?? string.Empty;
-                   
-                    if (milestone.TargetDate == null)
-                        oc.Parameters.Add("@targetdate", SqlDbType.Date).Value = DBNull.Value;
-                    else
-                        oc.Parameters.Add("@targetdate", SqlDbType.Date).Value = milestone.TargetDate;
-                    
-                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = milestone.UserID;
-                    oc.Parameters.Add("@projectid", SqlDbType.Int).Value = milestone.ProjectID;
-                 
-                    oc.ExecuteNonQuery();
-                    transaction.Commit();
-                
-                }
-                catch (SqlException sqle)
-                {
-                    HandleSQLError(sqle);
-                }
-                catch (Exception e)
-                {
-                    ShowError(e);
-                    try
-                    {
-                        oc.Transaction.Rollback();
-                    }
-                    catch
-                    {
-                        throw;
-                    }
-                }
-            }           
-        }
-
-        public static void AddEvaluationPlan(EPModel ep)
         {
             using (SqlCommand oc = new SqlCommand())
             {
@@ -2178,25 +2338,12 @@ namespace PTR
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "AddEvaluationPlan";
-                    oc.Parameters.Add("@title", SqlDbType.NVarChar, descrfieldlen).Value = ep.GOM.Description ?? string.Empty;
-                    oc.Parameters.Add("@objectives", SqlDbType.NVarChar, maxdescrlen).Value = ep.Objectives;
-                    oc.Parameters.Add("@strategy", SqlDbType.NVarChar, maxdescrlen).Value = ep.Strategy;
-                   
-                    if (ep.Created == null)
-                        oc.Parameters.Add("@created", SqlDbType.Date).Value = DBNull.Value;
-                    else
-                        oc.Parameters.Add("@created", SqlDbType.Date).Value = ep.Created;
-
-                    if (ep.Discussed == null)
-                        oc.Parameters.Add("@discussed", SqlDbType.Date).Value = DBNull.Value;
-                    else
-                        oc.Parameters.Add("@discussed", SqlDbType.Date).Value = ep.Discussed;
-
-                    oc.Parameters.Add("@projectid", SqlDbType.Int).Value = ep.ProjectID;
+                    oc.CommandText = spprefix + "AddUserCustomerAccess";
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = userid;
+                    oc.Parameters.Add("@customerid", SqlDbType.Int).Value = customerid;
+                    oc.Parameters.Add("@accessid", SqlDbType.Int).Value = accessid;
                     oc.ExecuteNonQuery();
                     transaction.Commit();
-
                 }
                 catch (SqlException sqle)
                 {
@@ -2215,6 +2362,108 @@ namespace PTR
                     }
                 }
             }
+        }
+
+        public static int AddMilestone(MilestoneModel milestone)
+        {
+            int insertedid = -1;
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "AddMilestone";
+                    oc.Parameters.Add("@CaseID", SqlDbType.Int);
+                    oc.Parameters.Add("@description", SqlDbType.NVarChar, maxdescrlen).Value = milestone.Description ?? string.Empty;
+
+                    if (milestone.TargetDate == null)
+                        oc.Parameters.Add("@targetdate", SqlDbType.Date).Value = DBNull.Value;
+                    else
+                        oc.Parameters.Add("@targetdate", SqlDbType.Date).Value = milestone.TargetDate;
+
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = milestone.UserID;
+                    oc.Parameters.Add("@projectid", SqlDbType.Int).Value = milestone.ProjectID;
+                    oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+            return insertedid;
+        }
+
+        public static int AddEvaluationPlan(EPModel ep)
+        {
+            int insertedid = -1;
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "AddEvaluationPlan";
+                    oc.Parameters.Add("@CaseID", SqlDbType.Int);
+                    oc.Parameters.Add("@title", SqlDbType.NVarChar, descrfieldlen).Value = ep.Description ?? string.Empty;
+                    oc.Parameters.Add("@objectives", SqlDbType.NVarChar, maxdescrlen).Value = ep.Objectives;
+                    oc.Parameters.Add("@strategy", SqlDbType.NVarChar, maxdescrlen).Value = ep.Strategy;
+
+                    if (ep.Created == null)
+                        oc.Parameters.Add("@created", SqlDbType.Date).Value = DBNull.Value;
+                    else
+                        oc.Parameters.Add("@created", SqlDbType.Date).Value = ep.Created;
+
+                    if (ep.Discussed == null)
+                        oc.Parameters.Add("@discussed", SqlDbType.Date).Value = DBNull.Value;
+                    else
+                        oc.Parameters.Add("@discussed", SqlDbType.Date).Value = ep.Discussed;
+
+                    oc.Parameters.Add("@projectid", SqlDbType.Int).Value = ep.ProjectID;
+                    oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+            return insertedid;
         }
 
         public static int AddSalesRegion(SalesRegionModel em)
@@ -2229,10 +2478,10 @@ namespace PTR
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "AddSalesRegion";
+                    oc.CommandText = spprefix + "AddSalesRegion";
                     oc.Parameters.Add("@CaseID", SqlDbType.Int);
                     oc.Parameters.Add("@countryid", SqlDbType.Int).Value = em.CountryID;
-                    oc.Parameters.Add("@name", SqlDbType.NVarChar, descrfieldlen).Value = em.Name;                   
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = em.Name;
                     oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
                     oc.ExecuteNonQuery();
                     transaction.Commit();
@@ -2258,105 +2507,7 @@ namespace PTR
             return insertedid;
         }
 
-        #endregion
-
-        #region Update Queries
-
-        public static void UpdateProject(ProjectModel project)
-        {                      
-            using (SqlCommand oc = new SqlCommand())
-            {
-                try
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    SqlTransaction transaction;
-                    transaction = Conn.BeginTransaction("LocalTransaction");
-                    oc.Transaction = transaction;
-                    oc.CommandText = "UpdateProject";
-                    oc.Parameters.Add("@customerid", SqlDbType.Int).Value = project.CustomerID;
-                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = project.GOM.Name ?? string.Empty;
-                    oc.Parameters.Add("@description", SqlDbType.NVarChar, descrfieldlen).Value = project.GOM.Description ?? string.Empty;
-                    oc.Parameters.Add("@estimatedannualsales", SqlDbType.Decimal).Value = project.EstimatedAnnualSales;
-                    oc.Parameters.Add("@salesforecastconfirmed", SqlDbType.Bit).Value = project.SalesForecastConfirmed;
-                    oc.Parameters.Add("@ownerid", SqlDbType.Int).Value = project.OwnerID;
-                    oc.Parameters.Add("@salesdivisionid", SqlDbType.Int).Value = project.SalesDivisionID;
-                    oc.Parameters.Add("@projectstatusid", SqlDbType.Int).Value = project.ProjectStatusID;              
-                    oc.Parameters.Add("@marketsegmentid", SqlDbType.Int).Value = project.MarketSegmentID;
-                    oc.Parameters.Add("@products", SqlDbType.NVarChar, multipleidslen).Value = project.Products ?? string.Empty;
-                    oc.Parameters.Add("@resources", SqlDbType.NVarChar, multipleidslen).Value = project.Resources ?? string.Empty;
-                    oc.Parameters.Add("@expecteddatefirstsales", SqlDbType.Date).Value = project.ExpectedDateFirstSales;
-                    oc.Parameters.Add("@targetedvolume", SqlDbType.Decimal).Value = project.TargetedVolume;
-                    oc.Parameters.Add("@applicationid", SqlDbType.Int).Value = project.ApplicationID;
-                    oc.Parameters.Add("@estimatedannualmpc", SqlDbType.Decimal).Value = project.EstimatedAnnualMPC;
-                    oc.Parameters.Add("@newbusinesscategoryid", SqlDbType.Int).Value = project.NewBusinessCategoryID;
-                    if (project.CompletedDate == null)
-                        oc.Parameters.Add("@completeddate", SqlDbType.Date).Value = DBNull.Value;
-                    else
-                        oc.Parameters.Add("@completeddate", SqlDbType.Date).Value = project.CompletedDate;
-                                       
-                    oc.Parameters.Add("@probabilityofsuccess", SqlDbType.Decimal).Value = ConvertObjToDecimal(project.ProbabilityOfSuccess/100);
-                    oc.Parameters.Add("@gm", SqlDbType.Decimal).Value = ConvertObjToDecimal(project.GM);
-                    oc.Parameters.Add("@smcodeid", SqlDbType.Int).Value = project.SMCodeID;
-                    oc.Parameters.Add("@projecttypeid", SqlDbType.Int).Value = project.ProjectTypeID;
-                    oc.Parameters.Add("@kpm", SqlDbType.Bit).Value = project.KPM;
-                    oc.Parameters.Add("@eprequired", SqlDbType.Bit).Value = project.EPRequired;
-                    oc.Parameters.Add("@cdpccpid", SqlDbType.Int).Value = project.CDPCCPID;
-                    oc.Parameters.Add("@differentiatedtechnology", SqlDbType.Bit).Value = project.DifferentiatedTechnology;
-                                                                         
-                    oc.Parameters.Add("@projectid", SqlDbType.Int).Value = project.GOM.ID;
-                    oc.ExecuteNonQuery();
-                    transaction.Commit();
-                }
-                catch (SqlException sqle)
-                {
-                    HandleSQLError(sqle);
-                }
-                catch (Exception e)
-                {
-                    ShowError(e);
-                    try
-                    {
-                        oc.Transaction.Rollback();
-                    }
-                    catch 
-                    {
-                        throw ;
-                    }
-                }
-            }                   
-        }
-
-        public static void UpdateMonthlyActivityStatus(FullyObservableCollection<MonthlyActivityStatusModel> activities)
-        {
-            int result = 0;
-            foreach (MonthlyActivityStatusModel mas in activities)
-            {
-                if (mas.IsDirty)
-                {
-                    if (RequiredTrialStatuses.Count > 0)
-                    {
-                        if (!RequiredTrialStatuses.Contains(mas.StatusID))
-                            mas.TrialStatusID = 0;
-                    }
-
-                    if (mas.StatusMonth != null)
-                    {
-                        if (mas.ID > 0)
-                            UpdateMonthlyActivityStatus2(mas);
-                        else
-                        {
-                            if (mas.StatusID > 0 && mas.StatusMonth != null)
-                            {
-                                result = AddMonthlyActivityStatus(mas);                                
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        public static int AddMonthlyActivityStatus(MonthlyActivityStatusModel activity)
+        public static int AddProductName(ModelBaseVM em)
         {
             int insertedid = -1;
             using (SqlCommand oc = new SqlCommand())
@@ -2368,14 +2519,10 @@ namespace PTR
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "AddMonthlyActivityStatus";
+                    oc.CommandText = spprefix + "AddProductName";
                     oc.Parameters.Add("@CaseID", SqlDbType.Int);
-                    oc.Parameters.Add("@projectid", SqlDbType.Int).Value = activity.ProjectID;
-                    oc.Parameters.Add("@statusmonth", SqlDbType.Date).Value = activity.StatusMonth;
-                    oc.Parameters.Add("@statusid", SqlDbType.Int).Value = activity.StatusID;
-                    oc.Parameters.Add("@comments", SqlDbType.NVarChar, descrfieldlen).Value = activity.Comments ?? string.Empty;
-                    oc.Parameters.Add("@trialstatusid", SqlDbType.Int).Value = activity.TrialStatusID;
-                    oc.Parameters.Add("@expecteddatefirstsales", SqlDbType.Date).Value = activity.ExpectedDateFirstSales ?? DateTime.Now.AddMonths(12);
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = em.Name;
+                    oc.Parameters.Add("@uppercase", SqlDbType.Bit).Value = em.IsSelected;
                     oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
                     oc.ExecuteNonQuery();
                     transaction.Commit();
@@ -2392,9 +2539,663 @@ namespace PTR
                     {
                         oc.Transaction.Rollback();
                     }
-                    catch 
+                    catch
                     {
-                        throw ;
+                        throw;
+                    }
+                }
+            }
+            return insertedid;
+        }
+
+        public static int AddProjectType(ProjectTypeModel item)
+        {
+            int insertedid = -1;
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "AddProjectType";
+                    oc.Parameters.Add("@CaseID", SqlDbType.Int);
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = item.Name ?? string.Empty;
+                    oc.Parameters.Add("@description", SqlDbType.NVarChar, descrfieldlen).Value = item.Description ?? string.Empty;
+                    oc.Parameters.Add("@colour", SqlDbType.NVarChar, colourlen).Value = item.Colour ?? string.Empty;
+                    oc.Parameters.Add("@showsponsor", SqlDbType.Bit).Value = item.ShowSponsor;
+                    oc.Parameters.Add("@miscellaneousdatalabel", SqlDbType.NVarChar, namefieldlen).Value = item.MiscellaneousDataLabel ?? string.Empty;
+                    oc.Parameters.Add("@showunitcost", SqlDbType.Bit).Value = item.ShowUnitCost;
+                    oc.Parameters.Add("@salesrequired", SqlDbType.Bit).Value = item.SalesRequired;
+                    oc.Parameters.Add("@salesvolumerequired", SqlDbType.Bit).Value = item.SalesVolumeRequired;
+                    oc.Parameters.Add("@gmrequired", SqlDbType.Bit).Value = item.GMRequired;
+                    oc.Parameters.Add("@mpcrequired", SqlDbType.Bit).Value = item.MPCRequired;
+                    oc.Parameters.Add("@probabilityrequired", SqlDbType.Bit).Value = item.ProbabilityRequired;
+                    oc.Parameters.Add("@productrequired", SqlDbType.Bit).Value = item.ProductRequired;
+                    oc.Parameters.Add("@opportunitycatrequired", SqlDbType.Bit).Value = item.OpportunityCatRequired;
+                    oc.Parameters.Add("@showdifferentiatedtech", SqlDbType.Bit).Value = item.ShowDifferentiatedTech;
+                    oc.Parameters.Add("@showkpm", SqlDbType.Bit).Value = item.ShowKPM;
+                    oc.Parameters.Add("@showpriority", SqlDbType.Bit).Value = item.ShowPriority;                   
+                    oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+            return insertedid;
+        }
+
+        public static int AddApplication(ApplicationModel item)
+        {
+            int insertedid = -1;
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "AddApplication";
+                    oc.Parameters.Add("@CaseID", SqlDbType.Int);
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = item.Name ?? string.Empty; 
+                    oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+            return insertedid;
+        }
+
+        public static int AddSMCode(SMCodeModel item)
+        {
+            int insertedid = -1;
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "AddSMCode";
+                    oc.Parameters.Add("@CaseID", SqlDbType.Int);
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = item.Name;
+                    oc.Parameters.Add("@description", SqlDbType.NVarChar, descrfieldlen).Value = item.Description ?? string.Empty;
+                    oc.Parameters.Add("@industryid", SqlDbType.Int).Value = item.IndustryID;
+                    oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+            return insertedid;
+        }
+
+        public static int AddTrialStatus(TrialStatusModel item)
+        {
+            int insertedid = -1;
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "AddTrialStatus";
+                    oc.Parameters.Add("@CaseID", SqlDbType.Int);
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = item.Name ?? string.Empty;
+                    oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+            return insertedid;
+        }
+
+        public static int AddNewBusinessCategory(ModelBaseVM em)
+        {
+            int insertedid = -1;
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "AddNewBusinessCategory";
+                    oc.Parameters.Add("@CaseID", SqlDbType.Int);
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, descrfieldlen).Value = em.Name ?? string.Empty;
+                    oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+            return insertedid;
+        }
+
+        public static int AddIndustrySegmentApplication(IndustrySegmentApplicationJoinModel item)
+        {
+            int insertedid = -1;
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "AddIndustrySegmentApplication";
+                    oc.Parameters.Add("@CaseID", SqlDbType.Int);
+                    oc.Parameters.Add("@industrysegmentid", SqlDbType.Int).Value = item.IndustrySegmentID;
+                    oc.Parameters.Add("@applicationid", SqlDbType.Int).Value = item.ApplicationID;
+                    oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+            return insertedid;
+        }
+
+        public static int AddIndustrySegment(IndustrySegmentModel item)
+        {
+            int insertedid = -1;
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "AddIndustrySegment";
+                    oc.Parameters.Add("@CaseID", SqlDbType.Int);
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = item.Name ?? string.Empty;
+                    oc.Parameters.Add("@industryid", SqlDbType.Int).Value = item.IndustryID;
+                    oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+            return insertedid;
+        }
+        
+        public static int AddReasonForIncompleteProject(ModelBaseVM item)
+        {
+            int insertedid = -1;
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "AddReasonForIncompleteProject";
+                    oc.Parameters.Add("@CaseID", SqlDbType.Int);
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, descrfieldlen).Value = item.Name ?? string.Empty;
+                    oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+            return insertedid;
+        }
+
+        public static int AddReportField(ReportFields item)
+        {
+            int insertedid = -1;
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "AddReportField";
+                    oc.Parameters.Add("@CaseID", SqlDbType.Int);
+                    oc.Parameters.Add("@reportname", SqlDbType.NVarChar, namefieldlen).Value = item.Name ?? string.Empty;
+                    oc.Parameters.Add("@caption", SqlDbType.NVarChar, namefieldlen).Value = item.Caption ?? string.Empty;
+                    oc.Parameters.Add("@fieldname", SqlDbType.NVarChar, namefieldlen).Value = item.FieldName ?? string.Empty;
+                    oc.Parameters.Add("@datatypeid", SqlDbType.Int).Value = item.DataTypeID;
+                    oc.Parameters.Add("@alignment", SqlDbType.NVarChar, alignmentlen).Value = item.Alignment ?? string.Empty;
+                    oc.Parameters.Add("@fieldtype", SqlDbType.Int).Value = item.FieldType;
+                    oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+            return insertedid;
+        }
+        
+        public static int AddMiscellaneousData(MiscellaneousDataModel item)
+        {
+            int insertedid = -1;
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "AddMiscellaneousData";
+                    oc.Parameters.Add("@CaseID", SqlDbType.Int);
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = item.Name ?? string.Empty;
+                    oc.Parameters.Add("@fkid", SqlDbType.Int).Value = item.FKID;                  
+                    oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+            return insertedid;
+        }
+
+        public static Collection<string> GetColours()
+        {
+            Collection<string> colors = new Collection<string>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetColors";
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                        {
+                            colors.Add(or["Color"].ToString() ?? string.Empty);
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return colors;
+        }
+
+        public static int AddBU(ModelBaseVM item)
+        {
+            int insertedid = -1;
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "AddBU";
+                    oc.Parameters.Add("@CaseID", SqlDbType.Int);
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = item.Name ?? string.Empty;
+                    oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+            return insertedid;
+        }
+
+
+        #endregion
+
+        #region Update Queries
+
+        public static void UpdateProject(ProjectModel project)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "UpdateProject";
+                    oc.Parameters.Add("@customerid", SqlDbType.Int).Value = project.CustomerID;
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, Config.MaxProjectNameLength).Value = project.Name ?? string.Empty;
+                    oc.Parameters.Add("@description", SqlDbType.NVarChar, descrfieldlen).Value = project.Description ?? string.Empty;
+                    oc.Parameters.Add("@estimatedannualsales", SqlDbType.Decimal).Value = project.EstimatedAnnualSales;
+                    oc.Parameters.Add("@ownerid", SqlDbType.Int).Value = project.OwnerID;
+                    oc.Parameters.Add("@salesdivisionid", SqlDbType.Int).Value = project.SalesDivisionID;
+                    oc.Parameters.Add("@projectstatusid", SqlDbType.Int).Value = project.ProjectStatusID;
+                    oc.Parameters.Add("@industrysegmentid", SqlDbType.Int).Value = project.IndustrySegmentID;
+                    oc.Parameters.Add("@products", SqlDbType.NVarChar, descrfieldlen).Value = project.Products ?? string.Empty;
+                    oc.Parameters.Add("@resources", SqlDbType.NVarChar, descrfieldlen).Value = project.Resources ?? string.Empty;                    
+                    oc.Parameters.Add("@targetedvolume", SqlDbType.Decimal).Value = project.TargetedVolume;
+                    oc.Parameters.Add("@applicationid", SqlDbType.Int).Value = project.ApplicationID;
+                    oc.Parameters.Add("@estimatedannualmpc", SqlDbType.Decimal).Value = project.EstimatedAnnualMPC;
+                    oc.Parameters.Add("@newbusinesscategoryid", SqlDbType.Int).Value = project.NewBusinessCategoryID;
+                    if (project.CompletedDate == null)
+                        oc.Parameters.Add("@completeddate", SqlDbType.Date).Value = DBNull.Value;
+                    else
+                        oc.Parameters.Add("@completeddate", SqlDbType.Date).Value = project.CompletedDate;
+                    oc.Parameters.Add("@probabilityofsuccess", SqlDbType.Decimal).Value = ConvertObjToDecimal(project.ProbabilityOfSuccess / 100);
+                    oc.Parameters.Add("@gm", SqlDbType.Decimal).Value = ConvertObjToDecimal(project.GM);
+                    oc.Parameters.Add("@smcodeid", SqlDbType.Int).Value = project.SMCodeID;
+                    oc.Parameters.Add("@projecttypeid", SqlDbType.Int).Value = project.ProjectTypeID;
+                    oc.Parameters.Add("@kpm", SqlDbType.Bit).Value = project.KPM;
+                    oc.Parameters.Add("@eprequired", SqlDbType.Bit).Value = project.EPRequired;
+                    oc.Parameters.Add("@differentiatedtechnology", SqlDbType.Bit).Value = project.DifferentiatedTechnology;
+                    oc.Parameters.Add("@comments", SqlDbType.NVarChar, commentslen).Value = project.Comments ?? string.Empty;
+                    oc.Parameters.Add("@incompletereasonid", SqlDbType.Int).Value = project.IncompleteReasonID;
+                    oc.Parameters.Add("@priorityid", SqlDbType.Int).Value = project.PriorityID;
+                    oc.Parameters.Add("@sponsorid", SqlDbType.Int).Value = project.SponsorID;
+                    oc.Parameters.Add("@miscellaneousdataid", SqlDbType.Int).Value = project.MiscDataID;
+                    oc.Parameters.Add("@allownonowneredits", SqlDbType.Bit).Value = project.AllowNonOwnerEdits;
+                    oc.Parameters.Add("@allownonownermilestoneaccess", SqlDbType.Bit).Value = project.AllowNonOwnerMileStoneAccess;
+                    oc.Parameters.Add("@creatorid", SqlDbType.Int).Value = CurrentUser.ID;
+                    oc.Parameters.Add("@unitcost", SqlDbType.Decimal).Value = ConvertObjToDecimal(project.UnitCost);
+                    oc.Parameters.Add("@projectid", SqlDbType.Int).Value = project.ID;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static FullyObservableCollection<MonthlyActivityStatusModel> UpdateMonthlyActivityStatus(FullyObservableCollection<MonthlyActivityStatusModel> activities)
+        {
+            int result = 0;
+            var q = activities.Where(x => x.StatusID == 10).FirstOrDefault();
+            if (q != null)
+                //update Project Status table
+                UpdateForecastedSalesDate(q.ProjectID, q.StatusID, q.EstimatedAnnualSales);
+            else
+            {
+                var q2 = activities.Where(x => x.StatusID > 0 && x.StatusID < 10).FirstOrDefault();
+                if (q2 != null)
+                    UpdateForecastedSalesDate(q2.ProjectID, q2.StatusID, q2.EstimatedAnnualSales);
+            }
+            foreach (MonthlyActivityStatusModel mas in activities)
+            {
+                if (mas.IsDirty)
+                {
+                    if (mas.StatusID != Config.StatusIDforTrials || mas.TrialStatusID < Config.DefaultTrialStatusID)
+                    {
+                        mas.TrialStatusID = 0;
+                    }
+
+                    if (mas.StatusMonth != null)
+                    {
+                        if (mas.ID > 0)                                                    
+                            UpdateMonthlyActivityStatus2(mas);                        
+                        else
+                        {
+                            if (mas.StatusID > 0)
+                            {
+                                result = AddMonthlyActivityStatus(mas);
+                                mas.ID = result;
+                            }
+                        }                       
+                    }
+                }
+            }
+            return activities;
+        }
+
+        public static int AddMonthlyActivityStatus(MonthlyActivityStatusModel activity)
+        {
+            int insertedid = -1;
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {                    
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "AddMonthlyActivityStatus";
+                    oc.Parameters.Add("@CaseID", SqlDbType.Int);
+                    oc.Parameters.Add("@projectid", SqlDbType.Int).Value = activity.ProjectID;
+                    oc.Parameters.Add("@statusmonth", SqlDbType.Date).Value = activity.StatusMonth;
+                    oc.Parameters.Add("@statusid", SqlDbType.Int).Value = activity.StatusID;
+                    oc.Parameters.Add("@comments", SqlDbType.NVarChar, descrfieldlen).Value = activity.Comments ?? string.Empty;
+                    oc.Parameters.Add("@trialstatusid", SqlDbType.Int).Value = activity.TrialStatusID;
+                    oc.Parameters.Add("@expecteddatefirstsales", SqlDbType.Date).Value = activity.ExpectedDateFirstSales ?? DateTime.Now.AddMonths(12);
+                    oc.Parameters["@CaseID"].Direction = ParameterDirection.Output;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                    insertedid = Convert.ToInt32(oc.Parameters["@CaseID"].Value);                    
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
                     }
                 }
             }
@@ -2412,12 +3213,12 @@ namespace PTR
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "UpdateMonthlyActivityStatus";
+                    oc.CommandText = spprefix + "UpdateMonthlyActivityStatus";
                     oc.Parameters.Add("@statusid", SqlDbType.Int).Value = activity.StatusID;
                     oc.Parameters.Add("@trialstatusid", SqlDbType.Int).Value = activity.TrialStatusID;
                     oc.Parameters.Add("@comments", SqlDbType.NVarChar, descrfieldlen).Value = activity.Comments ?? string.Empty;
                     oc.Parameters.Add("@expecteddatefirstsales", SqlDbType.Date).Value = activity.ExpectedDateFirstSales ?? DateTime.Now.AddMonths(12);
-                    oc.Parameters.Add("@activityid", SqlDbType.Int).Value = activity.ID;                           
+                    oc.Parameters.Add("@activityid", SqlDbType.Int).Value = activity.ID;
                     oc.ExecuteNonQuery();
                     transaction.Commit();
                 }
@@ -2432,14 +3233,14 @@ namespace PTR
                     {
                         oc.Transaction.Rollback();
                     }
-                    catch 
+                    catch
                     {
-                        throw ;
+                        throw;
                     }
                 }
-            }           
+            }
         }
-       
+
         public static void UpdateCustomer(CustomerModel customer)
         {
             using (SqlCommand oc = new SqlCommand())
@@ -2451,14 +3252,14 @@ namespace PTR
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "UpdateCustomer";
-                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = customer.GOM.Name ?? string.Empty;
+                    oc.CommandText = spprefix + "UpdateCustomer";
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = customer.Name ?? string.Empty;
                     oc.Parameters.Add("@number", SqlDbType.NVarChar, namefieldlen).Value = customer.Number ?? string.Empty;
-                    oc.Parameters.Add("@location", SqlDbType.NVarChar, multipleidslen).Value = customer.Location ?? string.Empty;
+                    oc.Parameters.Add("@location", SqlDbType.NVarChar, namefieldlen).Value = customer.Location ?? string.Empty;
                     oc.Parameters.Add("@countryid", SqlDbType.Int).Value = customer.CountryID;
                     oc.Parameters.Add("@salesregionid", SqlDbType.Int).Value = customer.SalesRegionID;
-                    oc.Parameters.Add("@deleted", SqlDbType.Bit).Value = customer.GOM.Deleted;
-                    oc.Parameters.Add("@customerid", SqlDbType.Int).Value = customer.GOM.ID;                   
+                    oc.Parameters.Add("@deleted", SqlDbType.Bit).Value = customer.Deleted;
+                    oc.Parameters.Add("@customerid", SqlDbType.Int).Value = customer.ID;
                     oc.ExecuteNonQuery();
                     transaction.Commit();
                 }
@@ -2473,39 +3274,39 @@ namespace PTR
                     {
                         oc.Transaction.Rollback();
                     }
-                    catch 
+                    catch
                     {
-                        throw ;
+                        throw;
                     }
                 }
             }
         }
 
         public static void UpdateUser(UserModel user)
-        {                        
+        {
             using (SqlCommand oc = new SqlCommand())
             {
                 try
-                { 
+                {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "UpdateUser";
-                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = user.GOM.Name ?? string.Empty;
+                    oc.CommandText = spprefix + "UpdateUser";
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = user.Name ?? string.Empty;
                     oc.Parameters.Add("@loginname", SqlDbType.NVarChar, namefieldlen).Value = user.LoginName ?? string.Empty;
-                    oc.Parameters.Add("@email", SqlDbType.NVarChar, multipleidslen).Value = user.Email ?? string.Empty;
+                    oc.Parameters.Add("@email", SqlDbType.NVarChar, descrfieldlen).Value = user.Email ?? string.Empty;
                     oc.Parameters.Add("@gin", SqlDbType.NVarChar, ginlen).Value = user.GIN ?? string.Empty;
                     oc.Parameters.Add("@administrator", SqlDbType.Bit).Value = user.Administrator;
-                    oc.Parameters.Add("@salesdivisions", SqlDbType.NVarChar, multipleidslen).Value = user.SalesDivisions ?? string.Empty;                  
+                    oc.Parameters.Add("@salesdivisions", SqlDbType.NVarChar, multipleidslen).Value = user.BusinessUnits ?? string.Empty;
                     oc.Parameters.Add("@administrationmnu", SqlDbType.NVarChar, multipleidslen).Value = user.AdministrationMnu ?? string.Empty;
                     oc.Parameters.Add("@projectsmnu", SqlDbType.NVarChar, multipleidslen).Value = user.ProjectsMnu ?? string.Empty;
                     oc.Parameters.Add("@reportsmnu", SqlDbType.NVarChar, multipleidslen).Value = user.ReportsMnu ?? string.Empty;
-                    oc.Parameters.Add("@showothers", SqlDbType.Bit).Value = user.ShowOthers;
-                    oc.Parameters.Add("@shownag", SqlDbType.Bit).Value = user.ShowNagScreen;
-                    oc.Parameters.Add("@deleted", SqlDbType.Bit).Value = user.GOM.Deleted;
-                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = user.GOM.ID;                    
+                    oc.Parameters.Add("@showothers", SqlDbType.Bit).Value = user.ShowOthers;                  
+                    oc.Parameters.Add("@alloweditcompletedcancelled", SqlDbType.Bit).Value = user.AllowEditCompletedCancelled;
+                    oc.Parameters.Add("@deleted", SqlDbType.Bit).Value = user.Deleted;
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = user.ID;
                     oc.ExecuteNonQuery();
                     transaction.Commit();
                 }
@@ -2520,32 +3321,32 @@ namespace PTR
                     {
                         oc.Transaction.Rollback();
                     }
-                    catch 
+                    catch
                     {
-                        throw ;
+                        throw;
                     }
                 }
-            }           
+            }
         }
-                
+
         public static void UpdateCountry(CountryModel country)
-        {                        
+        {
             using (SqlCommand oc = new SqlCommand())
             {
                 try
-                { 
+                {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "UpdateCountry";
-                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = country.GOM.Name ?? string.Empty;
+                    oc.CommandText = spprefix + "UpdateCountry";
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = country.Name ?? string.Empty;
                     oc.Parameters.Add("@operatingcompanyid", SqlDbType.Int).Value = country.OperatingCompanyID;
                     oc.Parameters.Add("@culturecode", SqlDbType.NVarChar, culturecodelen).Value = country.CultureCode ?? string.Empty;
                     oc.Parameters.Add("@useusd", SqlDbType.Bit).Value = country.UseUSD;
-                    oc.Parameters.Add("@deleted", SqlDbType.Bit).Value = country.GOM.Deleted;                    
-                    oc.Parameters.Add("@countryid", SqlDbType.Int).Value = country.GOM.ID;                    
+                    oc.Parameters.Add("@deleted", SqlDbType.Bit).Value = country.Deleted;
+                    oc.Parameters.Add("@countryid", SqlDbType.Int).Value = country.ID;
                     oc.ExecuteNonQuery();
                     transaction.Commit();
                 }
@@ -2560,12 +3361,12 @@ namespace PTR
                     {
                         oc.Transaction.Rollback();
                     }
-                    catch 
+                    catch
                     {
-                        throw ;
+                        throw;
                     }
                 }
-            }            
+            }
         }
 
         public static void UpdateSalesRegion(SalesRegionModel salesregion)
@@ -2579,7 +3380,7 @@ namespace PTR
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "UpdateSalesRegion";
+                    oc.CommandText = spprefix + "UpdateSalesRegion";
                     oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = salesregion.Name ?? string.Empty;
                     oc.Parameters.Add("@countryid", SqlDbType.Int).Value = salesregion.CountryID;
                     oc.Parameters.Add("@salesregionid", SqlDbType.Int).Value = salesregion.ID;
@@ -2604,126 +3405,8 @@ namespace PTR
                 }
             }
         }
-
-
-        public static void SetLastUpdatedMonth(DateTime dt)
-        {           
-            
-            using (SqlCommand oc = new SqlCommand())
-            {
-                try
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    SqlTransaction transaction;
-                    transaction = Conn.BeginTransaction("LocalTransaction");
-                    oc.Transaction = transaction;
-                    oc.CommandText = "SetLastUpdatedMonth";
-                    oc.Parameters.Add("@updatedate", SqlDbType.Date).Value = dt;                   
-                    oc.ExecuteNonQuery();
-                    transaction.Commit();
-                }
-                catch (SqlException sqle)
-                {
-                    HandleSQLError(sqle);
-                }
-                catch (Exception e)
-                {
-                    ShowError(e);
-                    try
-                    {
-                        oc.Transaction.Rollback();
-                    }
-                    catch 
-                    {
-                        throw ;
-                    }
-                }
-            }            
-        }
-
-        public static void UpdateStatus10ProjectsToCompleted()
-        {            
-            using (SqlCommand oc = new SqlCommand())
-            {
-                try
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    SqlTransaction transaction;
-                    transaction = Conn.BeginTransaction("LocalTransaction");
-                    oc.Transaction = transaction;
-                    oc.CommandText = "UpdateStatus10ProjectsToCompleted";
-                    DateTime previousmonth =(DateTime)ConvertDateToMonth(DateTime.Now.AddMonths(-1));
-                    oc.Parameters.Add("@completeddate", SqlDbType.Date).Value = new DateTime(previousmonth.Year, previousmonth.Month, 1);                  
-                    oc.ExecuteNonQuery();
-                    transaction.Commit();
-                }
-                catch (SqlException sqle)
-                {
-                    HandleSQLError(sqle);
-                }
-                catch (Exception e)
-                {
-                    ShowError(e);
-                    try
-                    {
-                        oc.Transaction.Rollback();
-                    }
-                    catch 
-                    {
-                        throw ;
-                    }
-                }
-            }           
-        }
-
-        public static void UpdateActualForecastedSales(int projectid, object[] values, bool salesconfirmedflag)
-        {            
-                          
-            using (SqlCommand oc = new SqlCommand())
-            {
-                try
-                {  
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    SqlTransaction transaction;
-                    transaction = Conn.BeginTransaction("LocalTransaction");
-                    oc.Transaction = transaction;
-                    oc.CommandText = "UpdateActualForecastedSales";
-                    oc.Parameters.Add("@actualannualsales", SqlDbType.Decimal).Value = ConvertObjToDecimal(values[0]);
-                    oc.Parameters.Add("@expecteddatefirstsales", SqlDbType.Date).Value = (DateTime) values[1];                 
-                    oc.Parameters.Add("@salesconfirmedflag", SqlDbType.Bit).Value = salesconfirmedflag;
-
-                    if (salesconfirmedflag == true)
-                        oc.Parameters.Add("@completeddate", SqlDbType.Date).Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
-                    else
-                        oc.Parameters.Add("@completeddate", SqlDbType.Date).Value = DBNull.Value;
-
-                    oc.Parameters.Add("@projectid", SqlDbType.Int).Value = projectid;                    
-                    oc.ExecuteNonQuery();
-                    transaction.Commit();
-                }
-                catch (SqlException sqle)
-                {
-                    HandleSQLError(sqle);
-                }
-                catch (Exception e)
-                {
-                    ShowError(e);
-                    try
-                    {
-                        oc.Transaction.Rollback();
-                    }
-                    catch 
-                    {
-                        throw ;
-                    }
-                }
-            }            
-        }
-
-        public static void UpdateForecastedSalesDate(int projectid, DateTime salesdate)
+                      
+        public static void UpdateForecastedSalesDate( int projectid, int statusid, decimal estimatedannualsales)
         {
             using (SqlCommand oc = new SqlCommand())
             {
@@ -2734,8 +3417,9 @@ namespace PTR
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "UpdateForecastedSalesDate";
-                    oc.Parameters.Add("@expecteddatefirstsales", SqlDbType.Date).Value = salesdate;
+                    oc.CommandText = spprefix + "UpdateForecastedSalesDate";
+                    oc.Parameters.Add("@statusid", SqlDbType.Int).Value = statusid;
+                    oc.Parameters.Add("@estimatedannualsales", SqlDbType.Decimal).Value = estimatedannualsales;
                     oc.Parameters.Add("@projectid", SqlDbType.Int).Value = projectid;
                     oc.ExecuteNonQuery();
                     transaction.Commit();
@@ -2751,64 +3435,28 @@ namespace PTR
                     {
                         oc.Transaction.Rollback();
                     }
-                    catch 
+                    catch
                     {
-                        throw ;
+                        throw;
                     }
                 }
             }
         }
-
-        public static void UpdateProjectStatus(int projectid, int newstatusid)
+               
+        public static void UpdateExchangeRate(ExchangeRateModel em)
         {
             using (SqlCommand oc = new SqlCommand())
             {
                 try
-                {                           
+                {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "UpdateProjectStatus";
-                    oc.Parameters.Add("@projectstatusid", SqlDbType.Int).Value = newstatusid;
-                    oc.Parameters.Add("@projectid", SqlDbType.Int).Value = projectid;
-                    oc.ExecuteNonQuery();
-                    transaction.Commit();
-                }
-                catch (SqlException sqle)
-                {
-                    HandleSQLError(sqle);
-                }
-                catch (Exception e)
-                {
-                    ShowError(e);
-                    try
-                    {
-                        oc.Transaction.Rollback();
-                    }
-                    catch 
-                    {
-                        throw ;
-                    }
-                }
-            }            
-        }
-                      
-        public static void UpdateExchangeRate(ExchangeRateModel em)
-        {                        
-            using (SqlCommand oc = new SqlCommand())
-            {
-                try
-                { 
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    SqlTransaction transaction;
-                    transaction = Conn.BeginTransaction("LocalTransaction");
-                    oc.Transaction = transaction;
-                    oc.CommandText = "UpdateExchangeRate";
+                    oc.CommandText = spprefix + "UpdateExchangeRate";
                     oc.Parameters.Add("@countryid", SqlDbType.Int).Value = em.CountryID;
-                    oc.Parameters.Add("@exratemonth", SqlDbType.Date).Value = em.ExRateMonth; 
+                    oc.Parameters.Add("@exratemonth", SqlDbType.Date).Value = em.ExRateMonth;
                     oc.Parameters.Add("@usexchangerate", SqlDbType.Float).Value = em.ExRate;
                     oc.Parameters.Add("@id", SqlDbType.Int).Value = em.ID;
                     oc.ExecuteNonQuery();
@@ -2825,12 +3473,12 @@ namespace PTR
                     {
                         oc.Transaction.Rollback();
                     }
-                    catch 
+                    catch
                     {
-                        throw ;
+                        throw;
                     }
                 }
-            }            
+            }
         }
 
         public static void UpdateEvaluationPlan(EPModel ep)
@@ -2844,8 +3492,8 @@ namespace PTR
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "UpdateEP";                    
-                    oc.Parameters.Add("@title", SqlDbType.NVarChar, descrfieldlen).Value = ep.GOM.Description ?? string.Empty;
+                    oc.CommandText = spprefix + "UpdateEP";
+                    oc.Parameters.Add("@title", SqlDbType.NVarChar, descrfieldlen).Value = ep.Description ?? string.Empty;
                     oc.Parameters.Add("@objectives", SqlDbType.NVarChar, maxdescrlen).Value = ep.Objectives ?? string.Empty;
                     oc.Parameters.Add("@strategy", SqlDbType.NVarChar, maxdescrlen).Value = ep.Strategy ?? string.Empty;
                     if (ep.Created == null)
@@ -2856,8 +3504,8 @@ namespace PTR
                         oc.Parameters.Add("@discussed", SqlDbType.Date).Value = DBNull.Value;
                     else
                         oc.Parameters.Add("@discussed", SqlDbType.Date).Value = ep.Discussed;
-                    oc.Parameters.Add("@deleted", SqlDbType.Bit).Value = ep.GOM.Deleted;
-                    oc.Parameters.Add("@id", SqlDbType.Int).Value = ep.GOM.ID;
+                    oc.Parameters.Add("@deleted", SqlDbType.Bit).Value = ep.Deleted;
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = ep.ID;
                     oc.ExecuteNonQuery();
                     transaction.Commit();
                 }
@@ -2891,9 +3539,9 @@ namespace PTR
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "UpdateMilestone";
-                    oc.Parameters.Add("@description", SqlDbType.NVarChar, maxdescrlen).Value = milestone.GOM.Description ?? string.Empty;
-                   
+                    oc.CommandText = spprefix + "UpdateMilestone";
+                    oc.Parameters.Add("@description", SqlDbType.NVarChar, maxdescrlen).Value = milestone.Description ?? string.Empty;
+
                     if (milestone.TargetDate == null)
                         oc.Parameters.Add("@targetdate", SqlDbType.Date).Value = DBNull.Value;
                     else
@@ -2901,13 +3549,13 @@ namespace PTR
 
                     oc.Parameters.Add("@userid", SqlDbType.Int).Value = milestone.UserID;
                     oc.Parameters.Add("@projectid", SqlDbType.Int).Value = milestone.ProjectID;
-                    
+
                     if (milestone.CompletedDate == null)
                         oc.Parameters.Add("@completeddate", SqlDbType.Date).Value = DBNull.Value;
                     else
                         oc.Parameters.Add("@completeddate", SqlDbType.Date).Value = milestone.CompletedDate;
-                    oc.Parameters.Add("@deleted", SqlDbType.Bit).Value = milestone.GOM.Deleted;
-                    oc.Parameters.Add("@id", SqlDbType.Int).Value = milestone.GOM.ID;
+                    oc.Parameters.Add("@deleted", SqlDbType.Bit).Value = milestone.Deleted;
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = milestone.ID;
                     oc.ExecuteNonQuery();
                     transaction.Commit();
                 }
@@ -2941,7 +3589,7 @@ namespace PTR
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "UpdateUserCustomerAccess";
+                    oc.CommandText = spprefix + "UpdateUserCustomerAccess";
                     oc.Parameters.Add("@userid", SqlDbType.Int).Value = userid;
                     oc.Parameters.Add("@customerid", SqlDbType.Int).Value = customerid;
                     oc.Parameters.Add("@accessid", SqlDbType.Int).Value = accessid;
@@ -2967,9 +3615,554 @@ namespace PTR
             }
         }
 
+        public static void UpdateActivityStatusCode(ActivityStatusCodesModel code)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "UpdateActivityStatusCode";
+                    oc.Parameters.Add("@colour", SqlDbType.NVarChar, colourlen).Value = code.Colour;
+                    oc.Parameters.Add("@description", SqlDbType.NVarChar, namefieldlen).Value = code.Description ?? string.Empty;                    
+                    oc.Parameters.Add("@playbookdescription", SqlDbType.NVarChar, namefieldlen).Value = code.PlaybookDescription ?? string.Empty;
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = code.ID;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void UpdateSetup(SetupModel su)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "UpdateSetup";
+                    oc.Parameters.Add("@domain", SqlDbType.NVarChar, namefieldlen).Value = su.Domain;
+                    oc.Parameters.Add("@emailformat", SqlDbType.NVarChar, namefieldlen).Value = su.Emailformat ?? string.Empty;
+                    oc.Parameters.Add("@eprequired", SqlDbType.Bit).Value = su.EPRequired;
+                    oc.Parameters.Add("@statusidfortrials", SqlDbType.Int).Value = su.StatusIDforTrials;
+                    oc.Parameters.Add("@defaulttrialstatusid", SqlDbType.Int).Value = su.DefaultTrialStatusID;
+                    oc.Parameters.Add("@validateproducts", SqlDbType.Bit).Value = su.ValidateProducts;
+                    oc.Parameters.Add("@maximumprojectnamelength", SqlDbType.Int).Value = su.MaxProjectNameLength;
+                    oc.Parameters.Add("@colouriseplaybookreport", SqlDbType.Bit).Value = su.ColourisePlaybookReport;
+                    oc.Parameters.Add("@defaultsalesstatuses", SqlDbType.NVarChar, multipleidslen).Value = su.DefaultSalesStatuses ?? string.Empty;
+                    oc.Parameters.Add("@productdelimiter", SqlDbType.Char, 1).Value = su.ProductDelimiter;
+                    oc.Parameters.Add("@defaultmasterliststartmonth", SqlDbType.DateTime).Value = su.DefaultMasterListStartMonth;
+                    oc.Parameters.Add("@disablepreviousmonths", SqlDbType.Bit).Value = su.DisablePreviousMonths;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+        
+        public static void UpdateProductName(ModelBaseVM item)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "UpdateProductName";
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = item.Name ?? string.Empty;
+                    oc.Parameters.Add("@uppercase", SqlDbType.Bit).Value = item.IsSelected;
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = item.ID;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void UpdateProjectType(ProjectTypeModel item)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "UpdateProjectType";
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = item.Name;
+                    oc.Parameters.Add("@description", SqlDbType.NVarChar, descrfieldlen).Value = item.Description ?? string.Empty;
+                    oc.Parameters.Add("@colour", SqlDbType.NVarChar, colourlen).Value = item.Colour ?? string.Empty;
+                    oc.Parameters.Add("@showsponsor", SqlDbType.Bit).Value = item.ShowSponsor;
+                    oc.Parameters.Add("@miscellaneousdatalabel", SqlDbType.NVarChar, namefieldlen).Value = item.MiscellaneousDataLabel ?? string.Empty;
+                    oc.Parameters.Add("@showunitcost", SqlDbType.Bit).Value = item.ShowUnitCost;
+                    oc.Parameters.Add("@salesrequired", SqlDbType.Bit).Value = item.SalesRequired;
+                    oc.Parameters.Add("@salesvolumerequired", SqlDbType.Bit).Value = item.SalesVolumeRequired;
+                    oc.Parameters.Add("@gmrequired", SqlDbType.Bit).Value = item.GMRequired;
+                    oc.Parameters.Add("@mpcrequired", SqlDbType.Bit).Value = item.MPCRequired;
+                    oc.Parameters.Add("@probabilityrequired", SqlDbType.Bit).Value = item.ProbabilityRequired;
+                    oc.Parameters.Add("@productrequired", SqlDbType.Bit).Value = item.ProductRequired;
+                    oc.Parameters.Add("@opportunitycatrequired", SqlDbType.Bit).Value = item.OpportunityCatRequired;
+                    oc.Parameters.Add("@showdifferentiatedtech", SqlDbType.Bit).Value = item.ShowDifferentiatedTech;
+                    oc.Parameters.Add("@showkpm", SqlDbType.Bit).Value = item.ShowKPM;
+                    oc.Parameters.Add("@showpriority", SqlDbType.Bit).Value = item.ShowPriority;
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = item.ID;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void UpdateApplication(ApplicationModel item)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "UpdateApplication";
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = item.Name ?? string.Empty;
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = item.ID;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void UpdateSMCode(SMCodeModel item)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "UpdateSMCode";
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = item.Name;
+                    oc.Parameters.Add("@description", SqlDbType.NVarChar, descrfieldlen).Value = item.Description ?? string.Empty;
+                    oc.Parameters.Add("@industryid", SqlDbType.Int).Value = item.IndustryID;
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = item.ID;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+        
+        public static void UpdateTrialStatus(TrialStatusModel item)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "UpdateTrialStatus";
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = item.Name ?? string.Empty;
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = item.ID;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void UpdateNewBusinessCategory(ModelBaseVM item)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "UpdateNewBusinessCategory";
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, descrfieldlen).Value = item.Name ?? string.Empty;
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = item.ID;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+                
+        public static void UpdateIndustrySegmentApplication(IndustrySegmentApplicationJoinModel item)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "UpdateIndustrySegmentApplication";
+                    oc.Parameters.Add("@industrysegmentid", SqlDbType.Int).Value = item.IndustrySegmentID;
+                    oc.Parameters.Add("@applicationid", SqlDbType.Int).Value = item.ApplicationID;
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = item.ID;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void UpdateIndustrySegment(IndustrySegmentModel item)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "UpdateIndustrySegment";
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = item.Name ?? string.Empty;
+                    oc.Parameters.Add("@industryid", SqlDbType.Int).Value = item.IndustryID;
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = item.ID;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+        
+        public static void UpdateReasonForIncompleteProject(ModelBaseVM item)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "UpdateReasonForIncompleteProject";
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, descrfieldlen).Value = item.Name ?? string.Empty;
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = item.ID;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void UpdateReportField(ReportFields item)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "UpdateReportField";
+                    oc.Parameters.Add("@caption", SqlDbType.NVarChar, namefieldlen).Value = item.Caption ?? string.Empty;
+                    oc.Parameters.Add("@fieldname", SqlDbType.NVarChar, namefieldlen).Value = item.FieldName ?? string.Empty;
+                    oc.Parameters.Add("@datatypeid", SqlDbType.Int).Value = item.DataTypeID;
+                    oc.Parameters.Add("@alignment", SqlDbType.NVarChar, alignmentlen).Value = item.Alignment ?? string.Empty;
+                    oc.Parameters.Add("@fieldtype", SqlDbType.Int).Value = item.FieldType;
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = item.ID;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void UpdateMiscellaneousData(MiscellaneousDataModel item)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "UpdateMiscellaneousData";
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, namefieldlen).Value = item.Name ?? string.Empty;
+                    oc.Parameters.Add("@fkid", SqlDbType.Int).Value = item.FKID;
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = item.ID;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void UpdateBU(ModelBaseVM item)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "UpdateBU";
+                    oc.Parameters.Add("@name", SqlDbType.NVarChar, descrfieldlen).Value = item.Name ?? string.Empty;
+                    oc.Parameters.Add("@deleted", SqlDbType.Bit).Value = item.Deleted;
+                    oc.Parameters.Add("@buid", SqlDbType.Int).Value = item.ID;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
 
 
-        //public static void ResetUserCustomerAccess(int userid)
+        #endregion
+
+        #region Delete Queries
+
+        //public static void DeleteCustomer(int customerid)
         //{
         //    using (SqlCommand oc = new SqlCommand())
         //    {
@@ -2980,8 +4173,8 @@ namespace PTR
         //            SqlTransaction transaction;
         //            transaction = Conn.BeginTransaction("LocalTransaction");
         //            oc.Transaction = transaction;
-        //            oc.CommandText = "ResetUserCustomerAccess";
-        //            oc.Parameters.Add("@userid", SqlDbType.Int).Value = userid;
+        //            oc.CommandText = spprefix + "DeleteCustomer";
+        //            oc.Parameters.Add("@customerid", SqlDbType.Int).Value = customerid;
         //            oc.ExecuteNonQuery();
         //            transaction.Commit();
         //        }
@@ -3004,46 +4197,6 @@ namespace PTR
         //    }
         //}
 
-
-        #endregion
-
-        #region Delete Queries
-
-        public static void DeleteCustomer(int customerid)
-        {                        
-            using (SqlCommand oc = new SqlCommand())
-            {
-                try
-                { 
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    SqlTransaction transaction;
-                    transaction = Conn.BeginTransaction("LocalTransaction");
-                    oc.Transaction = transaction;
-                    oc.CommandText = "DeleteCustomer";
-                    oc.Parameters.Add("@customerid", SqlDbType.Int).Value = customerid;
-                    oc.ExecuteNonQuery();
-                    transaction.Commit();
-                }
-                catch (SqlException sqle)
-                {
-                    HandleSQLError(sqle);
-                }
-                catch (Exception e)
-                {
-                    ShowError(e);
-                    try
-                    {
-                        oc.Transaction.Rollback();
-                    }
-                    catch 
-                    {
-                        throw ;
-                    }
-                }
-            }
-        }
-
         public static void DeleteSalesRegion(int salesregionid)
         {
             using (SqlCommand oc = new SqlCommand())
@@ -3055,7 +4208,7 @@ namespace PTR
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "DeleteSalesRegion";
+                    oc.CommandText = spprefix + "DeleteSalesRegion";
                     oc.Parameters.Add("@salesregionid", SqlDbType.Int).Value = salesregionid;
                     oc.ExecuteNonQuery();
                     transaction.Commit();
@@ -3090,7 +4243,427 @@ namespace PTR
                     SqlTransaction transaction;
                     transaction = Conn.BeginTransaction("LocalTransaction");
                     oc.Transaction = transaction;
-                    oc.CommandText = "DeleteUserCustomerAccess";     
+                    oc.CommandText = spprefix + "DeleteUserCustomerAccess";
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+        
+        public static void DeleteProductName(int id)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "DeleteProductName";
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void DeleteProjectType(int id)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "DeleteProjectType";
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void DeleteApplication(int id)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "DeleteApplication";
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void DeleteSMCode(int id)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "DeleteSMCode";
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void DeleteTrialStatus(int id)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "DeleteTrialStatus";
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void DeleteNewBusinessCategory(int id)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "DeleteNewBusinessCategory";
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void DeleteIndustrySegmentApplication(int id)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "DeleteIndustrySegmentApplication";
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void DeleteIndustrySegment(int id)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "DeleteIndustrySegment";
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+                
+        public static void DeleteIncompleteProjectReason(int id)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "DeleteIncompleteProjectReason";
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void DeleteReportField(int id)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "DeleteReportField";
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void DeleteMiscellaneousData(int id)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "DeleteMiscellaneousData";
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                    oc.ExecuteNonQuery();
+                    transaction.Commit();
+                }
+                catch (SqlException sqle)
+                {
+                    HandleSQLError(sqle);
+                }
+                catch (Exception e)
+                {
+                    ShowError(e);
+                    try
+                    {
+                        oc.Transaction.Rollback();
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static void DeleteBusinessUnit(int id)
+        {
+            using (SqlCommand oc = new SqlCommand())
+            {
+                try
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    SqlTransaction transaction;
+                    transaction = Conn.BeginTransaction("LocalTransaction");
+                    oc.Transaction = transaction;
+                    oc.CommandText = spprefix + "DeleteBusinessUnit";
+                    oc.Parameters.Add("@id", SqlDbType.Int).Value = id;
                     oc.ExecuteNonQuery();
                     transaction.Commit();
                 }
@@ -3117,93 +4690,309 @@ namespace PTR
 
         #region Report Queries
 
-        public static DataSet GetFilteredProjectsEstSales(string CountriesSrchString, string SalesDivisionSrchString, string ProjectStatusTypesSrchString, string ProjectTypesSrchString, 
-            bool useUSD, DateTime firstmonth, DateTime lastmonth, bool kpm, bool showallkpm, string cdpccpfilter)
+
+        #region Custom Report
+
+        public static FullyObservableCollection<CustomReportModel> GetCustomReports()
+        {
+            FullyObservableCollection<CustomReportModel> customreports = new FullyObservableCollection<CustomReportModel>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetCustomReports";
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                        {
+                            customreports.Add(new CustomReportModel
+                            {
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty,
+                                SPName = or["SPName"].ToString() ?? string.Empty,
+                                CombineTables = ConvertObjToBool(or["CombineTables"])
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return customreports;
+        }
+
+        public static FullyObservableCollection<CustomReportParametersModel> GetCustomReportParameters(int customreportid)
+        {
+            FullyObservableCollection<CustomReportParametersModel> paramcol = new FullyObservableCollection<CustomReportParametersModel>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetCustomReportParameters";
+                    oc.Parameters.Add("@customreportid", SqlDbType.Int).Value = customreportid;
+                    CustomReportParametersModel cm;
+
+                    using (SqlDataReader or = oc.ExecuteReader())
+                    {
+                        while (or.Read())
+                        {
+                            cm = new CustomReportParametersModel()
+                            {
+                                ID = ConvertObjToInt(or["ID"]),
+                                Name = or["Name"].ToString() ?? string.Empty,
+                                ParameterType = or["ParameterType"].ToString() ?? string.Empty,
+                                DefaultValue = or["DefaultValue"].ToString() ?? string.Empty,
+                                ToolTip = or["ToolTip"].ToString() ?? string.Empty,
+                                DisplayName = or["DisplayName"].ToString() ?? string.Empty
+                            };
+
+                            switch (cm.ParameterType)
+                            {
+                                case "DateTime":
+                                    if (string.IsNullOrEmpty(cm.DefaultValue))
+                                        cm.Value = ConvertDateToMonth(DateTime.Now).ToString();
+                                    else
+                                    {
+                                        bool blnDate = DateTime.TryParse(cm.DefaultValue, out DateTime enteredDate);
+                                        if (blnDate)
+                                            cm.Value = cm.DefaultValue;
+                                        else
+                                            cm.Value = ConvertDateToMonth(DateTime.Now).ToString();
+                                    }
+                                    break;
+
+                                case "Int32":
+                                    if (string.IsNullOrEmpty(cm.DefaultValue))
+                                        cm.Value = default(int).ToString();
+                                    else
+                                    {
+                                        bool blnInteger = int.TryParse(cm.DefaultValue, out int enteredInteger);
+                                        if (blnInteger)
+                                            cm.Value = cm.DefaultValue;
+                                        else
+                                            cm.Value = default(int).ToString();
+                                    }
+                                    break;
+
+                                case "Decimal":
+                                    if (string.IsNullOrEmpty(cm.DefaultValue))
+                                        cm.Value = default(decimal).ToString();
+                                    else
+                                    {
+                                        bool blnDecimal = decimal.TryParse(cm.DefaultValue, out decimal enteredDecimal);
+                                        if (blnDecimal)
+                                            cm.Value = cm.DefaultValue;
+                                        else
+                                            cm.Value = default(decimal).ToString();
+                                    }
+                                    break;
+
+                                case "Boolean":
+                                    if (string.IsNullOrEmpty(cm.DefaultValue))
+                                        cm.Value = default(bool).ToString();
+                                    else
+                                    {
+                                        bool blnBool = bool.TryParse(cm.DefaultValue, out bool enteredBool);
+                                        if (blnBool)                                        
+                                            cm.Value = cm.DefaultValue;                                        
+                                        else
+                                            cm.Value = default(bool).ToString();
+                                    }
+                                    break;
+
+                                case "String":
+                                    if (string.IsNullOrEmpty(cm.DefaultValue))
+                                        cm.Value = string.Empty;
+                                    else
+                                        cm.Value = cm.DefaultValue;
+                                    break;
+
+                            }
+                            paramcol.Add(cm);
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return paramcol;
+        }
+
+        public static DataSet GetCustomReportData(CustomReportModel custreport, FullyObservableCollection<CustomReportParametersModel> parameters)
+        {
+            DataSet ds = new DataSet();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = custreport.SPName;
+
+                    if (parameters.Count > 0)
+                    {
+                        for (int i = 0; i < parameters.Count; i++)
+                        {
+                            switch (parameters[i].ParameterType)
+                            {
+                                case "String":
+                                    oc.Parameters.Add(parameters[i].Name, SqlDbType.NVarChar, descrfieldlen).Value = parameters[i].Value ?? string.Empty;
+                                    break;
+
+                                case "DateTime":
+                                    oc.Parameters.Add(parameters[i].Name, SqlDbType.Date).Value = Convert.ToDateTime(parameters[i].Value);
+                                    break;
+
+                                case "Int32":
+                                    oc.Parameters.Add(parameters[i].Name, SqlDbType.Int).Value = Convert.ToInt32(parameters[i].Value);
+                                    break;
+
+                                case "Decimal":
+                                    oc.Parameters.Add(parameters[i].Name, SqlDbType.Decimal).Value = Convert.ToDecimal(parameters[i].Value);
+                                    break;
+
+                                case "Boolean":
+                                    oc.Parameters.Add(parameters[i].Name, SqlDbType.Bit).Value = ConvertObjToBool(parameters[i].Value);
+                                    break;
+
+                                default:
+                                    oc.Parameters.Add(parameters[i].Name, SqlDbType.NVarChar, descrfieldlen).Value = parameters[i].Value ?? string.Empty;
+                                    break;
+                            }                           
+                        }
+                    }
+
+                    using (SqlDataAdapter da = new SqlDataAdapter(oc))
+                    {
+                        da.Fill(ds);
+                    }
+
+                    //for each datatable...
+                    //get fields from ReportFields wher custreport.name
+                    //match fields with table fields
+                    //update table caption and format and extended properties
+                    Collection<ReportFields> rptflds = GetReportFields(custreport.Name);
+                    bool found = false;
+                    int tblctr = 0;
+                    foreach (DataTable dt in ds.Tables)
+                    {
+                        dt.TableName = "Table" + tblctr.ToString();
+                        foreach (DataColumn dc in dt.Columns)
+                        {
+                            found = false;
+                            foreach (ReportFields f in rptflds)
+                            {
+                                if (f.FieldName == dc.ColumnName)
+                                {
+                                    dc.Caption = f.Caption;
+                                    //dc.DataType = System.Type.GetType("System." + f.DataType); <======cannot change datatype after column is filled
+                                    dc.ExtendedProperties.Add("Alignment", f.Alignment);
+                                    dc.ExtendedProperties.Add("Format", f.Format);
+                                    dc.ExtendedProperties.Add("FieldType", f.FieldType);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found)
+                            {
+                                dc.ExtendedProperties.Add("Alignment", "Left");
+                                dc.ExtendedProperties.Add("FieldType", (int)ReportFieldType.PlaybookComments);//treat as Playbook comment field
+                            }
+                        };
+                        tblctr++;
+                    }
+                };
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return ds;
+        }
+
+        #endregion
+
+        public static DataSet GetSalesPipelineReport(string CountriesSrchString, string SalesDivisionSrchString, string ProjectStatusTypesSrchString, string ProjectTypesSrchString,
+            bool useUSD, DateTime firstmonth, DateTime lastmonth, bool kpm, bool showallkpm)
         {
             DataTable dt = new DataTable
             {
-                TableName = "TotalData"
+                TableName = SalesPipeline
             };
+
+            DataTable dtCount = new DataTable
+            {
+                TableName = SalesPipelineCount
+            };
+
             DataSet ds = new DataSet();
 
             try
             {
-                //get all status codes
-                //get all months and build dt - add row for each status code, add column for status code
-                //get sum of each status for each month
-                //add sums to dt where 
-                dt.Columns.Add(new DataColumn()
+                using (SqlCommand oc = new SqlCommand())
                 {
-                    Caption = "Status",
-                    ColumnName = "Status",
-                    DataType = System.Type.GetType("System.Int32")
-                });
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetSalesPipelineReport";
+                    oc.Parameters.Add("@firstmonth", SqlDbType.Date).Value = firstmonth;
+                    oc.Parameters.Add("@lastmonth", SqlDbType.Date).Value = lastmonth;
+                    oc.Parameters.Add("@countryids", SqlDbType.NVarChar, multipleidslen).Value = CountriesSrchString;
+                    oc.Parameters.Add("@salesdivisionids", SqlDbType.NVarChar, multipleidslen).Value = SalesDivisionSrchString;
+                    oc.Parameters.Add("@statustypesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectStatusTypesSrchString;
+                    oc.Parameters.Add("@typesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectTypesSrchString;
+                    oc.Parameters.Add("@kpm", SqlDbType.Bit).Value = kpm;
+                    oc.Parameters.Add("@showallkpm", SqlDbType.Bit).Value = showallkpm;
+                    oc.Parameters.Add("@useusd", SqlDbType.Bit).Value = useUSD;
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.ID;
 
-                //add month columns for data
-                AddNumericalReportMonths(ref dt, firstmonth, lastmonth);
-
-                DataTable dtCount = new DataTable();
-                dtCount = dt.Clone();
-                dtCount.TableName = "ProjectCountData";
-
-                DataRow dr;
-                DataRow drCount;
-
-                DateTime newmthdate;
-                decimal salesvalue = 0;
-                string colname = string.Empty;
+                    using (SqlDataAdapter da = new SqlDataAdapter(oc))
+                    {
+                        da.Fill(dt);
+                    }
+                }
 
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetFilteredProjectsEstSales";
+                    oc.CommandText = spprefix + "GetSalesPipelineProjectCountReport";
+                    oc.Parameters.Add("@firstmonth", SqlDbType.Date).Value = firstmonth;
+                    oc.Parameters.Add("@lastmonth", SqlDbType.Date).Value = lastmonth;
+                    oc.Parameters.Add("@countryids", SqlDbType.NVarChar, multipleidslen).Value = CountriesSrchString;
+                    oc.Parameters.Add("@salesdivisionids", SqlDbType.NVarChar, multipleidslen).Value = SalesDivisionSrchString;
+                    oc.Parameters.Add("@statustypesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectStatusTypesSrchString;
+                    oc.Parameters.Add("@typesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectTypesSrchString;
+                    oc.Parameters.Add("@kpm", SqlDbType.Bit).Value = kpm;
+                    oc.Parameters.Add("@showallkpm", SqlDbType.Bit).Value = showallkpm;
+                    oc.Parameters.Add("@useusd", SqlDbType.Bit).Value = useUSD;
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.ID;
 
-                    foreach (ActivityStatusCodesModel code in ActivityStatusCodes)
+                    using (SqlDataAdapter da = new SqlDataAdapter(oc))
                     {
-                        if (code.GOM.ID != 0)//dont show any 0's
-                        {
-                            dr = dt.NewRow();
-                            dr["Status"] = code.GOM.ID;// code.GOM.ID.ToString();
-                            drCount = dtCount.NewRow();
-                            drCount["Status"] = code.GOM.ID;// code.GOM.ID.ToString();
-                            oc.Parameters.Clear();
-                            oc.Parameters.Add("@firstmonth", SqlDbType.Date).Value = firstmonth;
-                            oc.Parameters.Add("@lastmonth", SqlDbType.Date).Value = lastmonth;
-                            oc.Parameters.Add("@statusid", SqlDbType.Int).Value = code.GOM.ID;
-                            oc.Parameters.Add("@countryids", SqlDbType.NVarChar, multipleidslen).Value = CountriesSrchString;
-                            oc.Parameters.Add("@salesdivisionids", SqlDbType.NVarChar, multipleidslen).Value = SalesDivisionSrchString;
-                            oc.Parameters.Add("@statustypesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectStatusTypesSrchString;
-                            oc.Parameters.Add("@typesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectTypesSrchString;
-                            oc.Parameters.Add("@kpm", SqlDbType.Bit).Value = kpm;
-                            oc.Parameters.Add("@showallkpm", SqlDbType.Bit).Value = showallkpm;
-                            oc.Parameters.Add("@cdpccpids", SqlDbType.NVarChar, multipleidslen).Value = cdpccpfilter;
-                            oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.GOM.ID;
-                                
-                            using (SqlDataReader or = oc.ExecuteReader())
-                            {
-                                while (or.Read())
-                                {
-                                    if (useUSD)
-                                        salesvalue = (decimal)(or["TotalStatusValueUS"]);
-                                    else
-                                        salesvalue = (decimal)(or["TotalStatusValue"]);
-
-                                    newmthdate = Convert.ToDateTime(or["StatusMonth"].ToString());
-                                    colname = newmthdate.ToString("MMM") + " " + newmthdate.Year.ToString();
-
-                                    if (salesvalue > 0)
-                                        dr[colname] = ConvertObjToInt(dr[colname]) + (int)salesvalue;
-
-                                    if ((int)(or["ProjectCount"]) > 0)
-                                        drCount[colname] = ConvertObjToInt(drCount[colname]) + (int)(or["ProjectCount"]);
-                                }
-                            }
-                            dt.Rows.Add(dr);
-                            dtCount.Rows.Add(drCount);
-                        }
+                        da.Fill(dtCount);
                     }
                 }
+
                 ds.Tables.Add(dt);
                 ds.Tables.Add(dtCount);
             }
@@ -3217,13 +5006,13 @@ namespace PTR
             }
             return ds;
         }
-        
-        public static DataTable GetSummaryByStatusMonth(string CountriesSrchString, string SalesDivisionSrchString, string ProjectStatusTypesSrchString, string ProjectTypesSrchString, bool useUSD, 
-            DateTime firstmonth, DateTime lastmonth, bool kpm, bool showallkpm, string cdpccpfilter)
+
+        public static DataTable GetSalesPipelineReportToolTip(string CountriesSrchString, string SalesDivisionSrchString, string ProjectStatusTypesSrchString, string ProjectTypesSrchString, bool useUSD,
+            DateTime firstmonth, DateTime lastmonth, bool kpm, bool showallkpm)
         {
             DataTable dt = new DataTable
             {
-                TableName = "StatusSummaryData"
+                TableName = SalesPipelineTooltip
             };
 
             try
@@ -3232,7 +5021,6 @@ namespace PTR
                 //get all months and build dt - add row for each status code, add column for status code
                 //get sum of each status for each month
                 //add sums to dt where 
-                ProjectMonthRange monthrange = GetFirstLastMonths();
 
                 DataColumn dc;
                 dc = new DataColumn
@@ -3243,58 +5031,43 @@ namespace PTR
                 };
                 dt.Columns.Add(dc);
 
-                //add month columns for data
-                AddReportMonths(ref dt, firstmonth, lastmonth);
+                //add month columns for comments data
+                AddReportCommentsMonths(ref dt, firstmonth, lastmonth);
 
                 DataRow dr;
-                DateTime newmthdate;
-                decimal EstimatedAnnualSales = 0;
                 string colname = string.Empty;
                 string culturecode = string.Empty;
-                CultureInfo cultinfo;
-
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetSummaryByStatusMonth";
+                    oc.CommandText = spprefix + "GetSalesPipelineToolTip";
 
                     foreach (ActivityStatusCodesModel code in ActivityStatusCodes)
                     {
                         dr = dt.NewRow();
-                        dr["Status"] = code.GOM.ID.ToString();
+                        dr["Status"] = code.ID.ToString();
                         oc.Parameters.Clear();
                         oc.Parameters.Add("@firstmonth", SqlDbType.Date).Value = firstmonth;
                         oc.Parameters.Add("@lastmonth", SqlDbType.Date).Value = lastmonth;
-                        oc.Parameters.Add("@statusid", SqlDbType.Int).Value = code.GOM.ID;
+                        oc.Parameters.Add("@statusid", SqlDbType.Int).Value = code.ID;
                         oc.Parameters.Add("@countryids", SqlDbType.NVarChar, multipleidslen).Value = CountriesSrchString;
                         oc.Parameters.Add("@salesdivisionids", SqlDbType.NVarChar, multipleidslen).Value = SalesDivisionSrchString;
                         oc.Parameters.Add("@statustypesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectStatusTypesSrchString;
                         oc.Parameters.Add("@typesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectTypesSrchString;
                         oc.Parameters.Add("@kpm", SqlDbType.Bit).Value = kpm;
                         oc.Parameters.Add("@showallkpm", SqlDbType.Bit).Value = showallkpm;
-                        oc.Parameters.Add("@cdpccpids", SqlDbType.NVarChar, multipleidslen).Value = cdpccpfilter;
-                        oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.GOM.ID;
+                        oc.Parameters.Add("@useusd", SqlDbType.Bit).Value = useUSD;
+                        oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.ID;
                         using (SqlDataReader or = oc.ExecuteReader())
                         {
                             while (or.Read())
                             {
-                                newmthdate = Convert.ToDateTime(or["StatusMonth"].ToString());
-                                colname = newmthdate.ToString("MMM") + " " + newmthdate.Year.ToString();
-                                culturecode = or["CultureCode"].ToString() ?? "en-US";
-                                if (useUSD)
-                                {
-                                    EstimatedAnnualSales = ConvertObjToDecimal(or["EstimatedAnnualSalesUS"]);
-                                    culturecode = "en-US";
-                                }
-                                else
-                                    EstimatedAnnualSales = ConvertObjToDecimal(or["EstimatedAnnualSales"]);
-
-                                cultinfo = new CultureInfo(culturecode);
+                                colname = or["StatusMonth"].ToString();
                                 if (dr[colname].ToString().Length > 0)
                                     dr[colname] = dr[colname].ToString() + "\n";
 
-                                dr[colname] = dr[colname].ToString() + (or["ID"]).ToString() + " " + (or["Name"]).ToString() + " : " + EstimatedAnnualSales.ToString("C0", cultinfo);
+                                dr[colname] = dr[colname].ToString() + or["Summary"].ToString() ?? string.Empty;
                             }
                         }
                         dt.Rows.Add(dr);
@@ -3311,165 +5084,28 @@ namespace PTR
             }
             return dt;
         }
-
-        public static DataTable GetStatusReportFiltered(string CountriesSrchString, string SalesDivisionSrchString, string ProjectStatusTypesSrchString, 
-            string ProjectTypesSrchString, bool kpm, bool showallkpm, string cdpccpfilter)
-        {
-            DataTable newdt = new DataTable
-            {
-                TableName = "StatusData"
-            };
-            try
-            {                
-                DataTable dt = new DataTable
-                {
-                    TableName = "StatusData"
-                };
-
-                AddReportColumns(ref newdt, "StatusReport");
-
-                SqlCommand oc1 = new SqlCommand
-                {
-                    Connection = Conn,
-                    CommandType = CommandType.StoredProcedure,
-                    CommandText = "GetStatusReportFilteredProjects2"
-                };
-                oc1.Parameters.Add("@countryids", SqlDbType.NVarChar, multipleidslen).Value = CountriesSrchString;
-                oc1.Parameters.Add("@salesdivisionids", SqlDbType.NVarChar, multipleidslen).Value = SalesDivisionSrchString;
-                oc1.Parameters.Add("@statustypesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectStatusTypesSrchString;
-                oc1.Parameters.Add("@typesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectTypesSrchString;
-                oc1.Parameters.Add("@kpm", SqlDbType.Bit).Value = kpm;
-                oc1.Parameters.Add("@showallkpm", SqlDbType.Bit).Value = showallkpm;
-                oc1.Parameters.Add("@cdpccpids", SqlDbType.NVarChar, multipleidslen).Value = cdpccpfilter;
-                oc1.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.GOM.ID;
-                using (SqlDataAdapter da = new SqlDataAdapter(oc1))
-                {
-                    da.Fill(dt);
-                }
-                oc1.Dispose();
-                
-                using (SqlCommand oc = new SqlCommand())
-                {
-                    oc.Connection = Conn;
-                    oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetStatusReportFilteredActivities";
-
-                    DataRow dr1;
-                    DataRow dr;
-                    int elementctr = 0;
-                    string laststatusid = string.Empty;
-                    int intlaststatusid = 0;
-                    int statusctr = 0;
-                    for (int i = 0; i < dt.Rows.Count; i++)
-                    {
-                        dr1 = dt.Rows[i];
-                        oc.Parameters.Clear();
-                        oc.Parameters.Add("@projectid", SqlDbType.Int).Value = ConvertObjToInt(dr1["ProjectID"]);                 
-                        using (SqlDataReader or = oc.ExecuteReader())
-                        {
-                            if (or.HasRows)
-                            {
-                                dr = newdt.NewRow();
-                                dr["ProjectID"] = ConvertObjToInt(dr1["ProjectID"]);
-                                dr["SalesDivision"] = dr1["SalesDivision"].ToString() ?? string.Empty;
-                                dr["Customer"] = dr1["Customer"].ToString() ?? string.Empty;
-                                dr["ProjectName"] = dr1["ProjectName"].ToString() ?? string.Empty;
-                                dr["EstimatedAnnualSales"] = ConvertObjToDecimal(dr1["EstimatedAnnualSales"]);
-                                dr["ActivatedDate"] = ConvertObjToDate(dr1["ActivatedDate"]);
-                                dr["CultureCode"] = dr1["CultureCode"].ToString() ?? string.Empty;
-                                dr["ProjectTypeColour"] = dr1["ProjectTypeColour"].ToString() ?? string.Empty;
-                                elementctr = 0;
-                                laststatusid = string.Empty;
-                                intlaststatusid = 0;
-                                statusctr = 0;
-                                DateTime laststatusmonth = new DateTime();
-                                while (or.Read())
-                                {
-                                    if (elementctr == 0)
-                                    {
-                                        intlaststatusid = ConvertObjToInt(or["StatusID"]);
-                                        laststatusmonth = Convert.ToDateTime(or["StatusMonth"].ToString());
-                                        dr["TrialStatus"] = GetTrialStatusFromID(or["TrialStatusID"]);
-                                        dr["Colour"] = or["Colour"].ToString() ?? string.Empty;
-                                    }
-                                    if (ConvertObjToInt(or["StatusID"]) == intlaststatusid)
-                                        statusctr++;
-                                    else
-                                        break;
-                                    elementctr++;
-                                }
-                                //get number of months
-                                if (elementctr > 0)
-                                {
-                                    dr["Status"] = GetActivityStatusFromID(intlaststatusid);
-                                    dr["MonthsAtStatus"] = statusctr;
-                                    dr["FirstMonthAtStatus"] = laststatusmonth.AddMonths(-statusctr + 1).ToString("MMM-yyyy");
-
-                                }
-                                newdt.Rows.Add(dr);
-                            }
-                        }
-                    }
-                }
-            }
-            catch (SqlException sqle)
-            {
-                HandleSQLError(sqle);
-            }
-            catch (Exception e)
-            {
-                ShowError(e);
-            }            
-            return newdt;
-        }
-
-        public static DataTable GetProjects(string CountriesSrchString,  string SalesDivisionSrchString, string ProjectStatusTypesSrchString, string ProjectTypesSrchString, 
-            bool kpm, bool showallkpm, string cdpccpfilter)
+              
+        public static DataTable GetStatusReportFiltered(string CountriesSrchString)
         {
             DataTable dt = new DataTable
             {
-                TableName = "ProjectsList"
+                TableName = StatusReport
             };
             try
             {
-                AddReportColumns(ref dt, "ProjectsList");
-                DataRow dr;
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetProjects";
+                    oc.CommandText = spprefix + "GetProjectStatusReport";
                     oc.Parameters.Add("@countryids", SqlDbType.NVarChar, multipleidslen).Value = CountriesSrchString;
-                    oc.Parameters.Add("@salesdivisionids", SqlDbType.NVarChar, multipleidslen).Value = SalesDivisionSrchString;
-                    oc.Parameters.Add("@statustypesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectStatusTypesSrchString;
-                    oc.Parameters.Add("@typesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectTypesSrchString;
-                    oc.Parameters.Add("@kpm", SqlDbType.Bit).Value = kpm;
-                    oc.Parameters.Add("@showallkpm", SqlDbType.Bit).Value = showallkpm;
-                    oc.Parameters.Add("@cdpccpids", SqlDbType.NVarChar, multipleidslen).Value = cdpccpfilter;
-                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.GOM.ID;
-                    using (SqlDataReader or = oc.ExecuteReader())
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.ID;
+                    using (SqlDataAdapter da = new SqlDataAdapter(oc))
                     {
-                        while (or.Read())
-                        {
-                            dr = dt.NewRow();
-
-                            dr["ProjectID"] = ConvertObjToInt(or["ProjectID"]);
-                            dr["Customer"] = or["Customer"].ToString() ?? string.Empty;
-                            dr["UserName"] = or["UserName"].ToString() ?? string.Empty;
-                            dr["ProjectName"] = or["Name"].ToString() ?? string.Empty;
-                            dr["Products"] = or["Products"].ToString() ?? string.Empty;
-                            dr["Resources"] = or["Resources"].ToString() ?? string.Empty;
-                            dr["ActivatedDate"] = ConvertObjToDate(or["ActivatedDate"]);
-                            dr["ProjectStatus"] = GetProjectStatusFromID(or["ProjectStatusID"]);
-                            dr["ProjectType"] = or["ProjectType"].ToString() ?? string.Empty;
-                            dr["EstimatedAnnualSales"] = ConvertObjToDecimal(or["EstimatedAnnualSales"]);
-                            dr["OwnerID"] = ConvertObjToInt(or["OwnerID"]);
-                            dr["CultureCode"] = or["CultureCode"].ToString() ?? string.Empty;
-                            dr["ProjectTypeColour"] = or["ProjectTypeColour"].ToString() ?? string.Empty;
-
-                            dt.Rows.Add(dr);
-                        }
+                        da.Fill(dt);
                     }
+
+                    ProcessReportColumns(ref dt, dt.TableName);
                 }
             }
             catch (SqlException sqle)
@@ -3482,106 +5118,68 @@ namespace PTR
             }
             return dt;
         }
-        
+                
+        public static DataTable GetProjects(string CountriesSrchString)
+        {
+            DataTable dt = new DataTable
+            {
+                TableName = ProjectReport
+            };
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetProjects";
+                    oc.Parameters.Add("@countryids", SqlDbType.NVarChar, multipleidslen).Value = CountriesSrchString;
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.ID;
+                    using (SqlDataAdapter da = new SqlDataAdapter(oc))
+                    {
+                        da.Fill(dt);
+                    }
+
+                    ProcessReportColumns(ref dt, dt.TableName);
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return dt;
+        }
+                
         public static FullyObservableCollection<MonthlyActivityStatusModel> GetMonthlyProjectData(int projectid)
         {
-            ProjectMonthRange monthrange = GetFirstLastMonthsForProject(projectid);
-            int startmonth;
-
-            if (monthrange.StartDate == null)
-            {
-                DateTime? activateddate = GetProjectActivatedDate(projectid);
-                if (activateddate != null)
-                    startmonth = ConvertDateToMonthInt(activateddate);
-                else
-                    startmonth = ConvertDateToMonthInt(DateTime.Now.AddMonths(-1));
-            }
-            else
-                startmonth = ConvertDateToMonthInt(((DateTime)monthrange.StartDate));
-
-            //_lastmonth;
-            DateTime dt = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-            int lastmonth = ConvertDateToMonthInt(dt);
-
-            //create collection of MonthlyActivityStatus
-            FullyObservableCollection<MonthlyActivityStatusModel> monthlyactivity = new FullyObservableCollection<MonthlyActivityStatusModel>();
-            FullyObservableCollection<MonthlyActivityStatusModel> selectedprojectactivity = GetMonthlyProjectStatuses(projectid);
-            MonthlyActivityStatusModel newmonthactivity;
-           
-            for (int i = lastmonth; i >= startmonth; i--)
-            {
-                newmonthactivity = new MonthlyActivityStatusModel
-                {
-                    ID = 0,
-                    ProjectID = projectid,
-                    StatusID = 0,
-                    TrialStatusID = (int)TrialStatusType.NoTrial,
-                    Comments = string.Empty,
-                    StatusMonth = ConvertMonthIntToDateTime(i),
-                    ExpectedDateFirstSales = null,
-                    IsDirty = false
-                };
-                var query = selectedprojectactivity.FirstOrDefault(a => ConvertDateToMonthInt(a.StatusMonth) == i);
-                if (query != null) 
-                {
-                    newmonthactivity.ID = query.ID;
-                    newmonthactivity.StatusID = query.StatusID;
-                    newmonthactivity.Comments = query.Comments;
-                    newmonthactivity.TrialStatusID = query.TrialStatusID;
-                    newmonthactivity.ShowTrial = RequiredTrialStatuses.Contains(query.StatusID);
-                    newmonthactivity.ExpectedDateFirstSales = query.ExpectedDateFirstSales;
-                }
-                monthlyactivity.Add(newmonthactivity);
-            }
-            return monthlyactivity;
-        }
-        
-        public static DataTable GetEvaluationPlansReport(string CountriesSrchString, string SalesDivisionSrchString, string ProjectStatusTypesSrchString, string ProjectTypesSrchString, 
-            bool kpm, bool showallkpm, string cdpccpfilter)
-        {            
-            DataTable dt = new DataTable
-                {
-                    TableName = "EPReport"
-                };
+            FullyObservableCollection<MonthlyActivityStatusModel> monthlyactivities = new FullyObservableCollection<MonthlyActivityStatusModel>();
             try
-            {                
-                AddReportColumns(ref dt, "EPReport");
-                DataRow dr;
-
+            {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetEvaluationPlans";
-                    oc.Parameters.Add("@countryids", SqlDbType.NVarChar, multipleidslen).Value = CountriesSrchString;
-                    oc.Parameters.Add("@salesdivisionids", SqlDbType.NVarChar, multipleidslen).Value = SalesDivisionSrchString;
-                    oc.Parameters.Add("@statustypesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectStatusTypesSrchString;
-                    oc.Parameters.Add("@typesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectTypesSrchString;
-                    oc.Parameters.Add("@kpm", SqlDbType.Bit).Value = kpm;
-                    oc.Parameters.Add("@showallkpm", SqlDbType.Bit).Value = showallkpm;
-                    oc.Parameters.Add("@cdpccpids", SqlDbType.NVarChar, multipleidslen).Value = cdpccpfilter;
-                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.GOM.ID;
+                    oc.CommandText = spprefix + "GetMonthlyActivitiesForProject";
+                    oc.Parameters.Add("@projectid", SqlDbType.Int).Value = projectid;
                     using (SqlDataReader or = oc.ExecuteReader())
                     {
                         while (or.Read())
                         {
-                            dr = dt.NewRow();
-                            dr["ID"] = ConvertObjToInt(or["ID"]);
-                            dr["ProjectID"] = ConvertObjToInt(or["ProjectID"]);
-                            dr["ProjectName"] = or["ProjectName"].ToString() ?? string.Empty;
-                            if (!string.IsNullOrEmpty(or["ActivatedDate"].ToString()))
-                                dr["ActivatedDate"] = ConvertObjToDate(or["ActivatedDate"]);
-                            dr["UserName"] = or["UserName"].ToString() ?? string.Empty;
-                            dr["Customer"] = or["Customer"].ToString() ?? string.Empty;
-                            dr["ProjectTypeColour"] = or["ProjectTypeColour"].ToString() ?? string.Empty;
-                            if (!string.IsNullOrEmpty(or["Created"].ToString()))
-                                dr["CreatedDate"] = ConvertObjToDate(or["Created"]);
-                            if (!string.IsNullOrEmpty(or["Discussed"].ToString()))
-                                dr["DiscussedDate"] = ConvertObjToDate(or["Discussed"]);
-                            dr["Objectives"] = or["Objectives"].ToString() ?? string.Empty;
-                            dr["Strategy"] = or["Strategy"].ToString() ?? string.Empty;
-                            dr["Title"] = or["Title"].ToString() ?? string.Empty;
-                            dt.Rows.Add(dr);
+                            monthlyactivities.Add(new MonthlyActivityStatusModel()
+                            {
+                                ID = ConvertObjToInt(or["ID"]),
+                                Comments = or["Comments"].ToString() ?? string.Empty,
+                                ProjectID = projectid,
+                                StatusID = ConvertObjToInt(or["StatusID"]),
+                                StatusMonth = ConvertObjToDate(or["StatusMonth"]),
+                                TrialStatusID = ConvertObjToInt(or["TrialStatusID"]),
+                                ExpectedDateFirstSales = ConvertObjToDate(or["ExpectedDateFirstSales"]),
+                                ShowStatus10 = false,
+                                IsDirty = false
+                            });
                         }
                     }
                 }
@@ -3594,122 +5192,30 @@ namespace PTR
             {
                 ShowError(e);
             }
-            return dt;
+            return monthlyactivities;
         }
 
-        private static void AddReportColumns(ref DataTable dt, string report)
-        {          
-            DataColumn dc;
-            //Get fields for report from DB and create new columns in datatable
-            Collection<ReportFields> fields = GetReportFields(report);
-            foreach (ReportFields f in fields)
-            {
-                dc = new DataColumn();
-                dc.ExtendedProperties.Add("Alignment", f.Alignment);
-                dc.ExtendedProperties.Add("Format", f.Format);
-                dc.ExtendedProperties.Add("FieldType", f.FieldType);
-                dc.Caption = f.Caption;
-                dc.ColumnName = f.FieldName;
-                dc.DataType = System.Type.GetType("System." + f.DataType);
-                dt.Columns.Add(dc);
-            }            
-        }
-
-        private static void AddReportMonths(ref DataTable dt, DateTime firstmonth, DateTime lastmonth)
+        public static DataTable GetMonthlyProjectDataReport(int projectid)
         {
-            DataColumn dc;
-            int intstartmonth = ConvertDateToMonthInt(firstmonth);
-            int intlastmonth = ConvertDateToMonthInt(lastmonth);
-            
-            for (int i = intstartmonth; i <= intlastmonth; i++)
-            {
-                dc = new DataColumn();
-                DateTime newmth = ConvertMonthIntToDateTime(i);
-                dc.Caption = newmth.ToString("MMM") + " " + newmth.Year.ToString();
-                dc.ColumnName = newmth.ToString("MMM") + " " + newmth.Year.ToString();
-                dc.DataType = System.Type.GetType("System.String");
-                dc.ExtendedProperties["Alignment"] = "Left";
-                dc.ExtendedProperties["FieldType"] = 99;
-                dt.Columns.Add(dc);
-            }
-        }
-
-        private static void AddNumericalReportMonths(ref DataTable dt, DateTime firstmonth, DateTime lastmonth)
-        {
-            DataColumn dc;
-            int intstartmonth = ConvertDateToMonthInt(firstmonth);
-            int intlastmonth = ConvertDateToMonthInt(lastmonth);
-
-            for (int i = intstartmonth; i <= intlastmonth; i++)
-            {
-                dc = new DataColumn();
-                DateTime newmth = ConvertMonthIntToDateTime(i);
-                dc.Caption = newmth.ToString("MMM") + " " + newmth.Year.ToString();
-                dc.ColumnName = newmth.ToString("MMM") + " " + newmth.Year.ToString();
-                dc.DataType = Type.GetType("System.Decimal");
-                dc.ExtendedProperties["Alignment"] = "Right";
-                dc.ExtendedProperties["FieldType"] = 99;
-                dt.Columns.Add(dc);
-            }
-        }
-
-        public static DataTable GetNewBusinessReport(string CountriesSrchString, int SelectedDivisionID, string ProjectTypesSrchString, DateTime startmonth, DateTime firstmonth, DateTime lastmonth, 
-            bool kpm, bool showallkpm, string cdpccpfilter)
-        {
-            string report = "NewBusiness";
             DataTable dt = new DataTable
             {
-                TableName = NewBusiness
+                TableName = ProjectReportActivities
             };
+
             try
             {
-                //add report columns for data
-                AddReportColumns(ref dt, report);
-
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "PBNewBusiness";
-                    oc.Parameters.Add("@startmonth", SqlDbType.Date).Value = startmonth;
-                    oc.Parameters.Add("@countryids", SqlDbType.NVarChar, multipleidslen).Value = CountriesSrchString;
-                    oc.Parameters.Add("@salesdivisionid", SqlDbType.Int).Value = SelectedDivisionID;
-                    oc.Parameters.Add("@typesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectTypesSrchString;
-                    oc.Parameters.Add("@kpm", SqlDbType.Bit).Value = kpm;
-                    oc.Parameters.Add("@showallkpm", SqlDbType.Bit).Value = showallkpm;
-                    oc.Parameters.Add("@cdpccpids", SqlDbType.NVarChar, multipleidslen).Value = cdpccpfilter;
-                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.GOM.ID;
-
-                    //add month columns for comments
-                    AddReportMonths(ref dt, firstmonth, lastmonth);
-
-                    DataRow dr;
-                    using (SqlDataReader or = oc.ExecuteReader())
+                    oc.CommandText = spprefix + "GetProjectMonthlyActivitiesReport";
+                    oc.Parameters.Add("@projectid", SqlDbType.Int).Value = projectid;
+                    using (SqlDataAdapter da = new SqlDataAdapter(oc))
                     {
-                        while (or.Read())
-                        {
-                            dr = dt.NewRow();
-                            dr["ProjectID"] = ConvertObjToInt(or["ProjectID"]);
-                            dr["SalesDivision"] = or["SalesDivision"].ToString() ?? string.Empty;
-                            dr["MarketSegment"] = or["MarketSegment"].ToString() ?? string.Empty;
-                            dr["Customer"] = or["Customer"].ToString() ?? string.Empty;
-                            dr["CustomerNumber"] = or["CustomerNumber"].ToString() ?? string.Empty;
-                            dr["UserName"] = or["UserName"].ToString() ?? string.Empty;
-                            dr["Application"] = or["Application"].ToString() ?? string.Empty;
-                            dr["Products"] = or["Products"].ToString() ?? string.Empty;
-                            dr["EstimatedAnnualSales"] = ConvertObjToDecimal(or["EstimatedAnnualSales"]);
-                            dr["EstimatedAnnualSalesUSD"] = ConvertObjToDecimal(or["EstimatedAnnualSalesUSD"]);
-                            dr["EstimatedAnnualMPC"] = ConvertObjToDecimal(or["EstimatedAnnualMPC"]);
-                            dr["EstimatedAnnualMPCUSD"] = ConvertObjToDecimal(or["EstimatedAnnualMPCUSD"]);
-                            if (!string.IsNullOrEmpty(or["ExpectedDateFirstSales"].ToString()))
-                                dr["ExpectedDateFirstSales"] = ConvertObjToDate(or["ExpectedDateFirstSales"]);
-                            dr["NewBusinessCategory"] = or["NewBusinessCategory"].ToString() ?? string.Empty;
-
-                            dr["CDPCCP"] = or["CDPCCP"].ToString() ?? string.Empty;
-                            dr["DifferentiatedTechnology"] = ConvertObjToBool(or["DifferentiatedTechnology"]);
-                            dt.Rows.Add(dr);
-                        }
+                        da.Fill(dt);
                     }
+
+                    ProcessReportColumns(ref dt, dt.TableName);
                 }
             }
             catch (SqlException sqle)
@@ -3723,147 +5229,27 @@ namespace PTR
             return dt;
         }
                
-        public static DataTable GetAllSalesFunnelReport(string CountriesSrchString, int SelectedDivisionID, string ProjectTypesSrchString, DateTime startmonth, DateTime firstmonth, DateTime lastmonth, 
-            bool showMiscColumns, bool kpm, bool showallkpm, string cdpccpfilter)
+        public static DataTable GetEvaluationPlansReport(string CountriesSrchString)
         {
-            string report = "SalesFunnel";
             DataTable dt = new DataTable
             {
-                TableName = SalesFunnel// "A-Sls Fnl";
+                TableName = EvaluationPlanReport
             };
             try
             {
-                //add report columns for data
-                AddReportColumns(ref dt, report);
-
-                //add comments column data
-                int intstartmonth = ConvertDateToMonthInt(firstmonth);
-                int intlastmonth = ConvertDateToMonthInt(lastmonth);
-
-                //add month columns for comments
-                AddReportMonths(ref dt, firstmonth, lastmonth);
-
-                Collection<MonthlyActivityStatusModel> projectmonthscoll = new Collection<MonthlyActivityStatusModel>();
-
-                using (SqlCommand ocdetails = new SqlCommand())
-                {
-                    ocdetails.Connection = Conn;
-                    ocdetails.CommandType = CommandType.StoredProcedure;
-                    ocdetails.CommandText = "PBSalesFunnelDetails";
-                    ocdetails.Parameters.Add("@startmonth", SqlDbType.Date).Value = startmonth;
-                    ocdetails.Parameters.Add("@countryids", SqlDbType.NVarChar, multipleidslen).Value = CountriesSrchString;
-                    ocdetails.Parameters.Add("@salesdivisionid", SqlDbType.Int).Value = SelectedDivisionID;
-                    ocdetails.Parameters.Add("@typesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectTypesSrchString;
-                    ocdetails.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.GOM.ID;
-                    using (SqlDataReader ordetails = ocdetails.ExecuteReader())
-                    {
-                        while (ordetails.Read())
-                        {
-                            projectmonthscoll.Add(new MonthlyActivityStatusModel()
-                            {
-                                StatusID = ConvertObjToInt(ordetails["StatusID"]),
-                                StatusMonth = ConvertObjToDate(ordetails["StatusMonth"]),
-                                Comments = ordetails["Comments"].ToString() ?? string.Empty,
-                                ProjectID = ConvertObjToInt(ordetails["ProjectID"]),
-                                TrialStatusID = ConvertObjToInt(ordetails["TrialStatusID"])
-                            });
-                        }
-                    }
-                }
-
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "PBSalesFunnel"; //get all sales funnel projects
-                    oc.Parameters.Add("@startmonth", SqlDbType.Date).Value = startmonth;
+                    oc.CommandText = spprefix + "GetEvaluationPlans";
                     oc.Parameters.Add("@countryids", SqlDbType.NVarChar, multipleidslen).Value = CountriesSrchString;
-                    oc.Parameters.Add("@salesdivisionid", SqlDbType.Int).Value = SelectedDivisionID;
-                    oc.Parameters.Add("@typesids", SqlDbType.NVarChar, multipleidslen).Value = ProjectTypesSrchString;
-                    oc.Parameters.Add("@kpm", SqlDbType.Bit).Value = kpm;
-                    oc.Parameters.Add("@showallkpm", SqlDbType.Bit).Value = showallkpm;
-                    oc.Parameters.Add("@cdpccpids", SqlDbType.NVarChar, multipleidslen).Value = cdpccpfilter;
-                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.GOM.ID;
-                    int laststatusid = 0;
-                    DateTime newmthdate;
-                    string colname = string.Empty;
-                    int elementctr = 0;
-                    int trialstatusid = 0;
-                    DataRow dr;
-                    using (SqlDataReader or = oc.ExecuteReader())
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.ID;
+                    using (SqlDataAdapter da = new SqlDataAdapter(oc))
                     {
-                        while (or.Read())
-                        {
-                            dr = dt.NewRow();
-                            dr["SalesDivision"] = or["SalesDivision"].ToString() ?? string.Empty;
-                            dr["MarketSegment"] = or["MarketSegment"].ToString() ?? string.Empty;
-                            dr["Customer"] = or["Customer"].ToString() ?? string.Empty;
-                            dr["ProjectName"] = or["ProjectName"].ToString() ?? string.Empty;
-                            dr["Resources"] = or["Resources"].ToString() ?? string.Empty;
-                            dr["UserName"] = or["UserName"].ToString() ?? string.Empty;
-                            dr["Application"] = or["Application"].ToString() ?? string.Empty;
-                            dr["Products"] = or["Products"].ToString() ?? string.Empty;
-                            if (!string.IsNullOrEmpty(or["ActivatedDate"].ToString()))
-                                dr["ActivatedDate"] = ConvertObjToDate(or["ActivatedDate"]);
-                            dr["ProbabilityOfSuccess"] = ConvertObjToDecimal(or["ProbabilityOfSuccess"]);
-                            dr["EstimatedAnnualSalesUSD"] = ConvertObjToDecimal(or["EstimatedAnnualSalesUSD"]);
-                            dr["SMCode"] = or["SMCode"].ToString() ?? string.Empty;
-                            dr["OPCOOpenField"] = ConvertObjToDecimal(or["OPCOOpenField"]);
-                            if (!string.IsNullOrEmpty(or["ExpectedDateFirstSales"].ToString()))
-                                dr["ExpectedDateFirstSales"] = ConvertObjToDate(or["ExpectedDateFirstSales"]);
-                            dr["ProjectTypeColour"] = or["ProjectTypeColour"].ToString() ?? string.Empty;
-                            dr["ProjectID"] = ConvertObjToInt(or["ProjectID"]);
-                            dr["GIN"] = or["GIN"].ToString() ?? string.Empty;
-                            dr["CustomerNumber"] = or["CustomerNumber"] ?? string.Empty;
-                            dr["KPM"] = ConvertObjToBool(or["KPM"]);
-
-                            dr["NewBusinessCategory"] = or["NewBusinessCategory"].ToString() ?? string.Empty;
-                            dr["CDPCCP"] = or["CDPCCP"].ToString() ?? string.Empty;
-                            dr["DifferentiatedTechnology"] = ConvertObjToBool(or["DifferentiatedTechnology"]);
-
-                            dr["ProjectType"] = or["ProjectType"].ToString() ?? string.Empty;
-                            if (ConvertObjToDecimal(or["EstimatedAnnualSalesUSD"]) > 0)
-                                dr["GMPercent"] = ConvertObjToDecimal(or["GMUSD"]) / ConvertObjToDecimal(or["EstimatedAnnualSalesUSD"]);
-
-                            if (!string.IsNullOrEmpty(or["ExpectedDateFirstSales"].ToString()))
-                            {
-                                decimal remainingfraction = ConvertObjToDecimal((12 - (decimal)((DateTime)ConvertObjToDate(or["ExpectedDateFirstSales"])).Month) / 12);
-                                dr["EOYSales"] = ConvertObjToDecimal(or["EstimatedAnnualSalesUSD"]) * remainingfraction;
-                                dr["EOYMPC"] = ConvertObjToDecimal(or["EstimatedAnnualMPCUSD"]) * remainingfraction;
-                            }
-
-                            var projectmonths = from p in projectmonthscoll
-                                                where p.ProjectID == Convert.ToInt32(or["ProjectID"])
-                                                orderby p.StatusMonth descending
-                                                select p;
-
-                            if (projectmonths != null)
-                            {
-                                elementctr = 0;
-                                laststatusid = 0;
-                                trialstatusid = 0;
-                                foreach (var pr in projectmonths)
-                                {
-                                    //if month matches column then add the comment to the 
-                                    newmthdate = (DateTime)pr.StatusMonth;
-                                    colname = newmthdate.ToString("MMM") + " " + newmthdate.Year.ToString();
-                                    if (ConvertDateToMonthInt(newmthdate) >= intstartmonth && ConvertDateToMonthInt(newmthdate) <= intlastmonth)
-                                        dr[colname] = pr.Comments;
-
-                                    if (elementctr == 0)
-                                        laststatusid = pr.StatusID;
-
-                                    elementctr++;
-                                    if (pr.TrialStatusID > 0 && trialstatusid == 0)
-                                        trialstatusid = pr.TrialStatusID;
-                                }
-                            }
-                            dr["SalesFunnelStage"] = GetPlaybookDescriptionFromID(laststatusid);
-                            dr["Colour"] = GetActivityStatusColorFromID(laststatusid);
-                            dr["ProjectStatus"] = GetSalesEffortStatusFromID(trialstatusid, or["ProjectStatusID"]);
-                            dt.Rows.Add(dr);
-                        }
+                        da.Fill(dt);
                     }
+
+                    ProcessReportColumns(ref dt, dt.TableName);
                 }
             }
             catch (SqlException sqle)
@@ -3877,16 +5263,161 @@ namespace PTR
             return dt;
         }
 
-        public static Collection<ReportFields> GetReportFields(string reportname)
+        //private static void AddReportColumns(ref DataTable dt, string report)
+        //{
+        //    DataColumn dc;
+        //    //Get fields for report from DB and create new columns in datatable
+        //    Collection<ReportFields> fields = GetReportFields(report);
+        //    foreach (ReportFields f in fields)
+        //    {
+        //        dc = new DataColumn();
+        //        dc.ExtendedProperties.Add("Alignment", f.Alignment);
+        //        dc.ExtendedProperties.Add("Format", f.Format);
+        //        dc.ExtendedProperties.Add("FieldType", f.FieldType);
+        //        dc.Caption = f.Caption;
+        //        dc.ColumnName = f.FieldName;
+        //        dc.DataType = System.Type.GetType("System." + f.DataType); 
+        //        dt.Columns.Add(dc);
+        //    }
+        //}
+
+        private static void AddReportCommentsMonths(ref DataTable dt, DateTime firstmonth, DateTime lastmonth)
         {
-            Collection<ReportFields> fields = new Collection<ReportFields>();
+            DataColumn dc;
+            int intstartmonth = ConvertDateToMonthInt(firstmonth);
+            int intlastmonth = ConvertDateToMonthInt(lastmonth);
+
+            for (int i = intstartmonth; i <= intlastmonth; i++)
+            {
+                dc = new DataColumn();
+                DateTime newmth = ConvertMonthIntToDateTime(i);
+                dc.Caption = newmth.ToString("MMM") + " " + newmth.Year.ToString();
+                dc.ColumnName = newmth.ToString("MMM") + " " + newmth.Year.ToString();
+                dc.DataType = Type.GetType("System.String");
+                dc.ExtendedProperties["Alignment"] = "Left";
+                dc.ExtendedProperties["FieldType"] = (int)ReportFieldType.PlaybookComments;
+                dt.Columns.Add(dc);
+            }
+        }
+                
+        //public static DataTable GetNewBusinessReport(string CountriesSrchString, DateTime startmonth)
+        //{
+        //    DataTable dt = new DataTable
+        //    {
+        //        TableName = GetConstant(NewBusinessXLTab)
+        //    };
+        //    try
+        //    {
+        //        using (SqlCommand oc = new SqlCommand())
+        //        {
+        //            oc.Connection = Conn;
+        //            oc.CommandType = CommandType.StoredProcedure;
+        //            oc.CommandText = spprefix + "GetNewBusinessReport";
+        //            oc.Parameters.Add("@startmonth", SqlDbType.Date).Value = startmonth;
+        //            oc.Parameters.Add("@countryids", SqlDbType.NVarChar, multipleidslen).Value = CountriesSrchString;                              
+        //            oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.ID;
+
+        //            using (SqlDataAdapter da = new SqlDataAdapter(oc))
+        //            {
+        //                da.Fill(dt);
+        //            }
+
+        //            ProcessReportColumns(ref dt, Constants.NewBusinessReport);
+        //        }
+        //    }
+        //    catch (SqlException sqle)
+        //    {
+        //        HandleSQLError(sqle);
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        ShowError(e);
+        //    }
+        //    return dt;
+        //}
+
+        private static void ProcessReportColumns(ref DataTable dt, string report)
+        {
+            Collection<ReportFields> rptflds = GetReportFields(report);
+            bool found = false;
+            foreach (DataColumn dc in dt.Columns)
+            {
+                found = false;
+                foreach (ReportFields f in rptflds)
+                {
+                    if (f.FieldName == dc.ColumnName)
+                    {
+                        dc.Caption = f.Caption;
+                        //dc.DataType = System.Type.GetType("System." + f.DataType); <======cannot change datatype after column is filled
+                        dc.ExtendedProperties.Add("Alignment", f.Alignment);
+                        dc.ExtendedProperties.Add("Format", f.Format);
+                        dc.ExtendedProperties.Add("FieldType", f.FieldType);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    dc.ExtendedProperties.Add("Alignment", "Left");
+                    dc.ExtendedProperties.Add("FieldType", (int)ReportFieldType.PlaybookComments); //treat as Playbook comment field
+                }
+            }
+
+            foreach (ReportFields f in rptflds)
+            {
+                if (dt.Columns.Contains(f.FieldName) && (int)dt.Columns[f.FieldName].ExtendedProperties["FieldType"] == (int)ReportFieldType.SystemAndRemoved)
+                    dt.Columns.Remove(f.FieldName);                
+            }
+        }
+
+        public static DataTable GetAllSalesFunnelReport(string CountriesSrchString, DateTime startmonth, DateTime firstmonth, DateTime lastmonth)
+        {
+            DataTable dt = new DataTable
+            {
+                TableName = GetConstant(SalesFunnelXLTab)// "A-Sls Fnl";
+            };
             try
-            { 
+            {
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetReportFields";
+                    oc.CommandText = spprefix + "GetMasterProjectList"; //get all sales funnel projects
+                    oc.Parameters.Add("@startmonth", SqlDbType.Date).Value = startmonth;
+                    oc.Parameters.Add("@firstmonth", SqlDbType.Date).Value = firstmonth;
+                    oc.Parameters.Add("@lastmonth", SqlDbType.Date).Value = lastmonth;
+                    oc.Parameters.Add("@countryids", SqlDbType.NVarChar, multipleidslen).Value = CountriesSrchString;              
+                    oc.Parameters.Add("@userid", SqlDbType.Int).Value = CurrentUser.ID;
+
+                    using (SqlDataAdapter da = new SqlDataAdapter(oc))
+                    {
+                        da.Fill(dt);
+                    }
+
+                    ProcessReportColumns(ref dt, SalesFunnelReport);
+                }
+            }
+            catch (SqlException sqle)
+            {
+                HandleSQLError(sqle);
+            }
+            catch (Exception e)
+            {
+                ShowError(e);
+            }
+            return dt;
+        }
+
+        public static FullyObservableCollection<ReportFields> GetReportFields(string reportname)
+        {
+            FullyObservableCollection<ReportFields> fields = new FullyObservableCollection<ReportFields>();
+            try
+            {
+                using (SqlCommand oc = new SqlCommand())
+                {
+                    oc.Connection = Conn;
+                    oc.CommandType = CommandType.StoredProcedure;
+                    oc.CommandText = spprefix + "GetReportFields";
                     oc.Parameters.Add("@reportname", SqlDbType.NVarChar, namefieldlen).Value = reportname;
 
                     using (SqlDataReader or = oc.ExecuteReader())
@@ -3895,12 +5426,15 @@ namespace PTR
                         {
                             fields.Add(new ReportFields()
                             {
+                                ID = ConvertObjToInt(or["ID"]),
                                 Caption = or["Caption"].ToString() ?? string.Empty,
                                 FieldName = or["Name"].ToString() ?? string.Empty,
                                 DataType = or["DataType"].ToString() ?? string.Empty,
                                 Alignment = or["Alignment"].ToString() ?? string.Empty,
                                 Format = or["Format"].ToString() ?? string.Empty,
-                                FieldType = ConvertObjToInt(or["FieldType"])
+                                FieldType = ConvertObjToInt(or["FieldType"]),
+                                System = ConvertObjToBool(or["System"]),
+                                DataTypeID = ConvertObjToInt(or["DataTypeID"])
                             });
                         }
                     }
@@ -3916,122 +5450,37 @@ namespace PTR
             }
             return fields;
         }
-
+                
         public static DataSet GetProjectReport(int projectid)
         {
             DataSet ds = new DataSet();
-
-            string tablename = "Project Report";
             DataTable dt = new DataTable
             {
-                TableName = tablename
+                TableName = SingleProjectReport
             };
             try
             {
-                //add report columns for data
-                AddReportColumns(ref dt, "ProjectReport");
-
-                DataRow dr;
-                dr = dt.NewRow();
                 using (SqlCommand oc = new SqlCommand())
                 {
                     oc.Connection = Conn;
                     oc.CommandType = CommandType.StoredProcedure;
-                    oc.CommandText = "GetProjectReport";
+                    oc.CommandText = spprefix + "GetProjectReport";
                     oc.Parameters.AddWithValue("@projectid", projectid);
-                    using (SqlDataReader or = oc.ExecuteReader())
+                    using (SqlDataAdapter da = new SqlDataAdapter(oc))
                     {
-                        while (or.Read())
-                        {
-                            dr["ProjectID"] = ConvertObjToInt(or["ProjectID"]);
-                            dr["Customer"] = or["Customer"].ToString() ?? string.Empty;
-                            dr["Country"] = or["Country"].ToString() ?? string.Empty;
-                            dr["SalesDivision"] = or["SalesDivision"].ToString() ?? string.Empty;
-                            dr["ProjectStatus"] = GetProjectStatusFromID(or["ProjectStatusID"]);
-                            dr["MarketSegment"] = or["MarketSegment"].ToString() ?? string.Empty;
-                            dr["Products"] = or["Products"].ToString() ?? string.Empty;
-                            dr["Resources"] = or["Resources"].ToString() ?? string.Empty;
-                            dr["ProjectName"] = or["ProjectName"].ToString() ?? string.Empty;
-                            dr["ExpectedDateFirstSales"] = ConvertObjToDate(or["ExpectedDateFirstSales"]);
-                            dr["UserName"] = or["UserName"].ToString() ?? string.Empty;
-                            dr["Description"] = or["Description"].ToString() ?? string.Empty;
-                            dr["ActivatedDate"] = ConvertObjToDate(or["ActivatedDate"]);
-                            dr["EstimatedAnnualSalesUSD"] = ConvertObjToDecimal(or["EstimatedAnnualSalesUSD"]);
-                            dr["TargetedVolume"] = ConvertObjToInt(or["TargetedVolume"]);
-                            dr["ProjectType"] = or["ProjectType"].ToString() ?? string.Empty;
-                            dr["KPM"] = or["KPM"].ToString() ?? string.Empty;
-                            dr["Application"] = or["Application"].ToString() ?? string.Empty;
-                            dr["GMUSD"] = or["GMUSD"].ToString() ?? string.Empty;
-                            dr["EstimatedAnnualMPCUSD"] = ConvertObjToDecimal(or["EstimatedAnnualMPCUSD"]);
-                            dr["DifferentiatedTechnology"] = or["DifferentiatedTechnology"].ToString() ?? string.Empty;
-                            dr["ProbabilityOfSuccess"] = ConvertObjToDecimal(or["ProbabilityOfSuccess"]);
-
-                            dt.Rows.Add(dr);
-                        }
+                        da.Fill(dt);
                     }
+
+                    ProcessReportColumns(ref dt, dt.TableName);
                 }
 
-                string activitiestablename = "Activities";
                 DataTable dtactivities = new DataTable
                 {
-                    TableName = activitiestablename
+                    TableName = SingleProjectReportActivities
                 };
-                DataColumn dc;
-                dc = new DataColumn
-                {
-                    Caption = "Month",
-                    ColumnName = "StatusMonth",
-                    DataType = Type.GetType("System.DateTime")                  
-                };
-                dc.ExtendedProperties["Format"] = "MMM-yyyy";
-                dc.ExtendedProperties["Alignment"] = "Center";
-                dc.ExtendedProperties["FieldType"] = 0;                
 
-                dtactivities.Columns.Add(dc);
-                dc = new DataColumn
-                {
-                    Caption = "Status",
-                    ColumnName = "Status",
-                    DataType = Type.GetType("System.String")
-                };
-                dc.ExtendedProperties["Format"] = "0";
-                dc.ExtendedProperties["Alignment"] = "Center";
-                dc.ExtendedProperties["FieldType"] = 0;
-                
-                dtactivities.Columns.Add(dc);
-                dc = new DataColumn
-                {
-                    Caption = "Comments",
-                    ColumnName = "Comments",
-                    DataType = Type.GetType("System.String")
-                };              
-                dc.ExtendedProperties["Alignment"] = "Left";
-                dc.ExtendedProperties["FieldType"] = 0;
-                
-                dtactivities.Columns.Add(dc);
-                dc = new DataColumn
-                {
-                    Caption = "Trial Status",
-                    ColumnName = "TrialStatus",
-                    DataType = Type.GetType("System.String")
-                };              
-                dc.ExtendedProperties["Alignment"] = "Center";
-                dc.ExtendedProperties["FieldType"] = 0;
+                dtactivities = GetMonthlyProjectDataReport(projectid);
 
-                dtactivities.Columns.Add(dc);
-                DataRow dract;                                                               
-               
-                FullyObservableCollection<MonthlyActivityStatusModel> monthlyactivities =  GetMonthlyProjectData(projectid);                    
-                for(int i=0; i<monthlyactivities.Count;i++)
-                {
-                    dract = dtactivities.NewRow();
-                    dract["StatusMonth"] = monthlyactivities[i].StatusMonth;
-                    dract["Status"] = GetActivityDescriptionFromID(monthlyactivities[i].StatusID);
-                    dract["Comments"] = monthlyactivities[i].Comments;
-                    dract["TrialStatus"] = GetTrialStatusFromID(monthlyactivities[i].TrialStatusID);
-                    dtactivities.Rows.Add(dract);
-                }                                        
-                
                 ds.Tables.Add(dt);
                 ds.Tables.Add(dtactivities);
             }
@@ -4049,81 +5498,14 @@ namespace PTR
         #endregion
 
         #region Helper functions
-     
-        private static string GetProjectStatusFromID(object obj)
+
+        private static int ConvertVersionToInt(string version)
         {
-            bool isnumber = int.TryParse(obj.ToString(), out int id);
-            foreach (EnumValue ev in EnumerationLists.ProjectStatusTypesList)            
-                if (ev.ID == id)                
-                    return ev.Description;                            
-            return string.Empty;
-        }                                           
-        
-        //[Description("No trial")]
-        //NoTrial = 1,
-        //[Description("Paused")]
-        //Paused = 2,
-        //[Description("Running")]
-        //Running = 3,
-        //[Description("Failed")]
-        //Failed = 4,        
-        //[Description("Successful")]
-        //Successful = 5                   
+            int progversion = 0;
+            string strversion = version.Replace(".", string.Empty);
+            progversion = ConvertObjToInt(strversion);
 
-        private static string GetSalesEffortStatusFromID(int trialstatusid, object obj)
-        {
-            //if project status is cancelled then return cancelled 3
-            //if project status is complete then return complete 6
-            //if project's last trial activity was a failed trial =4 then return failed trial 5
-            //if project's last trial activity was paused =2 then return Late/Delayed 3
-            //if project's last trial activity was running =3 or successful =4 or no trial =1 then return Ontrack 1
-
-            bool isnumber = int.TryParse(obj.ToString(), out int projectstatusid);
-
-            if (projectstatusid == (int)ProjectStatusType.Cancelled)  //==3)
-                return EnumerationManager.GetEnumDescription(SalesStatusType.Cancelled);
-            if (projectstatusid == (int)ProjectStatusType.Completed) //==2)
-                return EnumerationManager.GetEnumDescription(SalesStatusType.Complete);
-            if (trialstatusid == (int)TrialStatusType.Failed) //==4)
-                return EnumerationManager.GetEnumDescription(SalesStatusType.FailedTrial);
-            if (trialstatusid == (int)TrialStatusType.Paused) //==2)
-                return EnumerationManager.GetEnumDescription(SalesStatusType.LateDelayed);
-            if (trialstatusid == (int)TrialStatusType.Running || trialstatusid == (int)TrialStatusType.Successful || trialstatusid == (int)TrialStatusType.NoTrial)
-                return EnumerationManager.GetEnumDescription(SalesStatusType.OnTrack);         
-
-            return EnumerationManager.GetEnumDescription(SalesStatusType.OnTrack);
-        }
-        
-        private static string GetPlaybookDescriptionFromID(int id)
-        {
-            foreach (ActivityStatusCodesModel asc in ActivityStatusCodes)            
-                if (asc.GOM.ID == id)                
-                    return asc.PlaybookDescription;                            
-            return string.Empty;
-        }
-    
-        public static object ConvertType(DataColumn dc,  object obj)
-        {
-            if (dc.DataType == Type.GetType("System.Decimal"))            
-                return (decimal)ConvertObjToDecimal(obj);            
-            else
-                if (dc.DataType == Type.GetType("System.String"))            
-                return obj.ToString();            
-            else
-                    if (dc.DataType == Type.GetType("System.Int32"))            
-                return ConvertObjToInt(obj);            
-            else
-                        if (dc.DataType == Type.GetType("System.DateTime"))            
-                return ConvertObjToDate(obj);            
-            else
-                            if (dc.DataType == Type.GetType("System.Boolean"))            
-                return ConvertObjToBool(obj);            
-            else
-                                if (dc.DataType == Type.GetType("System.Double"))            
-                return ConvertObjToDouble(obj);            
-            else
-                return null;
-
+            return progversion;
         }
 
         public static int ConvertObjToInt(object obj)
@@ -4138,27 +5520,30 @@ namespace PTR
             return id;
         }
 
-        private static double ConvertObjToDouble(object obj)
-        {
-            bool isnumber = double.TryParse(obj.ToString(), out double id);
-            return id;
-        }
+        //private static double ConvertObjToDouble(object obj)
+        //{
+        //    bool isnumber = double.TryParse(obj.ToString(), out double id);
+        //    return id;
+        //}
 
-        private static bool ConvertObjToBool(object obj)
+        public static bool ConvertObjToBool(object obj)
         {
             bool isbool = bool.TryParse(obj.ToString(), out bool boolval);
             return boolval;
         }
 
-        private static string ConvertObjToYesNoBool(object obj)
-        {
-            bool isbool = bool.TryParse(obj.ToString(), out bool boolval);
-            if (boolval)
-                return "Yes";
+
+
+        public static char ConvertObjToChar(object obj)
+        {            
+            bool ok = char.TryParse(obj.ToString(), out char charval);
+            if (ok)
+                return charval;
             else
-                return "No";
+                return ',';
         }
-        
+
+
         public static DateTime? ConvertObjToDate(object obj)
         {
             bool isdate = DateTime.TryParse(obj.ToString(), out DateTime dt);
@@ -4180,17 +5565,18 @@ namespace PTR
             return new DateTime(yr, mth, 1);
         }
 
-        public static string ConvertMonthDateToString(DateTime? dt)
-        {
-            if (dt == null) return string.Empty;
-            return ((DateTime)dt).ToString("dd") + "-" + ((DateTime)dt).ToString("MMM") + "-" + ((DateTime)dt).ToString("yyyy");
-        }
-
         public static DateTime? ConvertDateToMonth(DateTime? dt)
         {
             if (dt == null) return null;
             return new DateTime(((DateTime)dt).Year, ((DateTime)dt).Month, 1);
         }
+
+        public static string GetConstant(string constantname)
+        {
+            bool result = DictConstants.TryGetValue(constantname, out string s);
+            return (result == true) ? s : constantname;
+        }
+
 
         private static void ShowError(Exception e, [CallerMemberName] string operationtype = null)
         {
@@ -4201,15 +5587,30 @@ namespace PTR
 
         public static void HandleSQLError(SqlException e, [CallerMemberName] string operationtype = null)
         {
-            if (e.Number == 4060)            
-                App.splashScreen.AddMessage("Unable to connect to database.\nProgram now shutting down.",3000);            
-            else            
-                App.splashScreen.AddMessage("SQL Error Occurred.\nProgram now shutting down.\n" + e.Number.ToString(),3000);               
-            
-            App.splashScreen?.LoadComplete();
-            App.CloseProgram();
+            IMessageBoxService msg = new MessageBoxService();
+            string msgtext = string.Empty;
+            switch (e.Number)
+            {
+                case 4060:
+                    msgtext = "Unable to connect to database";
+                    break;
 
-           // throw new Exception("SQL Error");
+                case 2812:
+                    msgtext = "Database is missing a stored procedure";
+                    break;
+
+                case -1:
+                    msgtext = "Cannot locate database - Please check the VPN connection";
+                    break;
+
+                default:
+                    msgtext = "SQL error " + e.Number.ToString();
+                    break;
+            }
+
+            msg.ShowMessage(msgtext + "\nError occurred in " + operationtype + " function\n" + e.Message.ToString() + "\nProgram now shutting down", operationtype + " Error", GenericMessageBoxButton.OK, GenericMessageBoxIcon.Error);
+            msg = null;
+            App.CloseProgram();
 
         }
 

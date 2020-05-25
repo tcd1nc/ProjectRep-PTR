@@ -13,14 +13,14 @@ namespace PTR.Views
         {
             InitializeComponent();
             this.DataContext = new ViewModels.EPViewModel(id, projectid);
-        }
-        
+        }       
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             if (Keyboard.Modifiers == ModifierKeys.Alt && e.SystemKey == Key.F4)            
                 e.Handled = true;            
-        }      
+        }
 
+      
     }
 }

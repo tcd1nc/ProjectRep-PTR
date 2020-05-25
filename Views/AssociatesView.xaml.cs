@@ -13,6 +13,7 @@ namespace PTR.Views
             InitializeComponent();
             this.DataContext = new ViewModels.UserViewModel();
         }
-                
+
+       
     }
 }

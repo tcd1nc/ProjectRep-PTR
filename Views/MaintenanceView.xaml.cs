@@ -1,10 +1,9 @@
 ﻿using System.Windows;
 
-
 namespace PTR.Views
 {
     /// <summary>
-    /// Interaction logic for ProjectView.xaml
+    /// Interaction logic for MaintenanceView.xaml
     /// </summary>
     public partial class MaintenanceView : Window
     {
@@ -12,12 +11,10 @@ namespace PTR.Views
         public MaintenanceView()
         {
             InitializeComponent();
-            //new project
-            
+            //new project            
             this.DataContext = new ViewModels.MaintenanceViewModel();
            
         }
-
                       
     }
 }

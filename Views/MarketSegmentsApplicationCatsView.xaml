@@ -1,4 +1,4 @@
-﻿<Window x:Class="PTR.Views.MarketSegmentsView"
+﻿<Window x:Class="PTR.Views.MarketSegmentsApplicationCatsView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -9,8 +9,8 @@
         Icon="/PTR;component/Images/Tools.ico"
         WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow" ResizeMode="NoResize"
         loc:DialogCloser.DialogClose="{Binding CloseWindowFlag}" 
-        loc:WindowBehavior.WindowClosing="{Binding WindowClosing}"    
-        Title="Market Segments" Height="450" Width="600">
+        loc:WindowBehavior.WindowClosing="{Binding WindowClosing}"          
+        Title="Market Segments - Application Categories" Height="850" Width="700">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
@@ -37,8 +37,8 @@
             </Grid>
             <Grid>
                 <DataGrid Margin="2,2,2,2"
-                           ItemsSource="{Binding MarketSegments, IsAsync=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True}"        					  
-                                             loc:GridScroll.SelectingItem="{Binding ScrollToIndex}"                                                                                                                                                                                                             
+                           ItemsSource="{Binding MarketSegmentApplicationCategories, IsAsync=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True}"        					  
+                                         loc:GridScroll.SelectingItem="{Binding ScrollToIndex}"                                                                                                                                                                                               
 						                AutoGenerateColumns="False" 
 						                AllowDrop="False"                                                                                                                                                  
 						                CanUserAddRows="False" 
@@ -66,34 +66,37 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        
-                        <DataGridTemplateColumn Width="250" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
-                            <DataGridTemplateColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="Name" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.HeaderTemplate>
 
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource bdlessgridtextbox}" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        
-                        <DataGridTemplateColumn Width="180" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                        <DataGridTemplateColumn Width="300" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
                             <DataGridTemplateColumn.HeaderTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="Industry" />
+                                    <TextBlock Text="Market Segment" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.HeaderTemplate>
 
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <ComboBox DisplayMemberPath="Name" Style="{StaticResource gridcombo}"
-                                        ItemsSource="{Binding DataContext.SalesDivisions, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"  
+                                        ItemsSource="{Binding DataContext.MarketSegments, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"  
                                         SelectedValuePath="ID"  
-                                        SelectedValue="{Binding IndustryID, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}"/>
+                                        SelectedValue="{Binding MarketSegmentID, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="300" IsReadOnly="True" KeyboardNavigation.IsTabStop="False" HeaderStyle="{StaticResource ColumnHeaderStyle}">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="Application Category" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ComboBox DisplayMemberPath="Name" Style="{StaticResource gridcombo}"
+                                        ItemsSource="{Binding DataContext.ApplicationCategories, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"  
+                                        SelectedValuePath="ID"  
+                                        SelectedValue="{Binding ApplicationCategoryID, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

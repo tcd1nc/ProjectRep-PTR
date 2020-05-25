@@ -9,17 +9,16 @@ namespace PTR.Views
     /// </summary>
     public partial class ConfirmExpectedSalesDateDialogView : Window
     {
-        public ConfirmExpectedSalesDateDialogView(DateTime?  values)
+        public ConfirmExpectedSalesDateDialogView(DateTime? estDateFirstSales, DateTime? StatusMonth)
         {
             InitializeComponent();
-            this.DataContext = new ViewModels.ConfirmExpectedSalesDateDialogViewModel(values);           
+            this.DataContext = new ViewModels.ConfirmExpectedSalesDateDialogViewModel(estDateFirstSales, StatusMonth);           
         }
 
         private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (Keyboard.Modifiers == ModifierKeys.Alt && e.SystemKey == Key.F4)            
-                e.Handled = true;
-            
+                e.Handled = true;            
         }
 
     }

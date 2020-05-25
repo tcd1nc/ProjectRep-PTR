@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-
+using System.Linq;
 
 namespace PTR
 {
@@ -28,7 +28,7 @@ namespace PTR
             {
                 ObserveAll();
             }
-
+        
             protected override void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
             {
                 if (e.Action == NotifyCollectionChangedAction.Remove || e.Action == NotifyCollectionChangedAction.Replace)
@@ -116,6 +116,5 @@ namespace PTR
             public ItemPropertyChangedEventArgs(int index, PropertyChangedEventArgs args) : this(index, args.PropertyName)
             { }
         }
-
-
+        
 }

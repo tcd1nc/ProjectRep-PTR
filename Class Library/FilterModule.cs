@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Linq;
@@ -11,76 +9,47 @@ using PTR.Models;
 
 namespace PTR
 {
-    public class FilterModule : ViewModelBase
+    public class FilterModule : ReportsFilterModule
     {
-        FullyObservableCollection<FilterListItem> countries = new FullyObservableCollection<FilterListItem>();
         FullyObservableCollection<FilterListItem> projecttypes = new FullyObservableCollection<FilterListItem>();
         FullyObservableCollection<FilterListItem> projectstatustypes = new FullyObservableCollection<FilterListItem>();
-        FullyObservableCollection<FilterListItem> associates = new FullyObservableCollection<FilterListItem>();
-        FullyObservableCollection<RadioListItem> salesdivisionradios = new FullyObservableCollection<RadioListItem>();
-        FullyObservableCollection<FilterListItem> salesdivisions = new FullyObservableCollection<FilterListItem>();
-        FullyObservableCollection<FilterListItem> marketsegments = new FullyObservableCollection<FilterListItem>();
-
-        public ICommand AllCountriesCommand { get; set; }
+        FullyObservableCollection<FilterListItem> associates = new FullyObservableCollection<FilterListItem>();        
+        FullyObservableCollection<FilterListItem> bus = new FullyObservableCollection<FilterListItem>();
         public ICommand AllProjectTypesCommand { get; set; }
         public ICommand AllProjectStatusTypesCommand { get; set; }
-        public ICommand AllSalesDivisionsCommand { get; set; }
-        public ICommand AllMarketSegmentsCommand { get; set; }
+        public ICommand AllBusinessUnitsCommand { get; set; }
         public ICommand AllAssociatesCommand { get; set; }
-
-        public ICommand ExpandMarketSegmentsCommand { get; set; }
-        public ICommand ExpandCountriesCommand { get; set; }        
         public ICommand ExpandAssociateButtonCommand { get; set; }
 
-        bool allcountries = true;
         bool allprojecttypes = false;
         bool allprojectstatuses = false;
-        bool allsalesdivisions = false;
-        bool allmarketsegments = true;
-        bool showallmarketsegments = true;
-        bool showallcountries = false;
-        
+        bool allbusinessunits = false;
         bool canExecuteAssoc = true;
-
         bool showallassociates = false;
         bool selectallassociates = false;
-        
         bool canExecute = true;
-        bool canopenprojectdetails = true;
-
+       
         public FilterModule()
         {
-            LoadCountries();
-            LoadProjectTypes();
-            LoadProjectStatusTypes();
-            LoadSalesDivisionRadios();
-            LoadSalesDivisions();
-            LoadMarketSegments();
+            LoadProjectTypesFilter();
+            LoadProjectStatusTypesFilter();
+            LoadBusinessUnitFilter();
 
             AllProjectStatusTypesCommand = new RelayCommand(SelectProjectStatuses, param => this.canExecute);
             AllProjectTypesCommand = new RelayCommand(SelectProjectTypes, param => this.canExecute);
-            AllSalesDivisionsCommand = new RelayCommand(SelectSalesDivisions, param => this.canExecute);
-            AllMarketSegmentsCommand = new RelayCommand(SelectMarketSegments, param => this.canExecute);
-            AllCountriesCommand = new RelayCommand(SelectCountries, param => this.canExecute);
+            AllBusinessUnitsCommand = new RelayCommand(SelectBusinessUnits, param => this.canExecute);        
             AllAssociatesCommand = new RelayCommand(SelectAssociates, param => this.canExecute);
-            ExpandMarketSegmentsCommand = new RelayCommand(ShowMarketSegments, param => this.canExecute);
-            ExpandCountriesCommand = new RelayCommand(ShowCountries, param => this.canExecute);
             ExpandAssociateButtonCommand = new RelayCommand(ShowAssociates, param => this.canExecuteAssoc);
             //initialise filters
 
-            InitSalesDivisions();
-            SalesDivisionSrchString = string.Join(",", SalesDivisions.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
+            InitBusinessUnits();
+            BusinessUnitSrchString = string.Join(",", BusinessUnitFilter.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
             InitProjectTypes();
-            ProjectTypesSrchString = string.Join(",", ProjectTypes.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
+            ProjectTypesSrchString = string.Join(",", ProjectTypesFilter.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
             InitProjectStatusTypes(1);
-            ProjectStatusTypesSrchString = string.Join(",", ProjectStatusTypes.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
-
-            CountriesSrchString = string.Join(",", Countries.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
-            MarketSegmentSrchString = string.Join(",", MarketSegments.Select(x => x.ID).ToList());
-
+            ProjectStatusTypesSrchString = string.Join(",", ProjectStatusTypesFilter.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
             InitAssociates();
             AssociatesSrchString = string.Join(",", Associates.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
-
         }
 
         #region Filter Properties
@@ -100,221 +69,100 @@ namespace PTR
             set { SetField(ref nonkpm, value); }
         }
 
-        bool cdp = true;
-        public bool CDP
-        {
-            get { return cdp; }
-            set { SetField(ref cdp, value); }
-        }
-
-        bool ccp = true;
-        public bool CCP
-        {
-            get { return ccp; }
-            set { SetField(ref ccp, value); }
-        }
-
-        bool allcdpccp = true;
-        public bool AllCDPCCP
-        {
-            get { return allcdpccp; }
-            set { SetField(ref allcdpccp, value); }
-        }
-        
         public bool ShowKPM()
-        {            
+        {
             bool showkpm = false;
-            if (!(KPM && NonKPM))              
+            if (!(KPM && NonKPM))
             {
-                if (KPM)
-                {
-                    showkpm = true;
-                }
+                if (KPM)                
+                    showkpm = true;                
             }
             return showkpm;
         }
 
         public bool ShowAllKPM()
         {
-            return (KPM && NonKPM);                    
+            return (KPM && NonKPM);
         }
 
-        public string GetCDPCCPList()
+        #region Business Units
+
+        private void InitBusinessUnits()
         {
-            string cdpccpfilter = string.Empty;
-            List<string> ls = new List<string>();
-
-            if (AllCDPCCP)
-            {
-                ls.Add("-1");
-                ls.Add("1");
-                ls.Add("2");
-            }
+            if (CurrentUser.BusinessUnits.Split(',').Contains("4"))
+                SelectedDivisionID = 4;
             else
-            {
-                if (CDP)
-                    ls.Add("1");
-                if (CCP)
-                    ls.Add("2");
-            }
+                SelectedDivisionID = Convert.ToInt32(CurrentUser.BusinessUnits.Split(',').FirstOrDefault());
 
-            cdpccpfilter = string.Join(",", ls);
-            return cdpccpfilter;
-        }
-
-
-        #region SalesDivisions
-
-        private void InitSalesDivisions()
-        {
-            if (CurrentUser.SalesDivisions.Split(',').Contains("4"))
-                SelectedDivisionID = Convert.ToInt32(CurrentUser.SalesDivisions.Split(',').Max());
-            else
-                SelectedDivisionID = Convert.ToInt32(CurrentUser.SalesDivisions.Split(',').FirstOrDefault());
-
-            foreach (FilterListItem fi in SalesDivisions)
+            foreach (FilterListItem fi in BusinessUnitFilter)
                 if (fi.ID == SelectedDivisionID)
                     fi.IsSelected = true;
-
-            foreach (RadioListItem ri in SalesDivisionRadios)
-                if (ri.ID == SelectedDivisionID)
-                    ri.IsSelected = true;
         }          
 
-        private void SelectSalesDivisions(object obj)
+        private void SelectBusinessUnits(object obj)
         {
-            AllSalesDivisions = !AllSalesDivisions;
+            AllBusinessUnits = !AllBusinessUnits;
         }
 
-        public bool AllSalesDivisions
+        public bool AllBusinessUnits
         {
-            get { return allsalesdivisions; }
-            set { SetField(ref allsalesdivisions, value); }
+            get { return allbusinessunits; }
+            set { SetField(ref allbusinessunits, value); }
         }
 
-        string salesdivisionssrchstr;
-        public string SalesDivisionsSrchString
-        {
-            get { return salesdivisionssrchstr; }
-            set { SetField(ref salesdivisionssrchstr, value); }
-        }
-                
-        string salesdivisionradiosrchstr;
-        public string SalesDivisionRadioSrchString
-        {
-            get { return salesdivisionradiosrchstr; }
-            set { SetField(ref salesdivisionradiosrchstr, value); }
-        }
-
-        public FullyObservableCollection<RadioListItem> SalesDivisionRadios
-        {
-            get { return salesdivisionradios; }
-            set { SetField(ref salesdivisionradios, value); }
-        }
+        //string salesdivisionssrchstr;
+        //public string SalesDivisionsSrchString
+        //{
+        //    get { return salesdivisionssrchstr; }
+        //    set { SetField(ref salesdivisionssrchstr, value); }
+        //}
         
-        public FullyObservableCollection<FilterListItem> SalesDivisions
+        public FullyObservableCollection<FilterListItem> BusinessUnitFilter
         {
-            get { return salesdivisions; }
-            set { SetField(ref salesdivisions, value); }
+            get { return bus; }
+            set { SetField(ref bus, value); }
         }
 
-        public bool GetAllSalesDivisions
-        {
-            get { return allsalesdivisions; }
-            set
-            {
-                SetField(ref allsalesdivisions, value);
-                SingleDivision = !value;
-            }
-        }
-        
-        bool blnsingledivision = true;
-        public bool SingleDivision
-        {
-            get { return blnsingledivision; }
-            set { SetField(ref blnsingledivision, value); }
-        }
-
-        Visibility singledivisionvisible = Visibility.Visible;
-        public Visibility SingleDivisionVisibility
-        {
-            get { return singledivisionvisible; }
-            set { SetField(ref singledivisionvisible, value); }
-        }
-
-        private void LoadSalesDivisionRadios()
-        {
-            RadioListItem fi;
-            List<int> t = CurrentUser.SalesDivisions.Split(',').Select(int.Parse).ToList();
-
-            foreach (GenericObjModel ag in StaticCollections.SalesDivisions)
-            {
-                if (t.Contains(ag.ID))
-                {
-                    fi = new RadioListItem()
-                    {
-                        ID = ag.ID,
-                        Name = ag.Name,
-                        GroupName = "Industries",
-                        VisibleState = Visibility.Visible,
-                        IsSelected = (ag.ID == SelectedDivisionID)
-                    };
-                    fi.PropertyChanged += FlSalesDivisionRadio_PropertyChanged;
-                    SalesDivisionRadios.Add(fi);                    
-                }
-            }
-        }
-
-        private void FlSalesDivisionRadio_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == "IsSelected")
-            {
-                string temp = string.Join(",", SalesDivisionRadios.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
-                if (!string.IsNullOrEmpty(temp))
-                    SalesDivisionRadioSrchString = temp;
-                else
-                    SalesDivisionRadioSrchString = string.Empty;
-
-                FilterMarketSegments();
-            }
-        }
-
-        private void LoadSalesDivisions()
+        //public bool GetAllBusinessUnits
+        //{
+        //    get { return AllBusinessUnits; }
+        //    set { SetField(ref AllBusinessUnits, value); }
+        //}
+                      
+        private void LoadBusinessUnitFilter()
         {
             FilterListItem fi;
-            foreach (GenericObjModel ag in StaticCollections.SalesDivisions)
+            foreach (ModelBaseVM ag in BusinessUnits)
             {
                 fi = new FilterListItem
                 {
                     ID = ag.ID,
                     Name = ag.Name,
-                    IsSelected = allsalesdivisions,
+                    IsSelected = AllBusinessUnits,
                     VisibleState = Visibility.Visible
                 };
-                fi.PropertyChanged += FlSalesDivisions_PropertyChanged;
-                SalesDivisions.Add(fi);
+                fi.PropertyChanged += BusinessUnits_PropertyChanged;
+                BusinessUnitFilter.Add(fi);
             }
         }
 
-        void FlSalesDivisions_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        void BusinessUnits_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == "IsSelected")
             {
-                string temp = string.Join(",", SalesDivisions.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
+                string temp = string.Join(",", BusinessUnitFilter.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
                 if (!string.IsNullOrEmpty(temp))
-                    SalesDivisionSrchString = temp;
+                    BusinessUnitSrchString = temp;
                 else
-                    SalesDivisionSrchString = string.Empty;
-
-                FilterMarketSegments();
+                    BusinessUnitSrchString = string.Empty;
             }
         }
 
-        string salesdivisionsrchstring;
-        public string SalesDivisionSrchString
+        string busrchstring;
+        public string BusinessUnitSrchString
         {
-            get { return salesdivisionsrchstring; }
-            set { SetField(ref salesdivisionsrchstring, value); }
+            get { return busrchstring; }
+            set { SetField(ref busrchstring, value); }
         }
 
         int selecteddivisionid;
@@ -345,7 +193,7 @@ namespace PTR
             Associates?.Clear();
 
             var q = from associat in associatess
-                    where !associat.GOM.Deleted && associat.SalesDivisions.Split(',').ToList().Contains(salesdivisionid.ToString())
+                    where !associat.Deleted && associat.BusinessUnits.Split(',').ToList().Contains(salesdivisionid.ToString())
                     select associat;
 
             if (CurrentUser.ShowOthers)
@@ -354,8 +202,8 @@ namespace PTR
                 {                
                         fi = new FilterListItem();
                         {
-                            fi.ID = ag.GOM.ID;
-                            fi.Name = ag.GOM.Name;
+                            fi.ID = ag.ID;
+                            fi.Name = ag.Name;
                             fi.IsSelected = false;
                             fi.VisibleState = Visibility.Visible;
                             fi.PropertyChanged += FlAssociates_PropertyChanged;
@@ -363,7 +211,7 @@ namespace PTR
                         }                             
                 }
                 foreach (FilterListItem fil in associates)
-                    if (fil.ID == CurrentUser.GOM.ID)
+                    if (fil.ID == CurrentUser.ID)
                         fil.IsSelected = true;
 
             }
@@ -371,15 +219,14 @@ namespace PTR
             {
                 fi = new FilterListItem();
                 {
-                    fi.ID = CurrentUser.GOM.ID;
-                    fi.Name = CurrentUser.GOM.Name;
+                    fi.ID = CurrentUser.ID;
+                    fi.Name = CurrentUser.Name;
                     fi.IsSelected = true;
                     fi.VisibleState = Visibility.Visible;
                     fi.PropertyChanged += FlAssociates_PropertyChanged;
                     Associates.Add(fi);
                 }
-            }
-                        
+            }                        
         }
 
         private void FlAssociates_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -431,89 +278,16 @@ namespace PTR
 
         #endregion
 
-        #region Countries
-
-        public FullyObservableCollection<FilterListItem> Countries
-        {
-            get { return countries; }
-            set { SetField(ref countries, value); }
-        }
-
-        string countriessrchstr;
-        public string CountriesSrchString
-        {
-            get { return countriessrchstr; }
-            set { SetField(ref countriessrchstr, value); }
-        }
-
-        private void SelectCountries(object obj)
-        {
-            AllCountries = !AllCountries;
-        }
-
-        public bool AllCountries
-        {
-            get { return allcountries; }
-            set { SetField(ref allcountries, value); }
-        }
-
-        private void LoadCountries()
-        {
-            Collection<int> t = GetUserCountryAccess();
-            
-            FilterListItem fi;
-            foreach (CountryModel ag in StaticCollections.Countries)
-            {
-                if (t.Contains(ag.GOM.ID))
-                {
-                    fi = new FilterListItem
-                    {
-                        ID = ag.GOM.ID,
-                        Name = ag.GOM.Name,
-                        IsSelected = allcountries,
-                        VisibleState = Visibility.Visible
-                    };
-                    fi.PropertyChanged += FlCountries_PropertyChanged;
-                    Countries.Add(fi);
-                }
-            }
-        }
-
-        private void FlCountries_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == "IsSelected")
-            {
-                string temp = string.Join(",", Countries.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
-                if (!string.IsNullOrEmpty(temp))
-                    CountriesSrchString = temp;
-                else
-                    CountriesSrchString = string.Empty;
-            }
-        }
-
-        private void ShowCountries(object obj)
-        {
-            ShowAllCountries = !ShowAllCountries;
-        }
-
-        public bool ShowAllCountries
-        {
-            get { return showallcountries; }
-            set { SetField(ref showallcountries, value); }
-        }
-
-        #endregion
-
         #region Project Types
 
         private void InitProjectTypes()
         {
-            foreach (FilterListItem fi in ProjectTypes)
+            foreach (FilterListItem fi in ProjectTypesFilter)
                 //if (fi.ID == selectedid)
-                    fi.IsSelected = true;
+                fi.IsSelected = true;
         }
 
-        public FullyObservableCollection<FilterListItem> ProjectTypes
+        public FullyObservableCollection<FilterListItem> ProjectTypesFilter
         {
             get { return projecttypes; }
             set { SetField(ref projecttypes, value); }
@@ -537,10 +311,10 @@ namespace PTR
             set { SetField(ref projecttypessrchstr, value); }
         }
 
-        private void LoadProjectTypes()          
+        private void LoadProjectTypesFilter()
         {
             FilterListItem fi;
-            foreach (GenericObjModel ag in StaticCollections.ProjectTypes)
+            foreach (ProjectTypeModel ag in ProjectTypes)
             {
                 fi = new FilterListItem
                 {
@@ -548,10 +322,10 @@ namespace PTR
                     Name = ag.Name,
                     IsSelected = allprojecttypes,
                     VisibleState = Visibility.Visible,
-                    Colour = ag.Description
+                    Colour = ag.Colour
                 };
                 fi.PropertyChanged += FlProjectTypes_PropertyChanged;
-                ProjectTypes.Add(fi);
+                ProjectTypesFilter.Add(fi);
             }
         }
 
@@ -559,7 +333,7 @@ namespace PTR
         {
             if (e.PropertyName == "IsSelected")
             {
-                string temp = string.Join(",", ProjectTypes.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
+                string temp = string.Join(",", ProjectTypesFilter.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
                 if (!string.IsNullOrEmpty(temp))
                     ProjectTypesSrchString = temp;
                 else
@@ -573,12 +347,12 @@ namespace PTR
 
         private void InitProjectStatusTypes(int selectedid)
         {
-            foreach (FilterListItem fi in ProjectStatusTypes)
+            foreach (FilterListItem fi in ProjectStatusTypesFilter)
                 if (fi.ID == selectedid)
                     fi.IsSelected = true;
         }
 
-        public FullyObservableCollection<FilterListItem> ProjectStatusTypes
+        public FullyObservableCollection<FilterListItem> ProjectStatusTypesFilter
         {
             get { return projectstatustypes; }
             set { SetField(ref projectstatustypes, value); }
@@ -601,8 +375,8 @@ namespace PTR
             get { return projectstatustypessrchstr; }
             set { SetField(ref projectstatustypessrchstr, value); }
         }
-       
-        private void LoadProjectStatusTypes()                
+
+        private void LoadProjectStatusTypesFilter()
         {
             var c = EnumerationLists.ProjectStatusTypesList;
             FilterListItem fi;
@@ -616,7 +390,7 @@ namespace PTR
                     VisibleState = Visibility.Visible
                 };
                 fi.PropertyChanged += FlProjectStatusTypes_PropertyChanged;
-                ProjectStatusTypes.Add(fi);
+                ProjectStatusTypesFilter.Add(fi);
             }
         }
 
@@ -624,7 +398,7 @@ namespace PTR
         {
             if (e.PropertyName == "IsSelected")
             {
-                string temp = string.Join(",", ProjectStatusTypes.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
+                string temp = string.Join(",", ProjectStatusTypesFilter.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
                 if (!string.IsNullOrEmpty(temp))
                     ProjectStatusTypesSrchString = temp;
                 else
@@ -634,160 +408,41 @@ namespace PTR
 
         #endregion
 
-        #region Market Segments
-
-        public FullyObservableCollection<FilterListItem> MarketSegments
-        {
-            get { return marketsegments; }
-            set { SetField(ref marketsegments, value); }
-        }
-
-        void FlMarketSegment_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == "IsSelected")
-            {
-                string temp = string.Empty;
-                temp = string.Join(",", MarketSegments.Where(t => t.IsSelected == true).Select(x => x.ID).ToList());
-                if (!string.IsNullOrEmpty(temp))
-                    MarketSegmentSrchString = temp;
-                else
-                    MarketSegmentSrchString = string.Empty;
-            }
-        }
-
-        public bool ShowAllMarketSegments
-        {
-            get { return showallmarketsegments; }
-            set { SetField(ref showallmarketsegments, value); }
-        }
-
-        private void ShowMarketSegments(object obj)
-        {
-            ShowAllMarketSegments = !ShowAllMarketSegments;
-        }
-
-        private void SelectMarketSegments(object obj)
-        {
-            AllMarketSegments = !AllMarketSegments;
-        }
-
-        public bool AllMarketSegments
-        {
-            get { return allmarketsegments; }
-            set { SetField(ref allmarketsegments, value); }
-        }
-
-        string marketsegmentsrchstring;
-        public string MarketSegmentSrchString
-        {
-            get { return marketsegmentsrchstring; }
-            set { SetField(ref marketsegmentsrchstring, value); }
-        }
-
-        FullyObservableCollection<MarketSegmentModel> marketsegmentss;
-
-        private void LoadMarketSegments()
-        {
-            marketsegmentss = StaticCollections.MarketSegments;
-        }
-
-        private void FilterMarketSegments()
-        {
-            FilterListItem fi;
-            MarketSegments.Clear();
-            var query = from q in SalesDivisions
-                        where q.IsSelected == true
-                        select q;
-            foreach (var sd in query)
-            {
-                foreach (MarketSegmentModel ag in StaticCollections.MarketSegments)
-                {
-                    if (ag.IndustryID == sd.ID)
-                    {
-                        fi = new FilterListItem
-                        {
-                            ID = ag.GOM.ID,
-                            Name = ag.GOM.Name,
-                            IsSelected = true,
-                            VisibleState = Visibility.Visible
-                        };
-                        fi.PropertyChanged += FlMarketSegment_PropertyChanged;
-                        MarketSegments.Add(fi);
-                    }
-                }
-            }
-        }
-
-        #endregion
-
+        
         #endregion
 
         #region Filter Commands
 
-        ICommand clearfilter;
-        public ICommand ClearFilter
+        ICommand clearallfilters;
+        public ICommand ClearAllFilters
         {
             get
             {
-                if (clearfilter == null)                
-                    clearfilter = new DelegateCommand(CanExecute, ExecuteClearFilter);
-                
-                return clearfilter;
+                if (clearallfilters == null)
+                    clearallfilters = new DelegateCommand(CanExecute, ExecuteClearAllFilters);
+
+                return clearallfilters;
             }
         }
 
-        private void ExecuteClearFilter(object parameter)                                                    
+        private void ExecuteClearAllFilters(object parameter)                                                    
         {                                
-            foreach (FilterListItem fi in Countries)
+            foreach (FilterListItem fi in CountriesFilter)
                 fi.IsSelected = false;
-            foreach (FilterListItem fi in SalesDivisions)
+            foreach (FilterListItem fi in BusinessUnitFilter)
                 fi.IsSelected = false;
-            foreach (FilterListItem fi in ProjectTypes)
+            foreach (FilterListItem fi in ProjectTypesFilter)
                 fi.IsSelected = false;
-            foreach (FilterListItem fi in ProjectStatusTypes)
-                fi.IsSelected = false;
-            foreach (FilterListItem fi in MarketSegments)
+            foreach (FilterListItem fi in ProjectStatusTypesFilter)
                 fi.IsSelected = false;
             foreach (FilterListItem fi in Associates)
                 fi.IsSelected = false;
-
+            KPM = false;
+            NonKPM = false;
             AllCountries = false;
         }
-
-        ICommand applyfilter;
-        public ICommand ApplyFilter
-        {
-            get
-            {
-                if (applyfilter == null)
-                    applyfilter = new DelegateCommand(CanExecute, ExecuteApplyModuleFilter);
-
-                return applyfilter;
-            }
-        }
-
-        ICommand openproject;
-        public ICommand OpenProject
-        {
-            get
-            {
-                if (openproject == null)
-                    openproject = new DelegateCommand(CanExecuteOpenProject, ExecuteFMOpenProject);
-                return openproject;
-            }
-        }
-              
-        public bool CanExecuteOpenProject(object parameter)
-        {
-            return canopenprojectdetails;
-        }
-
-        public Action<object> ExecuteApplyModuleFilter { get;  set; }
-        public Action<object> ExecuteFMOpenProject { get; set; }
-
-
+                                
         #endregion
 
-               
     }
 }

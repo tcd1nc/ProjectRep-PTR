@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Windows;
 using System;
-using System.Collections.ObjectModel;
 
 namespace PTR
 {
@@ -29,17 +28,17 @@ namespace PTR
             return true;
         }
 
-        public static Collection<int> dirtyprojects  = new Collection<int>(); 
-        public static void AddChangedProject(int id)
-        {       
-            if(!dirtyprojects.Contains(id))    
-               dirtyprojects.Add(id);                          
-        }
+        //public static Collection<int> dirtyprojects  = new Collection<int>(); 
+        //public static void AddChangedProject(int id)
+        //{       
+        //    if(!dirtyprojects.Contains(id))    
+        //       dirtyprojects.Add(id);                          
+        //}
 
-        public static void ClearDirtyProjectList()
-        {
-            dirtyprojects?.Clear();
-        }
+        //public static void ClearDirtyProjectList()
+        //{
+        //    dirtyprojects?.Clear();
+        //}
         
         public ICommand CloseWindowCommand
         {

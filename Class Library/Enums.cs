@@ -14,37 +14,7 @@ namespace PTR
         [Description("Cancelled")]
         Cancelled = 3 
     }
-
-    public enum TrialStatusType
-    {
-        [Description("No trial")]
-        NoTrial = 1,
-        [Description("Paused")]
-        Paused = 2,
-        [Description("Running")]
-        Running = 3,
-        [Description("Failed")]
-        Failed = 4,        
-        [Description("Successful")]
-        Successful = 5
-    }
-
-    public enum SalesStatusType
-    {
-        [Description("On Track")]
-        OnTrack = 1,
-        [Description("Trouble")]
-        Trouble = 2,
-        [Description("Late/Delayed")]
-        LateDelayed = 3,
-        [Description("Cancelled")]
-        Cancelled = 4,
-        [Description("Failed Trial")]
-        FailedTrial = 5,
-        [Description("Complete")]
-        Complete = 6
-    }
-          
+                
     public enum UserPermissionsType
     {
         [Description("Read Only")]
@@ -57,15 +27,15 @@ namespace PTR
 
     public enum MaintenanceType
     {
-        [Description("Missing EP")]
+        [Description("MissingEP")]
         MissingEP = 1,
-        [Description("Incomplete EP")]
+        [Description("IncompleteEP")]
         IncompleteEP = 2,
-        [Description("Milestone Due")]
+        [Description("MilestoneDue")]
         MilestoneDue = 3,
-        [Description("Requiring Completion")]
+        [Description("RequiringCompletion")]
         RequiringCompletion = 4,
-        [Description("Overdue Activity")]
+        [Description("OverdueActivity")]
         OverdueActivity = 5       
     }
 
@@ -80,7 +50,36 @@ namespace PTR
         [Description("Users")]
         UserMnu = 4,
         [Description("Exchange Rates")]
-        ExchangeRateMnu = 5
+        ExchangeRateMnu = 5,
+        [Description("Sales Stages")]
+        ActivityStatusesMnu = 6,
+        [Description("Setup")]
+        SetupMnu = 7,
+        [Description("Product Names")]
+        ProductNameMnu = 8,
+        [Description("Project Types")]
+        ProjectTypeMnu = 9,
+        [Description("Application Categories")]
+        ApplicationsMnu = 10,
+        [Description("Strategic Move Codes")]
+        SMCodesMnu = 11,
+        [Description("Trial Statuses")]
+        TrialStatusesMnu = 12,
+        [Description("New Business Categories")]
+        NewBusinessCategoriesMnu = 13,
+        [Description("Industry Segments - Applications")]
+        IndustrySegmentsApplicationsMnu = 14,
+        [Description("Industry Segments")]
+        IndustrySegmentsMnu = 15,
+        [Description("Incomplete Project Reasons")]
+        IncompleteProjectReasonsMnu = 16,
+        [Description("Report Fields")]
+        ReportFieldsMnu = 17,
+        [Description("Miscellaneous Data")]
+        MiscellaneousDataMnu = 18,
+        [Description("Business Units")]
+        BUMnu = 19
+
     }
 
     public enum ProjectsMenuOptions
@@ -90,8 +89,7 @@ namespace PTR
         [Description("Master List")]
         ProjectMasterListMnu = 2
     }
-
-
+    
     public enum ReportsMenuOptions
     {
         [Description("Sales Pipeline")]
@@ -101,32 +99,32 @@ namespace PTR
         [Description("Project List")]
         ProjectListMnu = 3,
         [Description("Evaluation Plans")]
-        EvaluationPlans = 4
+        EvaluationPlans = 4,
+        [Description("Custom Reports")]
+        CustomReportsMnu = 5
     }
 
+    public enum ReportFieldType
+    {
+        [Description("Playbook")]
+        Playbook = 0,
+        [Description("Playbook Comments")]
+        PlaybookComments = 99,
+        [Description("General")]
+        General = 1,
+        [Description("System and Hidden")]
+        SystemAndHidden = 2,
+        [Description("System and Removed")]
+        SystemAndRemoved = -1
+    }
 
 
     public class EnumValue
     {
         public EnumValue() { }
-
-        public Enum Enumvalue
-        {
-            get;
-            set;
-        }
-
-        public string Description
-        {
-            get;
-            set;
-        }
-
-        public int ID
-        {
-            get; set;
-        }
-
+        public Enum Enumvalue { get; set; }
+        public string Description { get; set; }
+        public int ID { get; set; }
     }
 
     public class EnumerationManager
@@ -168,11 +166,6 @@ namespace PTR
         public static Collection<EnumValue> ProjectStatusTypesList         
         {
             get { return EnumerationManager.GetEnumList(typeof(ProjectStatusType)); } 
-        }
-
-        public static Collection<EnumValue> TrialStatusTypesList
-        {
-            get { return EnumerationManager.GetEnumList(typeof(TrialStatusType)); }
         }
 
         public static Collection<EnumValue> UserPermissionTypeList

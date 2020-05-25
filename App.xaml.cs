@@ -28,8 +28,7 @@ namespace PTR
 
         protected override void OnExit(ExitEventArgs e)
         {
-            base.OnExit(e);
-            
+            base.OnExit(e);            
             CloseProgram();
         }
 
@@ -64,9 +63,9 @@ namespace PTR
         protected override void OnStartup(StartupEventArgs e)
         {
 
-//#if !DEBUG
+#if !DEBUG
             Current.Dispatcher.UnhandledException += Dispatcher_SystemException;
-//#endif
+#endif
 
             ResetSplashCreated = new ManualResetEvent(false);
             SetupSplash();
@@ -78,12 +77,11 @@ namespace PTR
 
             //Set application startup culture based on config settings
             FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement), new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
-            //NetworkStatus.AvailabilityChanged += new NetworkStatusChangedHandler(DoAvailabilityChanged);
+            NetworkStatus.AvailabilityChanged += new NetworkStatusChangedHandler(DoAvailabilityChanged);
                        
             if (IsNetworkAvailable() && LoadConfigFileData())
             {                
                 InitializeApp();
-
                 this.ShutdownMode = ShutdownMode.OnMainWindowClose;
                 this.StartupUri = new Uri("Views/PTMainView.xaml", UriKind.Relative);                                                                      
             }
@@ -91,7 +89,6 @@ namespace PTR
             {
                 this.ShutdownMode = ShutdownMode.OnExplicitShutdown;
                 CloseProgram();
-
                 //Shutdown();
                 return;
             }
@@ -129,41 +126,57 @@ namespace PTR
         }
 
         private bool IsNetworkAvailable()
-        {
-            bool networkavailable = true;
-            if (!NetworkStatus.IsAvailable)
+        {            
+            try
             {
-                splashScreen.AddMessage("Internet is not connected!",2000);
-                splashScreen?.LoadComplete();
-                networkavailable = false;
+                if (!NetworkStatus.IsAvailable)
+                {
+                    splashScreen.AddMessage("Internet is not connected!", 2000);
+                    splashScreen?.LoadComplete();
+                    return false;
+                }
+                else
+                    return true;
             }
-            return networkavailable;
-        }
+            catch
+            {
+                return false;
+            }
+         }
 
         public bool LoadConfigFileData()
         {
             //Get network file location of db connection string from config.json file
             //Get connection string from that file
             //Decrypt the connection string
-            bool isok = false;
             const string errormsg = "Database configuration file not found";
             try
             {
-                string sqlconnfile = ConfigMgr.ReadJsonValue(ConfigMgr.GetLocalJSONPath() + @"\Config.JSON", "SQL Conn");
-                if(!string.IsNullOrEmpty(sqlconnfile))
-                {
-                    string sqlconnstr = Crypto.DecryptString(ConfigMgr.ReadJsonValue(sqlconnfile, "ConnectionString"), "tcdj1");                
-                    Current.Resources["DatabaseConnectionString"] = sqlconnstr;
-                    isok = true;
-                }                                          
+                //string sqlconnfile = ConfigMgr.ReadJsonValue(ConfigMgr.GetLocalJSONPath() + @"\Config.JSON", "SQL Conn");
+                //if(!string.IsNullOrEmpty(sqlconnfile))
+                //{
+                //    string sqlconnstr = Crypto.DecryptString(ConfigMgr.ReadJsonValue(sqlconnfile, "ConnectionString"), "tcdj1");                
+                //    Current.Resources["DatabaseConnectionString"] = sqlconnstr;
+                //    isok = true;
+                //}
+
+                string sqlconnstr = Crypto.DecryptString(ConfigMgr.ReadJsonValue(ConfigMgr.GetLocalJSONPath() + @"\PTR.JSON", "ConnectionString"), "tcdj1");
+                Current.Resources["DatabaseConnectionString"] = sqlconnstr;
+                return true;                
             }
-            catch {}
-            if (!isok)
+            catch
             {
-                splashScreen.AddMessage(errormsg, 2000);
-                splashScreen?.LoadComplete();       
-            }
-            return isok;        
+                try
+                {
+                    splashScreen.AddMessage(errormsg, 2000);
+                    splashScreen?.LoadComplete();
+                    return false;
+                }
+                catch
+                {
+                    return false;
+                }            
+            }                              
         }
 
         private static void CloseSplash()
@@ -174,10 +187,12 @@ namespace PTR
                 {
                     //splashScreen.LoadComplete();
                     splashScreen = null;
-                }               
-                SplashThread = null;
+                }
+                SplashThread = null;                
             }
-            catch{ }
+            catch
+            {
+            }
         }
 
         public static void CloseProgram()
@@ -199,7 +214,8 @@ namespace PTR
                 NetworkStatus.AvailabilityChanged -= new NetworkStatusChangedHandler(DoAvailabilityChanged);
             }
             catch { }
-            finally {
+            finally
+            {
                 Environment.Exit(0);
             }
         }

@@ -55,17 +55,20 @@
     <ApplicationIcon>PT32.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EPPlus, Version=4.5.3.1, Culture=neutral, PublicKeyToken=ea159fdaa78159a1, processorArchitecture=MSIL">
-      <HintPath>..\packages\EPPlus.4.5.3.1\lib\net40\EPPlus.dll</HintPath>
+    <Reference Include="EPPlus, Version=4.5.3.3, Culture=neutral, PublicKeyToken=ea159fdaa78159a1, processorArchitecture=MSIL">
+      <HintPath>..\packages\EPPlus.4.5.3.3\lib\net40\EPPlus.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Linq.Dynamic, Version=1.0.6132.35681, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Linq.Dynamic.1.0.7\lib\net40\System.Linq.Dynamic.dll</HintPath>
+    </Reference>
     <Reference Include="System.Management" />
     <Reference Include="System.Security" />
     <Reference Include="System.Windows.Forms" />
@@ -81,37 +84,48 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="Xceed.Wpf.Toolkit, Version=3.5.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
-      <HintPath>..\packages\Extended.Wpf.Toolkit.3.5.0\lib\net40\Xceed.Wpf.Toolkit.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Class Library\DynamicFilter.cs" />
+    <Compile Include="Class Library\ReportsFilterModule.cs" />
+    <Compile Include="Class Library\UpdateVersion.cs" />
+    <Compile Include="Controls\DecimalUpDown.xaml.cs">
+      <DependentUpon>DecimalUpDown.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\IntegerUpDown.xaml.cs">
+      <DependentUpon>IntegerUpDown.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\MonthUpDown.xaml.cs">
+      <DependentUpon>MonthUpDown.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\NumericTextBox.cs" />
+    <Compile Include="Models\CustomReportModel.cs" />
+    <Compile Include="Models\CustomReportParametersModel.cs" />
+    <Compile Include="Models\FilterPopupModel.cs" />
+    <Compile Include="Models\IndustrySegmentApplicationJoinModel.cs" />
+    <Compile Include="Models\MiscellaneousDataModel.cs" />
+    <Compile Include="Models\ModelBaseVM.cs" />
+    <Compile Include="Models\MonthlyActivityReportModel.cs" />
+    <Compile Include="Models\ProjectTypeModel.cs" />
+    <Compile Include="Models\ReportFieldDataTypeModel.cs" />
+    <Compile Include="Models\ReportFieldsDataTypesModel.cs" />
+    <Compile Include="Models\SystemConstantsModel.cs" />
+    <Compile Include="Models\TrialStatusModel.cs" />
     <Compile Include="ViewModels\ActivitiesViewModel.cs" />
     <Compile Include="Class Library\Behaviors.cs" />
-    <Compile Include="BusyIndicator\Busy.xaml.cs">
-      <DependentUpon>Busy.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="BusyIndicator\BusyIndicator.cs" />
     <Compile Include="Class Library\ClipboardHelper.cs" />
     <Compile Include="Class Library\ConfigMgr.cs" />
     <Compile Include="Class Library\Crypto.cs" />
     <Compile Include="Class Library\ExcelLib.cs" />
-    <Compile Include="Class Library\Mail.cs" />
-    <Compile Include="Class Library\UserReminderTree.cs" />
     <Compile Include="Controls\ActivitiesControl.xaml.cs">
       <DependentUpon>ActivitiesControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Controls\ExtendedGrid.cs" />
     <Compile Include="Controls\FilterListControl.xaml.cs">
       <DependentUpon>FilterListControl.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\RadioListCls.cs" />
-    <Compile Include="Controls\RadioListControl.xaml.cs">
-      <DependentUpon>RadioListControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Class Library\Converters.cs" />
     <Compile Include="Class Library\Enums.cs" />
@@ -121,16 +135,13 @@
     <Compile Include="Class Library\LBScrollSynchronizer.cs" />
     <Compile Include="Class Library\MessageBoxService.cs" />
     <Compile Include="Models\ActivityStatusCodesModel.cs" />
-    <Compile Include="Models\ApplicationCategoriesModel.cs" />
+    <Compile Include="Models\ApplicationModel.cs" />
     <Compile Include="Models\EPModel.cs" />
     <Compile Include="Models\MaintenanceModel.cs" />
     <Compile Include="Models\MilestoneModel.cs" />
     <Compile Include="Models\OperatingCompanyModel.cs" />
-    <Compile Include="Models\ProjectMonthRange.cs" />
     <Compile Include="Models\SalesRegionModel.cs" />
-    <Compile Include="Models\SelectedCountriesModel.cs" />
     <Compile Include="Models\SelectedItemModel.cs" />
-    <Compile Include="Models\SelectedSalesDivisionModel.cs" />
     <Compile Include="Models\SetupModel.cs" />
     <Compile Include="Models\TreeViewNodeModel.cs" />
     <Compile Include="Models\UserCustomerAccessModel.cs" />
@@ -139,8 +150,7 @@
     <Compile Include="Models\CustomerModel.cs" />
     <Compile Include="Models\DatabaseQueriesAccess.cs" />
     <Compile Include="Models\ExchangeRateModel.cs" />
-    <Compile Include="Models\GenericObjModel.cs" />
-    <Compile Include="Models\MarketSegmentModel.cs" />
+    <Compile Include="Models\IndustrySegmentModel.cs" />
     <Compile Include="Models\MonthlyActivityStatusModel.cs" />
     <Compile Include="Models\ProjectModel.cs" />
     <Compile Include="Models\ProjectReportSummary.cs" />
@@ -148,18 +158,59 @@
     <Compile Include="Models\SMCodeModel.cs" />
     <Compile Include="Class Library\NetworkStatus.cs" />
     <Compile Include="TreeView\TreeViewViewModel.cs" />
+    <Compile Include="ViewModels\MiscellaneousDataViewModel.cs" />
+    <Compile Include="ViewModels\ReportFieldsViewModel.cs" />
+    <Compile Include="ViewModels\IndustrySegmentsViewModel.cs" />
+    <Compile Include="ViewModels\NewBusinessCategoriesViewModel.cs" />
+    <Compile Include="ViewModels\IndustrySegmentsApplicationsViewModel.cs" />
+    <Compile Include="ViewModels\IncompleteProjectReasonsViewModel.cs" />
+    <Compile Include="ViewModels\BUViewModel.cs" />
+    <Compile Include="ViewModels\TrialStatusesViewModel.cs" />
+    <Compile Include="ViewModels\SMCodesViewModel.cs" />
     <Compile Include="ViewModels\CountriesViewModel.cs" />
-    <Compile Include="ViewModels\CustomersViewModel2.cs" />
+    <Compile Include="ViewModels\CustomersViewModel.cs" />
+    <Compile Include="ViewModels\CustomReportViewModel.cs" />
+    <Compile Include="ViewModels\ProductNamesViewModel.cs" />
+    <Compile Include="ViewModels\ApplicationsViewModel.cs" />
+    <Compile Include="ViewModels\ProjectTypesViewModel.cs" />
+    <Compile Include="ViewModels\ProjectSalesStagesViewModel.cs" />
     <Compile Include="ViewModels\SalesRegionViewModel.cs" />
     <Compile Include="ViewModels\MilestoneViewModel.cs" />
     <Compile Include="ViewModels\EvaluationPlansViewModel.cs" />
     <Compile Include="ViewModels\EPViewModel.cs" />
-    <Compile Include="ViewModels\PlaybookViewModel2.cs" />
+    <Compile Include="ViewModels\PlaybookViewModel.cs" />
     <Compile Include="ViewModels\ProjectCommentsViewModel.cs" />
     <Compile Include="ViewModels\MaintenanceViewModel.cs" />
-    <Compile Include="ViewModels\UserReminderViewModel.cs" />
+    <Compile Include="ViewModels\SetupViewModel.cs" />
     <Compile Include="Views\AboutView.xaml.cs">
       <DependentUpon>AboutView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\EditBUView.xaml.cs">
+      <DependentUpon>EditBUView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\MiscellaneousDataView.xaml.cs">
+      <DependentUpon>MiscellaneousDataView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ReportFieldsView.xaml.cs">
+      <DependentUpon>ReportFieldsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\IndustrySegmentsView.xaml.cs">
+      <DependentUpon>IndustrySegmentsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\NewBusinessCategoryView.xaml.cs">
+      <DependentUpon>NewBusinessCategoryView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\IndustrySegmentsApplicationsView.xaml.cs">
+      <DependentUpon>IndustrySegmentsApplicationsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\IncompleteProjectReasonsView.xaml.cs">
+      <DependentUpon>IncompleteProjectReasonsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\TrialStatusesView.xaml.cs">
+      <DependentUpon>TrialStatusesView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\SMCodesView.xaml.cs">
+      <DependentUpon>SMCodesView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\AssociatesView.xaml.cs">
       <DependentUpon>AssociatesView.xaml</DependentUpon>
@@ -167,11 +218,26 @@
     <Compile Include="Views\CompletedProjectDialogView.xaml.cs">
       <DependentUpon>CompletedProjectDialogView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\EditCustomerView2.xaml.cs">
-      <DependentUpon>EditCustomerView2.xaml</DependentUpon>
+    <Compile Include="Views\CustomReportsView.xaml.cs">
+      <DependentUpon>CustomReportsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\EditCustomerView.xaml.cs">
+      <DependentUpon>EditCustomerView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\EditCountryView.xaml.cs">
       <DependentUpon>EditCountryView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ProductNameView.xaml.cs">
+      <DependentUpon>ProductNameView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ApplicationsView.xaml.cs">
+      <DependentUpon>ApplicationsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ProjectTypesView.xaml.cs">
+      <DependentUpon>ProjectTypesView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ProjectSalesStagesView.xaml.cs">
+      <DependentUpon>ProjectSalesStagesView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\SalesRegionView.xaml.cs">
       <DependentUpon>SalesRegionView.xaml</DependentUpon>
@@ -185,9 +251,6 @@
     <Compile Include="Views\ConfirmExpectedSalesDateDialogView.xaml.cs">
       <DependentUpon>ConfirmExpectedSalesDateDialogView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\CustomDialog.xaml.cs">
-      <DependentUpon>CustomDialog.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Class Library\RelayCommand.cs" />
     <Compile Include="SplashScreen\SplashScreen.xaml.cs" />
     <Compile Include="Class Library\StaticCollections.cs" />
@@ -197,7 +260,6 @@
     <Compile Include="ViewModels\CompletedProjectDialogViewModel.cs" />
     <Compile Include="ViewModels\ConfirmExpectedSalesDateDialogViewModel.cs" />
     <Compile Include="ViewModels\ExchangeRateViewModel.cs" />
-    <Compile Include="ViewModels\ObjectCRUDViewModelcs.cs" />
     <Compile Include="ViewModels\ProjectReportViewModel.cs" />
     <Compile Include="ViewModels\ProjectViewModel.cs" />
     <Compile Include="ViewModels\PTMainViewModel.cs" />
@@ -206,8 +268,8 @@
     <Compile Include="Views\ExchangeRateView.xaml.cs">
       <DependentUpon>ExchangeRateView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\PlaybookView2.xaml.cs">
-      <DependentUpon>PlaybookView2.xaml</DependentUpon>
+    <Compile Include="Views\PlaybookView.xaml.cs">
+      <DependentUpon>PlaybookView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\EvaluationPlansView.xaml.cs">
       <DependentUpon>EvaluationPlansView.xaml</DependentUpon>
@@ -230,16 +292,12 @@
     <Compile Include="Views\SalesFunnelReportView.xaml.cs">
       <DependentUpon>SalesFunnelReportView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\SetupView.xaml.cs">
+      <DependentUpon>SetupView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\StatusReportView.xaml.cs">
       <DependentUpon>StatusReportView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\UserReminderDialog.xaml.cs">
-      <DependentUpon>UserReminderDialog.xaml</DependentUpon>
-    </Compile>
-    <Page Include="BusyIndicator\Busy.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -248,11 +306,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Controls\DecimalUpDown.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Controls\FilterListControl.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Controls\RadioListControl.xaml">
+    <Page Include="Controls\IntegerUpDown.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Controls\MonthUpDown.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -264,6 +330,42 @@
       <SubType>Designer</SubType>
       <Generator>XamlIntelliSenseFileGenerator</Generator>
     </Page>
+    <Page Include="Views\EditBUView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\MiscellaneousDataView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\ReportFieldsView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\IndustrySegmentsView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\NewBusinessCategoryView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\IndustrySegmentsApplicationsView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\IncompleteProjectReasonsView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\TrialStatusesView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\SMCodesView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\AssociatesView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -272,13 +374,33 @@
       <SubType>Designer</SubType>
       <Generator>XamlIntelliSenseFileGenerator</Generator>
     </Page>
-    <Page Include="Views\EditCustomerView2.xaml">
+    <Page Include="Views\CustomReportsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\EditCustomerView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\EditCountryView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\ProductNameView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ApplicationsView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\ProjectTypesView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\ProjectSalesStagesView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\SalesRegionView.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -293,10 +415,6 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\ConfirmExpectedSalesDateDialogView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>XamlIntelliSenseFileGenerator</Generator>
-    </Page>
-    <Page Include="Views\CustomDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>XamlIntelliSenseFileGenerator</Generator>
     </Page>
@@ -316,7 +434,7 @@
       <SubType>Designer</SubType>
       <Generator>XamlIntelliSenseFileGenerator</Generator>
     </Page>
-    <Page Include="Views\PlaybookView2.xaml">
+    <Page Include="Views\PlaybookView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -348,13 +466,13 @@
       <SubType>Designer</SubType>
       <Generator>XamlIntelliSenseFileGenerator</Generator>
     </Page>
+    <Page Include="Views\SetupView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\StatusReportView.xaml">
       <SubType>Designer</SubType>
       <Generator>XamlIntelliSenseFileGenerator</Generator>
-    </Page>
-    <Page Include="Views\UserReminderDialog.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>
@@ -456,6 +574,12 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\compass.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\BoldBlueFilter.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\BoldRedFilter.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

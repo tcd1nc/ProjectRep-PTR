@@ -2,26 +2,30 @@
 using PTR.Models;
 using System;
 using System.Text;
+using static PTR.DatabaseQueries;
 
 namespace PTR.ViewModels
 {
-    public class EPViewModel : ObjectCRUDViewModel
+    public class EPViewModel : ViewModelBase
     {
         private const string title = "Evaluation Plan";
         public ICommand CopyEP { get; set; }
+        public ICommand AddNew { get; set; }
+        public ICommand Cancel { get; set; }
+        public ICommand Save { get; set; }
+
         bool isdirty = false;
 
+        public bool canexecutesave = true;
+        public bool canexecuteadd = true;
+        
         public EPViewModel(int id, int projectid)
         {
-            ExCloseWindow = ExecuteClosing;
             if (id == 0)
             {
                 EP = new EPModel()
-                {
-                    GOM = new GenericObjModel()
-                    {
-                        Description = string.Empty
-                    },
+                {                    
+                    Description = string.Empty,
                     Created = DateTime.Now,
                     Objectives = string.Empty,
                     Strategy = string.Empty,
@@ -31,21 +35,21 @@ namespace PTR.ViewModels
             }
             else
             {
-                EP = DatabaseQueries.GetEvaluationPlan(id);
+                EP = GetEvaluationPlan(id);
                 SetUserAccessExistingEP(ep.CustomerID);
             }
             cancleardate = EP.Discussed != null;
             EP.PropertyChanged += EP_PropertyChanged;
-            ep.GOM.PropertyChanged += EP_PropertyChanged;
-
-            Save = new RelayCommand(ExecuteSave, CanExecuteSave);
-
+                     
             if (id == 0)
                 WindowTitle = title;
             else
                 WindowTitle = title + " (ID: " + id.ToString() + ", Project ID: " + projectid.ToString() + ")";
 
+
+            Save = new RelayCommand(ExecuteSave, CanExecuteSave);
             CopyEP = new RelayCommand(ExecuteCopyEP, CanExecuteCopyEP);
+            Cancel = new RelayCommand(ExecuteCancel, CanExecute);
         }
 
         #region Event Handlers
@@ -53,23 +57,14 @@ namespace PTR.ViewModels
         private void EP_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             isdirty = true;
+            if (e.PropertyName == "Discussed")
+                cancleardate = true;
         }
 
         #endregion
 
         #region Properties 
-
-        string selecteddate;
-        public string SelectedDate
-        {
-            get { return selecteddate; }
-            set
-            {
-                cancleardate = !string.IsNullOrEmpty(value);
-                SetField(ref selecteddate, value);
-            }
-        }
-
+                
         EPModel ep;
         public EPModel EP
         {
@@ -98,13 +93,6 @@ namespace PTR.ViewModels
             set { SetField(ref returncode, value); }
         }
         
-        bool? blnsave;
-        public bool? SaveFlag
-        {
-            get { return blnsave; }
-            set { SetField(ref blnsave, value); }
-        }
-
         #endregion
 
         #region Private functions
@@ -129,7 +117,7 @@ namespace PTR.ViewModels
             sbhtml.Append("<p style='font-size:18px;font-family:Arial'><b>");
             sbhtml.Append("Proposal:</b></p>");
             sbhtml.Append("<p style='font-size:14px;font-family:Arial'>");
-            sbhtml.Append(ep.GOM.Description);
+            sbhtml.Append(ep.Description);
             sbhtml.Append("</p><br/>");
 
             sbhtml.Append("<p style='font-size:18px;font-family:Arial'><b>");
@@ -146,7 +134,7 @@ namespace PTR.ViewModels
 
             StringBuilder sbtext = new StringBuilder();
             sbtext.Append("Proposal:\n");            
-            sbtext.Append(ep.GOM.Description);
+            sbtext.Append(ep.Description);
             sbtext.Append("\n\n");
             sbtext.Append("Objectives:\n");            
             sbtext.Append(ep.Objectives);
@@ -163,15 +151,16 @@ namespace PTR.ViewModels
                
         private bool CanExecuteSave(object obj)
         {
+            if (!isdirty)
+                return false;
+
             return canexecutesave;
         }
 
         private void ExecuteSave(object parameter)
         {
             SaveEP();
-
             ReturnObject = true;
-            SaveFlag = true;
             CloseWindow();
         }
 
@@ -179,35 +168,14 @@ namespace PTR.ViewModels
         {
             if (isdirty)
             {
-                if (EP.GOM.ID > 0)
-                    DatabaseQueries.UpdateEvaluationPlan(EP);
+                if (EP.ID > 0)
+                    UpdateEvaluationPlan(EP);
                 else
-                    DatabaseQueries.AddEvaluationPlan(EP);
+                    EP.ID = AddEvaluationPlan(EP);
                 isdirty = false;
             }
         }
-
-
-        ICommand cancelandclose;
-        public ICommand CancelConfirmation
-        {
-            get
-            {
-                if (cancelandclose == null)
-                    cancelandclose = new DelegateCommand(CanExecute, ExecuteCancelAndClose);
-                return cancelandclose;
-            }
-        }
-
-        private void ExecuteCancelAndClose(object parameter)
-        {
-            ReturnObject = false;
-            SaveFlag = false;                                            
-            CloseWindow();
-        }
-
-        //==============================
-
+                      
         ICommand cleardate;
         bool cancleardate = true;
         private bool CanClearDate(object obj)
@@ -243,20 +211,46 @@ namespace PTR.ViewModels
             SetClipboard(EP);
         }
 
+        private void ExecuteCancel(object parameter)
+        {
+            CloseWindow();
+        }
+
         private void ExecuteClosing(object parameter)
         {
-            if (canexecutesave)
-            {
+        }
+
+        ICommand windowclosing;
+
+        private bool CanCloseWindow(object obj)
+        {
+            if (isdirty)
+            {                
                 IMessageBoxService msg = new MessageBoxService();
-                GenericMessageBoxResult result = msg.ShowMessage("There are unsaved changes. Do you want to save these?", "Unsaved Changes", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
+                var result = msg.ShowMessage("There are unsaved changes. Do you want to save these?", "Unsaved Changes", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
                 msg = null;
                 if (result.Equals(GenericMessageBoxResult.Yes))
                 {
                     SaveEP();
+                    ReturnObject = true;
+                    return true;
                 }
+                else                
+                    return true;                                              
             }
+            else
+                return true;
         }
 
+        public ICommand WindowClosing
+        {
+            get
+            {
+                if (windowclosing == null)
+                    windowclosing = new DelegateCommand(CanCloseWindow, ExecuteClosing);
+                return windowclosing;
+            }
+        }
 
         #endregion
 

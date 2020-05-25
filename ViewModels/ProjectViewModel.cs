@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Windows.Input;
 using static PTR.StaticCollections;
 using static PTR.DatabaseQueries;
 using System.Collections.Generic;
 using PTR.Models;
 using System.Windows;
+using System.Globalization;
 
 namespace PTR.ViewModels
 {
@@ -16,78 +16,81 @@ namespace PTR.ViewModels
 
         private const string title = "Project Details";
         ProjectModel project;
-        Regex rx;
         bool isnew = false;
-        
+        public bool isdirty = false;
+
+
         public ProjectViewModel()
         {
             //new project
             isnew = true;
             Initialisedropdowns();
+            MakeProductTT();
             project = new ProjectModel
             {
                 OwnerID = 0,
                 CustomerID = 0,
-                GOM = new GenericObjModel()
-                {
-                    ID = 0,
-                    Deleted = false,
-                    Name = string.Empty
-                },
+
+                ID = 0,
+                Deleted = false,
+                Name = string.Empty,
+                Description = string.Empty,
                 ProjectStatusID = (int)ProjectStatusType.Active,
                 SalesDivisionID = 0,
-                MarketSegmentID = 0,
+                IndustrySegmentID = 0,
                 EstimatedAnnualSales = 0,
                 EstimatedAnnualMPC = 0,
-                SalesForecastConfirmed = false,
                 Resources = string.Empty,
                 ActivatedDate = DateTime.Now,
                 TargetedVolume = 0,
                 GM = 0,
-                SMCodeID = -1,
+                SMCodeID = 0,
                 ApplicationID = 0,
                 NewBusinessCategoryID = 0,
                 Products = string.Empty,
-                ExpectedDateFirstSales = DateTime.Now.AddMonths(12),
                 ProbabilityOfSuccess = 100,
                 ProjectTypeID = 1,
-                KPM = false,
-                CDPCCPID = -1,
+                KPM = false,               
                 DifferentiatedTechnology = false,
-                EPRequired = true,
+                EPRequired = Config.EPRequired,
                 Milestones = new FullyObservableCollection<MilestoneModel>(),
-                EvaluationPlans = new FullyObservableCollection<EPModel>()
-                                
+                EvaluationPlans = new FullyObservableCollection<EPModel>(),
+                Comments = string.Empty,
+                IncompleteReasonID = 0,
+                PriorityID = 0,
+                SponsorID = 0,
+                MiscDataID=0,
+                AllowNonOwnerEdits = true,
+                AllowNonOwnerMileStoneAccess = true,
+                UnitCost = 0
+                               
             };
-            culturecode = "en-US";
 
-            int projectid = AddProject(project);
-            project.GOM.ID = projectid;
+            Project.ID = AddProject(project);
 
-            ExpectedDateFirstSalesEnabled = true;
             ProjectNameEnabled = true;
-            ProjectStatus = project.ProjectStatusID;
+            ProjectStatus = Project.ProjectStatusID;
             Project.PropertyChanged += _project_PropertyChanged;
-            Project.GOM.PropertyChanged += _project_PropertyChanged;
             SetUserAccessForNewProject();
 
             SetInitial();
+
         }
-     
+
         public ProjectViewModel(int projectID)
         {
             Initialisedropdowns();
-            project = GetSingleProject(projectID);
-            project.Milestones= GetProjectMilestones(projectID);
-            project.EvaluationPlans = GetProjectEvaluationPlans(projectID);
+            MakeProductTT();
+            Project = GetSingleProject(projectID);
+            Project.Milestones = GetProjectMilestones(projectID);
+            Project.EvaluationPlans = GetProjectEvaluationPlans(projectID);
 
-            ProjectStatus = project.ProjectStatusID;
+            ProjectStatus = Project.ProjectStatusID;
             Project.PropertyChanged += _project_PropertyChanged;
-            Project.GOM.PropertyChanged += _project_PropertyChanged;
-            ExpectedDateFirstSalesEnabled = false;
             ProjectNameEnabled = false;
 
             SetInitial();
+
         }
 
 
@@ -96,15 +99,129 @@ namespace PTR.ViewModels
         private void SetUserAccessExistingProject(int customerid)
         {
             int accessid = StaticCollections.GetUserCustomerAccess(customerid);
-            if (accessid == (int)UserPermissionsType.FullAccess)
-                IsEnabled = true;            
-            else
-                IsEnabled = false;        
+
+            if (Project.ProjectStatusID == (int)ProjectStatusType.Active)
+            {                               
+                //Project Owner can always add/delete/edit milestones and add/delete/edit Evaluation Plans
+                if ((CurrentUser.ID == Project.OwnerID || CurrentUser.ID == Project.CreatorID) && accessid == (int)UserPermissionsType.FullAccess)
+                {
+                    IsEnabled = true;
+                    EPEnabled = true;
+                    AddEPIsEnabled = true;
+                    DeleteEPIsEnabled = true;
+                    AddMilestoneIsEnabled = true;
+                    DeleteMilestoneIsEnabled = true;
+                    MilestoneIsEnabled = true;                  
+                }
+                else
+                {                   
+                    //Non-project owner or creator can add/delete/edit milestones
+                    if (Project.AllowNonOwnerMileStoneAccess)
+                    {
+                        //must have full access
+                        if (accessid == (int)UserPermissionsType.FullAccess)
+                        {                            
+                            //if current user is a milestone owner (assigned by project owner) and non-project owners are allowed to edit assigned milestones, 
+                            //then they can edit but not create or delete the assigned milestones                           
+                            if (IsInMilestoneUsers(CurrentUser.ID))
+                                MilestoneIsEnabled = true;
+                            else
+                            {
+                                AddMilestoneIsEnabled = false;
+                                DeleteMilestoneIsEnabled = false;
+                                MilestoneIsEnabled = false;
+                            }
+                        }
+                        else  
+                        {
+                            AddMilestoneIsEnabled = false;
+                            DeleteMilestoneIsEnabled = false;
+                            MilestoneIsEnabled = false;
+                        }                        
+                    }
+                    else
+                    {
+                        AddMilestoneIsEnabled = false;
+                        DeleteMilestoneIsEnabled = false;
+                        MilestoneIsEnabled = false;
+                    }
+
+                    //Non-project owner can edit project details including milestones
+                    if (Project.AllowNonOwnerEdits)
+                    {
+                        //User must have full access permission to edit this
+                        if(accessid == (int)UserPermissionsType.FullAccess)
+                        {
+                            IsEnabled = true;
+                            EPEnabled = true;
+                            AddEPIsEnabled = true;
+                            DeleteEPIsEnabled = true;                            
+                        }
+                        else
+                        {
+                            IsEnabled = false;
+                            EPEnabled = false;
+                            AddEPIsEnabled = false;
+                            DeleteEPIsEnabled = false;                           
+                        }
+                    } 
+                    else
+                    //prevent non-project owners from editing details other than their assigned milestones
+                    {
+                        IsEnabled = false;
+                        EPEnabled = false;
+                        AddEPIsEnabled = false;
+                        DeleteEPIsEnabled = false;                        
+                    }
+                }                                                                                        
+            }
+            else //cancelled or completed projects
+            if (CurrentUser.AllowEditCompletedCancelled
+                && accessid == (int)UserPermissionsType.FullAccess
+                && (CurrentUser.ID == Project.OwnerID
+                    || CurrentUser.ID == Project.CreatorID 
+                    || (CurrentUser.ID != Project.OwnerID && Project.AllowNonOwnerEdits)))
+            {
+                IsEnabled = true;
+                EPEnabled = false;
+                AddEPIsEnabled = false;
+                DeleteEPIsEnabled = false;
+                AddMilestoneIsEnabled = false;
+                DeleteMilestoneIsEnabled = false;
+                MilestoneIsEnabled = false;
+
+            }
+
+            if (CurrentUser.Administrator)
+            {
+                IsEnabled = true;
+                EPEnabled = true;
+                AddEPIsEnabled = true;
+                DeleteEPIsEnabled = true;
+                AddMilestoneIsEnabled = true;
+                DeleteMilestoneIsEnabled = true;
+                MilestoneIsEnabled = true;
+            }
+        }
+
+        private bool IsInMilestoneUsers(int userid)
+        {
+            bool isfound = false;
+            foreach (MilestoneModel mm in Project.Milestones)
+                if (mm.UserID == userid)
+                    return true;
+            return isfound;
         }
 
         private void SetUserAccessForNewProject()
         {
-            IsEnabled = true;          
+            IsEnabled = true;
+            EPEnabled = true;
+            MilestoneIsEnabled = true;
+            AddMilestoneIsEnabled = true;
+            DeleteMilestoneIsEnabled = true;
+            AddEPIsEnabled = true;
+            DeleteEPIsEnabled = true;
         }
 
         #endregion
@@ -115,12 +232,17 @@ namespace PTR.ViewModels
         {
             if (e.PropertyName == "Products")
                 InValidProduct = IsInValidProduct((sender as ProjectModel).Products);
-            CheckFieldValidation();
-            CalcPercentGM();
+
+            if (e.PropertyName != "EvaluationPlans" && e.PropertyName != "Milestones")
+            {
+                CheckFieldValidation();
+                CalcPercentGM();
+                isdirty = true;
+            }
         }
 
         #endregion
-        
+
         #region Properties
 
         string windowtitle;
@@ -130,36 +252,59 @@ namespace PTR.ViewModels
             set { SetField(ref windowtitle, value); }
         }
 
-        bool isenabled;
+        bool isenabled = false;
         public bool IsEnabled
         {
             get { return isenabled; }
             set { SetField(ref isenabled, value); }
         }
 
-        bool milestoneisenabled;
+        bool epenabled = false;
+        public bool EPEnabled
+        {
+            get { return epenabled; }
+            set { SetField(ref epenabled, value); }
+        }
+
+        bool milestoneisenabled = false;
         public bool MilestoneIsEnabled
         {
             get { return milestoneisenabled; }
             set { SetField(ref milestoneisenabled, value); }
         }
 
-        public Collection<GenericObjModel> CDPCCP { get; private set; }
-        public Collection<string> ProductGroupNames { get; private set; }
-        public FullyObservableCollection<GenericObjModel> ProjectTypesList { get; private set; }
+        public bool AddMilestoneIsEnabled;
+        public bool DeleteMilestoneIsEnabled;
+            
+        bool AddEPIsEnabled = false;
+        bool DeleteEPIsEnabled = false;
+        
+        public FullyObservableCollection<ModelBaseVM> ProductGroupNames { get; private set; }
+        public FullyObservableCollection<ProjectTypeModel> ProjectTypesList { get; private set; }
+        public FullyObservableCollection<ModelBaseVM> NewBusinessCategories { get; private set; }
+        public FullyObservableCollection<ModelBaseVM> BusinessUnits { get; private set; }
         public Collection<EnumValue> ProjectStatusTypesList { get; private set; }
-        public FullyObservableCollection<CustomerModel> Customers { get; private set; }
-        public FullyObservableCollection<UserModel> Associates { get; private set; }
-        public Collection<GenericObjModel> NewBusinessCategories { get; private set; }
-        public FullyObservableCollection<GenericObjModel> SalesDivisions { get; private set; }
-        FullyObservableCollection<SMCodeModel> smcodes;
+        public FullyObservableCollection<ModelBaseVM> Reasons { get; private set; }
+        public FullyObservableCollection<ModelBaseVM> Priorities { get; private set; }
+       
+        FullyObservableCollection<CustomerModel> customers;
+        public FullyObservableCollection<CustomerModel> Customers
+        {
+            get { return customers; }
+            set { SetField(ref customers, value); }
+        }
+
+        FullyObservableCollection<UserModel> associates;
+        public FullyObservableCollection<UserModel> Associates
+        {
+            get { return associates; }
+            set { SetField(ref associates, value); }
+        }
 
         public ProjectModel Project
         {
-            get {return project; }
-            set {
-                ProjectStatus = value.ProjectStatusID;
-                SetField(ref project, value); }
+            get { return project; }
+            set { SetField(ref project, value); }
         }
 
         int projstatus;
@@ -168,30 +313,33 @@ namespace PTR.ViewModels
             get { return projstatus; }
             set
             {
-                if (project.ProjectStatusID != (int)ProjectStatusType.Completed && (value == (int)ProjectStatusType.Completed))
+                if ((value == (int)ProjectStatusType.Completed) || (value == (int)ProjectStatusType.Cancelled))
                 {
-                    if (value == (int)ProjectStatusType.Completed)
-                    {
-                        CompletedDateEnabled = true;
-                        Project.CompletedDate = DateTime.Now;
-                    }
+                    CompletedDateEnabled = true;
+                    Project.CompletedDate = DateTime.Now;
                 }
                 else
-                if (value == (int)ProjectStatusType.Active || value == (int)ProjectStatusType.Cancelled)
+                if (value == (int)ProjectStatusType.Active)
                 {
                     //clear date completed
                     CompletedDateEnabled = false;
                     Project.CompletedDate = null;
                 }
-                else
-                if (project.ProjectStatusID == (int)ProjectStatusType.Completed)
-                    CompletedDateEnabled = true;
+                //else
+                //if ((project.ProjectStatusID == (int)ProjectStatusType.Completed)
+                //    || (project.ProjectStatusID == (int)ProjectStatusType.Cancelled))                    
+                //    CompletedDateEnabled = true;
 
                 Project.ProjectStatusID = value;
+
+                ReasonForIncompleteProjectEnabled = !Project.IsNewBusiness && (value == (int)ProjectStatusType.Completed || value == (int)ProjectStatusType.Cancelled);
+                if (!ReasonForIncompleteProjectEnabled)
+                    Project.IncompleteReasonID = 0;
+
                 SetField(ref projstatus, value);
             }
         }
-       
+
         bool completeddateenabled;
         public bool CompletedDateEnabled
         {
@@ -199,20 +347,13 @@ namespace PTR.ViewModels
             set { SetField(ref completeddateenabled, value); }
         }
 
-        bool expecteddatefirstsalesenabled;
-        public bool ExpectedDateFirstSalesEnabled
-        {
-            get { return expecteddatefirstsalesenabled; }
-            set { SetField(ref expecteddatefirstsalesenabled, value); }
-        }
-                        
         bool projectnameenabled;
         public bool ProjectNameEnabled
         {
             get { return projectnameenabled; }
             set { SetField(ref projectnameenabled, value); }
         }
-        
+
         bool? blnsaveproject;
         public bool? SaveProjectFlag
         {
@@ -227,8 +368,63 @@ namespace PTR.ViewModels
             set { SetField(ref percentgm, value); }
         }
 
-        GenericObjModel selectedsalesdivision;
-        public GenericObjModel SelectedSalesDivision
+
+        ProjectTypeModel selectedprojecttype;
+        public ProjectTypeModel SelectedProjectType
+        {
+            get { return selectedprojecttype; }
+            set
+            {
+                SetField(ref selectedprojecttype, value);
+                if (value != null)
+                {
+                    ///////<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                    FilterMiscellaneousData(value.ID);
+                    ShowSponsor = value.ShowSponsor;
+                    ShowUnitCost = value.ShowUnitCost;
+                    MiscellaneousDataLabel = value.MiscellaneousDataLabel;
+                }
+            }
+        }
+
+        bool misccomboenabled;
+        public bool MiscComboEnabled
+        {
+            get { return misccomboenabled; }
+            set { SetField(ref misccomboenabled, value); }
+        }
+
+        bool showsponsor;
+        public bool ShowSponsor
+        {
+            get { return showsponsor; }
+            set { SetField(ref showsponsor, value);
+                if(value == false)
+                    Project.SponsorID = 0;
+            }
+        }
+
+        bool showunitcost = false;
+        public bool ShowUnitCost
+        {
+            get { return showunitcost; }
+            set
+            {
+                SetField(ref showunitcost, value);
+                if (value == false)
+                    Project.UnitCost = 0;
+            }
+        }
+
+        string miscellaneousdatalabel;
+        public string MiscellaneousDataLabel
+        {
+            get { return miscellaneousdatalabel; }
+            set { SetField(ref miscellaneousdatalabel, value); }
+        }
+        
+        ModelBaseVM selectedsalesdivision;
+        public ModelBaseVM SelectedSalesDivision
         {
             get { return selectedsalesdivision; }
             set
@@ -236,26 +432,21 @@ namespace PTR.ViewModels
                 SetField(ref selectedsalesdivision, value);
                 if (value != null)
                 {
-                    FilterMarketSegments(value.ID);
+                    FilterIndustrySegments(value.ID);
                     FilterSMCodes(value.ID);
-                    if (SelectedIndustrySegment!=null)
-                         FilterApplications(value.ID, SelectedIndustrySegment.GOM.ID);
-                    else
-                         FilterApplications(value.ID, 0);
-                  
-                }               
+                }
             }
         }
 
-        MarketSegmentModel selectedmktseg;
-        public MarketSegmentModel SelectedIndustrySegment
+        IndustrySegmentModel selectedmktseg;
+        public IndustrySegmentModel SelectedIndustrySegment
         {
             get { return selectedmktseg; }
             set
             {
                 SetField(ref selectedmktseg, value);
-                if (value != null && SelectedSalesDivision!=null)                
-                    FilterApplications(SelectedSalesDivision.ID, value.GOM.ID);                                   
+                if (value != null && Project.SalesDivisionID != 0) // SelectedSalesDivision != null)
+                    FilterApplications(value.ID);
             }
         }
 
@@ -268,19 +459,11 @@ namespace PTR.ViewModels
                 SetField(ref selectedcustomer, value);
                 if (value != null)
                 {
-                    CultureCode = value.CultureCode;
-                    SetUserAccessExistingProject(value.GOM.ID);
+                    SetUserAccessExistingProject(value.ID);
+                    GetOwnersList(value.ID);
+                    GetCurrencySymbol(value.CultureCode);
                 }
-                else
-                    CultureCode = "en-US";                                   
             }
-        }
-
-        string culturecode;
-        public string CultureCode
-        {
-            get { return culturecode; }
-            set { SetField(ref culturecode, value); }
         }
 
         bool invalidproduct;
@@ -296,349 +479,86 @@ namespace PTR.ViewModels
             get { return maxprojnamelength; }
             set { SetField(ref maxprojnamelength, value); }
         }
-        
-        #endregion
 
-        #region Private Functions
-
-        private void SetInitial()
+        string currencysymbol = "$";
+        public string CurrencySymbol
         {
-            GetAssociatesList();
-            InValidProduct = IsInValidProduct(project.Products);
-            CheckFieldValidation();
-            CalcPercentGM();
-
-            if (project.GOM.ID == 0)
-                WindowTitle = title;
-            else
-                WindowTitle = title + " (ID: " + project.GOM.ID.ToString() + ")";
+            get { return currencysymbol; }
+            set { SetField(ref currencysymbol, value); }
         }
 
-        private void Initialisedropdowns()
+        bool estimatedsaleserror;
+        public bool EstimatedSalesError
         {
-            GetProjectTypesList();
-            GetProjectStatusList();
-            if (isnew)
-                GetNewProjectCustomerList();
-            else
-                GetCustomerList();
-            GetSalesDivisionList();
-            GetMarketSegmentsMaster();
-            GetApplicationCategoriesList();
-            GetNewBusinessCategories();
-            GetProductGroupNames();
-            GetCDPCCP();
-          
-            rx = new Regex(StaticCollections.Config.Productformat, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-          //  ^([\w+\s]*\w+)*(;\s[\w+\s]*\w+)*$
-
+            get { return estimatedsaleserror; }
+            set {
+                SetField(ref estimatedsaleserror, value);
+                CheckFieldValidation();
+            }
         }
 
-        private void GetProjectTypesList()
-        {           
-            ProjectTypesList = StaticCollections.ProjectTypes;
-        }
-
-        private void GetProjectStatusList()
+        bool estimatedgmerror;
+        public bool EstimatedGMError
         {
-            ProjectStatusTypesList = EnumerationLists.ProjectStatusTypesList;
-        }
-
-        private void GetNewProjectCustomerList()
-        {
-            FullyObservableCollection<CustomerModel> cm = new FullyObservableCollection<CustomerModel>();
-
-            int accessid = 0;
-            foreach (CustomerModel cust in StaticCollections.Customers)
+            get { return estimatedgmerror; }
+            set
             {
-                accessid = StaticCollections.GetUserCustomerAccess(cust.GOM.ID);
-                if (accessid == (int)UserPermissionsType.FullAccess)
-                    if (!cust.GOM.Deleted)
-                    {
-                        cust.IsEnabled = true;// (accessid == (int)UserPermissionsType.FullAccess);
-                        cm.Add(cust);
-                    }                  
+                SetField(ref estimatedgmerror, value);
+                CheckFieldValidation();
             }
-            Customers = cm;
-        }        
+        }
 
-        private void GetCustomerList()
-        {           
-            FullyObservableCollection<CustomerModel> cm = new FullyObservableCollection<CustomerModel>();                        
-            foreach (CustomerModel cust in StaticCollections.Customers)
+        bool estimatedmpcerror;
+        public bool EstimatedMPCError
+        {
+            get { return estimatedmpcerror; }
+            set
             {
-                if (!cust.GOM.Deleted)                
-                    cust.IsEnabled = (StaticCollections.GetUserCustomerAccess(cust.GOM.ID) == (int)UserPermissionsType.FullAccess);                                   
-                else                
-                    cust.IsEnabled = false;                    
-                
-                cm.Add(cust);
+                SetField(ref estimatedmpcerror, value);
+                CheckFieldValidation();
             }
-            Customers = cm;            
         }
 
-        private string GetCultureCode(int countryid)
+        bool targetedvolumeerror;
+        public bool TargetedVolumeError
         {
-            foreach(CountryModel cm in Countries)            
-                if (cm.GOM.ID == countryid)
-                    return cm.CultureCode;            
-            return "en-US";
-        }
-
-        private void GetAssociatesList()
-        {
-            if(!isnew)
-                Associates = GetUsers();
-            else //remove any deleted associates from list
+            get { return targetedvolumeerror; }
+            set
             {
-                FullyObservableCollection<UserModel> associatess = GetUsers();
-                FullyObservableCollection<UserModel> newassociatess = new FullyObservableCollection<UserModel>();               
-                        
-                foreach (UserModel ag in associatess)
-                {
-                    if (!ag.GOM.Deleted)
-                    {                                                                    
-                        newassociatess.Add(new UserModel()
-                        {
-                            GOM = new GenericObjModel()
-                            {
-                                ID = ag.GOM.ID,
-                                Name = ag.GOM.Name
-                            },
-                            LoginName = ag.LoginName,
-                            Administrator = ag.Administrator
-                        });                                                  
-                    }
-                }
-                Associates = newassociatess;
+                SetField(ref targetedvolumeerror, value);
+                CheckFieldValidation();
             }
         }
 
-        private void GetNewBusinessCategories()
+        bool probofsuccesserror;
+        public bool ProbOfSuccessError
         {
-            NewBusinessCategories = StaticCollections.NewBusinessCategories;
-        }
-
-        private void GetSalesDivisionList()
-        {
-            SalesDivisions = StaticCollections.SalesDivisions;
-        }
-
-        private void GetCDPCCP()
-        {
-            CDPCCP = StaticCollections.CDPCCP;            
-        }
-
-        private void CalcPercentGM()
-        {
-            if(Project.EstimatedAnnualSales >0 && Project.GM >0)            
-                PercentGM = Project.GM / Project.EstimatedAnnualSales;            
-            else
-                PercentGM = 0;
-        }           
-
-        #endregion
-
-        #region Validation
-
-        private bool IsInValidProduct(string product)
-        {
-            if (!string.IsNullOrEmpty(Config.Productformat.Trim()))
+            get { return probofsuccesserror; }
+            set
             {
-                Match match = rx.Match(product);
-                if (match.Success)
-                    if (CheckProductNames(product))
-                        return false;
-                    else
-                        return true;
-                else
-                    return true;
+                SetField(ref probofsuccesserror, value);
+                CheckFieldValidation();
             }
-            else
-                return false;
-
-        }
-        
-        private string ConvertoTitleCase(string input)
-        {
-            return input.Trim().Substring(0, 1).ToUpper() + input.Trim().Substring(1).ToLower();
         }
 
-        private bool CheckProductNames(string srcproduct)
+        bool unitcosterror;
+        public bool UnitCostError
         {
-            bool ok = false;
-            Collection<string> productsubstrings = new Collection<string>();
-            try
+            get { return unitcosterror; }
+            set
             {
-                         
-                List<string> prodslist = srcproduct.Split(';').ToList();
-                List<string> prodname;
-                string product = string.Empty;
-                foreach (var s in prodslist)
-                {
-                    product = string.Empty;
-                    prodname = s.Trim().Split(' ').ToList();
-                                       
-                    ok = false;
-                    foreach (var pr in StaticCollections.ProductGroupNames)
-                    {
-                        string temp = string.Empty;
-                        if (prodname.Count() == 1 || prodname.Count() == 2)
-                        {
-                            temp = prodname[0].Trim();
-                            prodname[0] = ConvertoTitleCase(prodname[0]);
-                            if (prodname[0].ToUpper() == "BLX")
-                                prodname[0] = "BLX";
-                            if (prodname.Count() == 2)
-                                prodname[1] = ConvertoTitleCase(prodname[1]);
-                        }
-                        else
-                        if (prodname.Count() == 3)
-                        {
-                            temp = prodname[0].Trim() + " " + prodname[1].Trim();
-                            prodname[0] = ConvertoTitleCase(prodname[0]);
-                            prodname[1] = ConvertoTitleCase(prodname[1]);
-                            prodname[2] = prodname[2].ToUpper();
-                        }
-                                                    
-                        if (pr.ToLower() == temp.ToLower())
-                        {
-                            ok = true;
-                            break;
-                        }
-                    }
-                    if (ok)
-                    {
-                        product = string.Join(" ", prodname);
-                        productsubstrings.Add(product);
-                    }
-                    else
-                        break;
-                }                              
+                SetField(ref unitcosterror, value);
+                CheckFieldValidation();
             }
-            catch
-            {
-                return false;
-            }
-            if (ok)
-            {               
-                Project.Products = string.Join("; ", productsubstrings);
-                return true;
-            }
-            else
-                return false;
         }
 
-        private void GetProductGroupNames()
+        bool reasonforincompleteprojectenabled = false;
+        public bool ReasonForIncompleteProjectEnabled
         {
-            ProductGroupNames = StaticCollections.ProductGroupNames;
+            get { return reasonforincompleteprojectenabled; }
+            set { SetField(ref reasonforincompleteprojectenabled, value); }
         }
 
-        private bool SalesCompletionDateMissing()
-        {
-            if ((Project.ProjectStatusID == (int)ProjectStatusType.Completed))
-            {
-                if (Project.CompletedDate != null)
-                    return false;
-                else
-                    return true;
-            }
-            return false;
-        }
-
-        private void CheckFieldValidation()
-        {
-            bool ApplicationRequired;
-            bool AssociateRequired;
-            bool CustomerRequired;
-            bool EstimatedAnnualGMRequired;
-            bool EstimatedAnnualSalesRequired;          
-            bool MarketSegmentRequired;
-            bool NewBusinessCategoryRequired;
-            bool SalesDivisionRequired;
-            bool ProjectNameRequired;
-            bool EstimatedAnnualMPCRequired;
-            bool ProbabilityOfSuccessRequired;
-
-            SalesDivisionRequired = !(Project.SalesDivisionID > 0);
-            ProjectNameRequired = (Project.GOM.Name == string.Empty);
-            MarketSegmentRequired = !(Project.MarketSegmentID > 0);
-            ApplicationRequired = !(Project.ApplicationID > 0);
-            CustomerRequired = !(Project.CustomerID > 0);
-            AssociateRequired = !(Project.OwnerID > 0);
-            NewBusinessCategoryRequired = !(Project.NewBusinessCategoryID > 0 && Project.NewBusinessCategoryID != -1);
-            EstimatedAnnualSalesRequired = !(Project.EstimatedAnnualSales > 0);
-            EstimatedAnnualGMRequired = !(Project.GM > 0);
-            EstimatedAnnualMPCRequired = !(Project.EstimatedAnnualMPC > 0);
-               
-            ProbabilityOfSuccessRequired = !(Project.ProbabilityOfSuccess > 0);
-            InvalidField = (
-                SalesDivisionRequired
-                || MarketSegmentRequired
-                || ApplicationRequired 
-                || CustomerRequired
-                || AssociateRequired                
-                || ProjectNameRequired
-                || NewBusinessCategoryRequired
-                || InValidProduct
-                || EstimatedAnnualSalesRequired
-                || EstimatedAnnualGMRequired
-                || EstimatedAnnualMPCRequired                                            
-                || ProbabilityOfSuccessRequired
-                );
-
-            if (SalesDivisionRequired)
-                DataMissingLabel = "Industry Missing";
-            else
-                if (MarketSegmentRequired)
-                DataMissingLabel = "Industry Segment Missing";
-            else
-                if (ApplicationRequired)
-                DataMissingLabel = "Application Missing";
-            else
-                if (CustomerRequired)
-                DataMissingLabel = "Customer Missing";
-            else
-                if (AssociateRequired)
-                DataMissingLabel = "Associate Missing";
-            else
-                if (ProjectNameRequired)
-                DataMissingLabel = "Project Name Missing";
-            else
-                if (NewBusinessCategoryRequired)
-                DataMissingLabel = "Opportunity Category Missing";
-            else
-                if (InValidProduct)
-                DataMissingLabel = "Error in Products List";
-            else
-                if (EstimatedAnnualSalesRequired)
-                DataMissingLabel = "Estimated Annual Sales Missing";
-            else
-                if (EstimatedAnnualGMRequired)
-                DataMissingLabel = "Estimated Gross Margin Missing";
-            else              
-                if (EstimatedAnnualMPCRequired)
-                DataMissingLabel = "Estimated MPC Missing";            
-            else
-                if (ProbabilityOfSuccessRequired)
-                DataMissingLabel = "Probability Of Success Missing";                                                
-        }
-
-        bool invalidfield;
-        public bool InvalidField
-        {
-            get { return invalidfield; }
-            set { SetField(ref invalidfield, value); }
-        }           
-       
-        string datamissing;
-        public string DataMissingLabel
-        {
-            get { return datamissing; }
-            set { SetField(ref datamissing, value); }
-        }
-        
         MilestoneModel selectedmilestone;
         public MilestoneModel SelectedMilestone
         {
@@ -653,148 +573,626 @@ namespace PTR.ViewModels
             set { SetField(ref selectedevaluationplan, value); }
         }
 
+        string producttt = "Product names must be separated by a comma and space and formatted like: \nBusan 1009, Busan 1455, BLX 12345\n";
+        public string ProductTT
+        {
+            get { return producttt; }
+            set { SetField(ref producttt, value); }
+        }
+
+
+        #endregion
+
+        #region Private Functions
+
+        private void MakeProductTT()
+        {
+            if(Config.ProductDelimiter == ',')
+                ProductTT = "Product names must be separated by a comma and space and formatted like: \nBusan 1009, Busan 1455, BLX 12345\n";            
+            else
+                ProductTT = "Product names must be separated by a semi-colon and space and formatted like: \nBusan 1009; Busan 1455; BLX 12345\n";
+        }
+
+        private void SetInitial()
+        {
+            //CheckFieldValidation();
+            CalcPercentGM();
+
+            if (project.ID == 0)
+                WindowTitle = title;
+            else
+                WindowTitle = title + " (ID: " + project.ID.ToString() + ")";
+
+            MaxProjNameLength = Config.MaxProjectNameLength;
+                       
+        }
+
+        private void Initialisedropdowns()
+        {
+            GetIndustrySegmentsMaster();
+            GetMiscellaneousDataMaster();
+            GetApplicationsList();
+            ProjectTypesList = ProjectTypes;
+            GetProjectStatusList();
+            if (isnew)
+                GetNewProjectCustomerList();
+            else
+                GetCustomerList();
+            BusinessUnits = StaticCollections.BusinessUnits;
+
+            GetNewBusinessCategories();
+            GetProductGroupNames();
+            GetSMCodesMaster();
+            GetReasonsForIncompleteProject();
+            GetPriorities();
+            GetMiscellaneousData();
+        }
+
+        private void GetProjectStatusList()
+        {
+            ProjectStatusTypesList = EnumerationLists.ProjectStatusTypesList;
+        }
+
+        private void GetNewProjectCustomerList()
+        {
+            FullyObservableCollection<CustomerModel> cm = new FullyObservableCollection<CustomerModel>();
+            FullyObservableCollection<CustomerModel> customers = GetCustomers();
+            int accessid = 0;
+            foreach (CustomerModel cust in customers)
+            {
+                accessid = StaticCollections.GetUserCustomerAccess(cust.ID);
+                if (accessid == (int)UserPermissionsType.FullAccess)
+                    if (!cust.Deleted)
+                    {
+                        cust.IsEnabled = true;
+                        cm.Add(cust);
+                    }
+            }
+            Customers = cm;
+        }
+
+        private void GetCustomerList()
+        {
+            FullyObservableCollection<CustomerModel> cm = new FullyObservableCollection<CustomerModel>();
+            FullyObservableCollection<CustomerModel> customers = GetCustomers();
+            foreach (CustomerModel cust in customers)
+            {
+                if (!cust.Deleted)
+                    cust.IsEnabled = (StaticCollections.GetUserCustomerAccess(cust.ID) == (int)UserPermissionsType.FullAccess);
+                else
+                    cust.IsEnabled = false;
+
+                cm.Add(cust);
+            }
+            Customers = cm;
+        }
+
+        private void GetReasonsForIncompleteProject()
+        {
+            Reasons = DatabaseQueries.GetReasonsForIncompleteProject();
+        }
+
+        private void GetPriorities()
+        {
+            Priorities = DatabaseQueries.GetPriorities();
+        }
+       
+        UserModel selecteduser;
+        public UserModel SelectedUser
+        {
+            get { return selecteduser; }
+            set { SetField(ref selecteduser, value); }
+        }
+
+        private void GetOwnersList(int customerid)
+        {
+            Associates?.Clear();
+
+            if (customerid > 0)
+            {
+                FullyObservableCollection<UserModel> associatess = GetCustomerUserAccess(customerid);
+                FullyObservableCollection<UserModel> newassociatess = new FullyObservableCollection<UserModel>();
+
+                if (!isnew)
+                {
+                    foreach (UserModel ag in associatess)
+                    {
+                        if (!ag.Deleted || (ag.Deleted && ag.ID == Project.OwnerID))
+                            newassociatess.Add(new UserModel()
+                            {
+                                ID = ag.ID,
+                                Name = ag.Name,
+                                LoginName = ag.LoginName,
+                                Administrator = ag.Administrator,
+                                IsEnabled = !ag.Deleted
+                            });
+                    }
+                    Associates = newassociatess;
+                }
+                else //remove any deleted associates from list
+                {
+                    foreach (UserModel ag in associatess)
+                    {
+                        if (!ag.Deleted)
+                        {
+                            newassociatess.Add(new UserModel()
+                            {
+                                ID = ag.ID,
+                                Name = ag.Name,
+                                LoginName = ag.LoginName,
+                                Administrator = ag.Administrator,
+                                IsEnabled = true
+
+                            });
+                        }
+                    }
+                    Associates = newassociatess;
+                }
+                UserModel q = Associates.Where(x => x.ID == Project.OwnerID).FirstOrDefault();
+                if (q != null)
+                    SelectedUser = q;
+                else
+                {
+                    SelectedUser = null;
+                    Project.OwnerID = 0;
+                }
+            }
+        }
+
+        private void GetNewBusinessCategories()
+        {
+            NewBusinessCategories = DatabaseQueries.GetNewBusinessCategories();
+        }
+
+        private void CalcPercentGM()
+        {            
+            if (Project.EstimatedAnnualSales > 0 && Project.GM > 0)
+                PercentGM = Project.GM / Project.EstimatedAnnualSales;
+            else
+                PercentGM = 0;
+            
+        }
+
+        private void GetCurrencySymbol(string culturecode)
+        {
+            CultureInfo ci = new CultureInfo(culturecode);
+            CurrencySymbol = ci.NumberFormat.CurrencySymbol;
+        }              
+               
+        #endregion
+
+        #region Validation
+
+        private bool IsInValidProduct(string product)
+        {
+            if (Config.ValidateProducts)
+            {
+                if (string.IsNullOrEmpty(product.Trim()) && SelectedProjectType.ProductRequired)
+                    return true;
+                else
+                {
+                    if (ProductNamesOK(product))
+                        return false;
+                    else
+                        return true;
+                }
+            }
+            else
+                return false;
+        }
+
+        private string ConvertoTitleCase(string input)
+        {
+            TextInfo textInfo = new CultureInfo("en-US", false).TextInfo;
+            return textInfo.ToTitleCase(input.TrimStart());
+        }
+
+        private bool ProductNamesOK(string srcproduct)
+        {
+            Collection<string> productsubstrings = new Collection<string>();
+            List<string> prodslist = srcproduct.Split(Config.ProductDelimiter).ToList();
+            try
+            {
+                //check for trailing ,
+                if (srcproduct.Length > 0)
+                    if (srcproduct.LastIndexOf(Config.ProductDelimiter) == srcproduct.Length - 1)
+                        return false;
+
+                foreach (string s in prodslist)
+                {
+                    char[] chars = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+
+                    string cleaneds = ConvertoTitleCase(s.ToLower());
+                    // busan =>Busan
+                    //Optimyze pLUS =>Optimyze Plus
+                    //   optimyze plus 444=>Optimyze Plus 444
+
+                    //if (cleaneds.StartsWith("Blx"))
+                    //    cleaneds = cleaneds.Replace("Blx", "BLX");
+                    //if (cleaneds.StartsWith("Brd"))
+                    //    cleaneds = cleaneds.Replace("Brd", "BRD");
+
+                    //parse up to first number or end of string
+                    int idxnumber = cleaneds.IndexOfAny(chars);
+
+                    int termlen = 0;
+                    if (idxnumber == -1)
+                        termlen = cleaneds.Length;
+                    else
+                    {
+                        if (idxnumber < 2)
+                            termlen = cleaneds.Length;
+                        else
+                        {
+                            if (idxnumber > 1)
+                            {
+                                if (cleaneds[idxnumber - 1] == ' ')
+                                    termlen = idxnumber - 1;
+                                else
+                                    termlen = cleaneds.Length;
+                            }
+                            else
+                                termlen = cleaneds.Length;
+                        }
+                    }
+                    string temp = string.Empty;
+                    temp = cleaneds.Substring(0, termlen);
+                    bool containsOther = ProductGroupNames.Select(x => x.Name == "Other").Count() > 0;
+
+                    foreach (ModelBaseVM v in ProductGroupNames)
+                    {                        
+                        if (temp == v.Name || (temp.StartsWith("Other") && containsOther))
+                        {
+                            productsubstrings.Add(cleaneds);
+                            break;
+                        }
+                        else                                                                     
+                        if (temp.ToUpper() == v.Name.ToUpper() && v.IsSelected)
+                        {
+                            productsubstrings.Add(cleaneds.ToUpper());
+                            break;
+                        }                        
+                    }
+                }
+            }
+            catch
+            {
+                return true;
+            }
+
+            if (prodslist.Count == productsubstrings.Count)
+            {
+                Project.Products = string.Join(Config.ProductDelimiter.ToString() + " ", productsubstrings);
+                return true;
+            }
+            else
+                return false;
+        }
+
+        private void GetProductGroupNames()
+        {
+            ProductGroupNames = DatabaseQueries.GetProductGroupNames();
+        }
+
+        private void CheckFieldValidation()
+        {
+            bool ApplicationRequired;
+            bool AssociateRequired;
+            bool CustomerRequired;
+            bool EstimatedAnnualGMRequired;
+            bool EstimatedAnnualSalesRequired;
+            bool SalesVolumeRequired;
+            bool IndustrySegmentRequired;
+            bool NewBusinessCategoryRequired;
+            bool BusinessUnitRequired;
+            bool ProjectNameRequired;
+            bool EstimatedAnnualMPCRequired;
+            bool ProbabilityOfSuccessRequired;
+            bool ReasonForIncompleteRequired;
+            bool SponsorRequired;
+            bool MiscellaneousDataRequired;
+            bool PriorityRequired;
+
+            BusinessUnitRequired = !(Project.SalesDivisionID > 0);
+            ProjectNameRequired = string.IsNullOrEmpty(Project.Name);
+            IndustrySegmentRequired = !(Project.IndustrySegmentID > 0);
+            ApplicationRequired = !(Project.ApplicationID > 0);
+            CustomerRequired = !(Project.CustomerID > 0);
+            AssociateRequired = !(Project.OwnerID > 0);
+            NewBusinessCategoryRequired = !(Project.NewBusinessCategoryID > 0) && SelectedProjectType.OpportunityCatRequired;
+            EstimatedAnnualSalesRequired = !(Project.EstimatedAnnualSales > 0) && SelectedProjectType.SalesRequired;            
+            EstimatedAnnualGMRequired = !(Project.GM > 0) && SelectedProjectType.GMRequired;
+            EstimatedAnnualMPCRequired = !(Project.EstimatedAnnualMPC > 0) && SelectedProjectType.MPCRequired;
+            SalesVolumeRequired = !(Project.TargetedVolume > 0) && SelectedProjectType.SalesVolumeRequired;
+            ProbabilityOfSuccessRequired = !(Project.ProbabilityOfSuccess > 0) && SelectedProjectType.ProbabilityRequired;
+            ReasonForIncompleteRequired = !(Project.IncompleteReasonID > 0)
+                && !Project.IsNewBusiness && (Project.ProjectStatusID == (int)ProjectStatusType.Completed || Project.ProjectStatusID == (int)ProjectStatusType.Cancelled);
+
+            SponsorRequired = ShowSponsor && Project.SponsorID == 0;
+            MiscellaneousDataRequired = (MiscellaneousData?.Count > 0) && !(Project.MiscDataID > 0);
+
+            PriorityRequired = !(Project.PriorityID > 0) && SelectedProjectType.ShowPriority;
+            InValidProduct = IsInValidProduct(project.Products);
+
+            InvalidField = (
+                BusinessUnitRequired
+                || IndustrySegmentRequired
+                || ApplicationRequired
+                || CustomerRequired
+                || AssociateRequired
+                || ProjectNameRequired
+                || NewBusinessCategoryRequired
+                || ReasonForIncompleteRequired
+                || InValidProduct
+                || EstimatedAnnualSalesRequired              
+                || EstimatedAnnualGMRequired
+                || EstimatedAnnualMPCRequired
+                || SalesVolumeRequired
+                || ProbabilityOfSuccessRequired
+                || EstimatedSalesError
+                || EstimatedGMError
+                || EstimatedMPCError
+                || TargetedVolumeError
+                || ProbOfSuccessError 
+                || SponsorRequired
+                || MiscellaneousDataRequired
+                || PriorityRequired
+                );
+
+            if (BusinessUnitRequired)
+                DataMissingLabel = "Business Unit Missing";
+            else
+            if (PriorityRequired)
+                DataMissingLabel = "Priority not selected";
+            else
+                if (IndustrySegmentRequired)
+                DataMissingLabel = "Industry Segment Missing";
+            else
+                if (ApplicationRequired)
+                DataMissingLabel = "Application Missing";
+            else
+                if (CustomerRequired)
+                DataMissingLabel = "Customer Missing";
+            else
+                if (AssociateRequired)
+                DataMissingLabel = "Owner Missing";
+            else
+                if (SponsorRequired)
+                DataMissingLabel = "Sponsor Missing";
+            else
+                if (ProjectNameRequired)
+                DataMissingLabel = "Project Name Missing";
+            else
+                if (ReasonForIncompleteRequired)
+                DataMissingLabel = "Incomplete Project Reason Missing";
+            else
+                if (NewBusinessCategoryRequired)
+                DataMissingLabel = "Opportunity Category Missing";
+            else
+                if (MiscellaneousDataRequired)
+                DataMissingLabel = MiscellaneousDataLabel + " Missing";            
+            else
+                if (InValidProduct)
+                DataMissingLabel = "Error in Products List";
+            else
+                if (EstimatedAnnualSalesRequired)
+                DataMissingLabel = "Estimated Annual Sales Missing";
+            else
+                if (EstimatedSalesError)
+                DataMissingLabel = "Estimated Annual Sales Error";
+            else
+                if (UnitCostError)
+                DataMissingLabel = "Unit Cost Error";
+            else
+                if (EstimatedAnnualGMRequired)
+                DataMissingLabel = "Estimated Gross Margin Missing";
+            else
+                if (EstimatedGMError)
+                DataMissingLabel = "Estimated Gross Margin Error";
+            else
+                if (EstimatedAnnualMPCRequired)
+                DataMissingLabel = "Estimated MPC Missing";
+            else
+                if (EstimatedMPCError)
+                DataMissingLabel = "Estimated MPC Error";
+            else
+                if (SalesVolumeRequired)
+                DataMissingLabel = "Sales Volume Missing";
+            else
+                if (TargetedVolumeError)
+                DataMissingLabel = "Targeted Volume Error";
+            else
+                if (ProbabilityOfSuccessRequired)
+                DataMissingLabel = "Probability Of Success Missing";
+            else
+                if (ProbOfSuccessError)
+                DataMissingLabel = "Probability Of Success Error";
+
+        }
+
+        bool invalidfield;
+        public bool InvalidField
+        {
+            get { return invalidfield; }
+            set { SetField(ref invalidfield, value); }
+        }
+               
+        string datamissing;
+        public string DataMissingLabel
+        {
+            get { return datamissing; }
+            set { SetField(ref datamissing, value); }
+        }
+                      
         #endregion
 
         #region Application Filtering
 
-        FullyObservableCollection<ApplicationCategoriesModel> applicationcategoriesmaster;
-        FullyObservableCollection<ApplicationCategoriesModel> applicationcategories;
-        public FullyObservableCollection<ApplicationCategoriesModel> ApplicationCategories
+        FullyObservableCollection<ApplicationModel> applicationsmaster;
+        FullyObservableCollection<ApplicationModel> applications;
+        public FullyObservableCollection<ApplicationModel> Applications
         {
-            get { return applicationcategories; }
-            set
-            {
-                SetField(ref applicationcategories, value);
-                if (value == null)                
-                    Project.ApplicationID = 0;                
-            }
+            get { return applications; }
+            set { SetField(ref applications, value); }
         }
+        
+        Collection<IndustrySegmentApplicationJoinModel> industrysegsapps;
 
-        private void GetApplicationCategoriesList()
+        private void GetApplicationsList()
         {
-            applicationcategoriesmaster = GetApplicationCategories();
+            applicationsmaster = GetApplications();
+            industrysegsapps = GetIndustrySegmentApplicationJoin();
         }     
 
-        private void FilterApplications(int indvalue, int mktsegid)
+        private void FilterApplications(int mktsegid)
         {
-            var subs = from p in applicationcategoriesmaster
-                        where p.IndustryID == indvalue
-                        || indvalue == 4 && mktsegid == 4 && p.IndustryID == 1
-                        select p;
-             
-            FullyObservableCollection<ApplicationCategoriesModel> newapplicationcategories = new FullyObservableCollection<ApplicationCategoriesModel>();
-            bool applicationidfound = false;
-            foreach (ApplicationCategoriesModel ac in subs)
+            var subs = from p in applicationsmaster
+                       join q in industrysegsapps on p.ID equals q.ApplicationID                       
+                       where q.IndustrySegmentID == mktsegid
+                       select new
+                       {
+                           p.ID,
+                           p.Name                           
+                       };
+
+            FullyObservableCollection<ApplicationModel> newapplications = new FullyObservableCollection<ApplicationModel>();
+            int tempid = 0;
+            foreach (var ac in subs)
             {
-                newapplicationcategories.Add(ac);
-                if (ac.GOM.ID == Project.ApplicationID)
-                    applicationidfound = true;
-            }
+                newapplications.Add(new ApplicationModel() { ID = ac.ID, Name = ac.Name });
+                if (ac.ID == Project.ApplicationID)            
+                    tempid = Project.ApplicationID;                                                
+            }           
 
-            if (!applicationidfound)
-                Project.ApplicationID = 0;
+            Project.ApplicationID = 0;
+            Applications = newapplications;
+            Project.ApplicationID = tempid;
 
-            ApplicationCategories = newapplicationcategories;
         }
 
         #endregion
 
-        #region MarketSegment Fitering
+        #region Industry Segments Fitering
 
-        FullyObservableCollection<MarketSegmentModel> marketsegments;
-        public FullyObservableCollection<MarketSegmentModel> MarketSegments
+        FullyObservableCollection<IndustrySegmentModel> industrysegmentsmaster;
+        FullyObservableCollection<IndustrySegmentModel> industrysegments;
+
+        public FullyObservableCollection<IndustrySegmentModel> IndustrySegments
         {
-            get { return marketsegments; }
-            set {
-                SetField(ref marketsegments, value);
-                if (value == null)
-                    Project.MarketSegmentID = 0;
-            }
+            get { return industrysegments; }
+            set { SetField(ref industrysegments, value); }
         }
-
-        FullyObservableCollection<MarketSegmentModel> marketsegmentsmaster;
-        private void GetMarketSegmentsMaster()
-        {
-            marketsegmentsmaster = GetMarketSegments();
-        }
-
-        private void FilterMarketSegments(int idvalue)
-        {
-            var subs = marketsegmentsmaster.Where(x => x.IndustryID == idvalue);
-            FullyObservableCollection<MarketSegmentModel> newmarketsegments = new FullyObservableCollection<MarketSegmentModel>();
-
-            bool marketsegmentidfound = false;
-            foreach (MarketSegmentModel ac in subs)
-            {
-                newmarketsegments.Add(ac);
-                if (ac.GOM.ID == Project.MarketSegmentID)
-                    marketsegmentidfound = true;
-            }
-
-            if (!marketsegmentidfound)
-                Project.MarketSegmentID = 0;
-
-            MarketSegments = newmarketsegments;
-        }
-
-
-        #endregion
         
+        private void GetIndustrySegmentsMaster()
+        {
+            industrysegmentsmaster = GetIndustrySegments();
+        }
+
+        private void FilterIndustrySegments(int idvalue)
+        {
+            var subs = industrysegmentsmaster.Where(x => x.IndustryID == idvalue);
+            FullyObservableCollection<IndustrySegmentModel> newindustrysegments = new FullyObservableCollection<IndustrySegmentModel>();
+
+            int tempid = 0;
+            foreach (IndustrySegmentModel ac in subs)
+            {
+                newindustrysegments.Add(ac);
+                if (ac.ID == Project.IndustrySegmentID)
+                    tempid = Project.IndustrySegmentID;
+            }
+            Project.IndustrySegmentID = 0;
+            
+            if (tempid == 0)
+            {
+                Project.ApplicationID = 0;
+                Applications?.Clear();
+            }
+
+            IndustrySegments = newindustrysegments;
+            Project.IndustrySegmentID = tempid;
+        }
+
+
+        #endregion
+
         #region SMCode Filtering
-               
+
+        FullyObservableCollection<SMCodeModel> smcodes;
+        FullyObservableCollection<SMCodeModel> smcodesmaster;
+
         public FullyObservableCollection<SMCodeModel> SMCodes
         {
             get { return smcodes; }
-            set
-            {
-                SetField(ref smcodes, value);
-                if (value == null)                
-                    Project.SMCodeID = -1;
-                
-            }
+            set { SetField(ref smcodes, value); }
         }
 
-        SMCodeModel smcode;
-        public SMCodeModel SelectedSMCode
+        private void GetSMCodesMaster()
         {
-            get { return smcode; }
-            set { SetField(ref smcode, value); }
-        }
-
-        int smcodeindx;
-        public int SelectedSMCodeIndex
-        {
-            get { return smcodeindx; }
-            set { SetField(ref smcodeindx, value); }
+            smcodesmaster = GetSMCodes();
         }
 
         private void FilterSMCodes(int indvalue)
-        {           
+        {                       
             FullyObservableCollection<SMCodeModel> newsmcodes = new FullyObservableCollection<SMCodeModel>();
-            int index=0;
-            int i = 0;
-            foreach (SMCodeModel ac in StaticCollections.SMCodes)
+            int tempid = 0;
+            foreach (SMCodeModel ac in smcodesmaster)
             {
-                if (indvalue == ac.SalesDivisionID)
+                if (indvalue == ac.IndustryID || ac.IndustryID == 0)
                 {
                     newsmcodes.Add(ac);
-                    if (ac.GOM.ID == Project.SMCodeID)
-                        index = i;
-                
-                    i++;
+                    if (ac.ID == Project.SMCodeID)                    
+                       tempid = Project.SMCodeID;                    
                 }
             }
-           
-            SMCodes = newsmcodes;
-            if(index==0)
-                Project.SMCodeID = -1;
 
-            SelectedSMCodeIndex = index;
-           
+            Project.SMCodeID = 0;
+            SMCodes = newsmcodes;         
+            Project.SMCodeID = tempid;
+
         }
 
         #endregion
-        
+
+        #region Miscellaneous Data Fitering
+
+        FullyObservableCollection<MiscellaneousDataModel> miscellaneousdatamaster;
+        FullyObservableCollection<MiscellaneousDataModel> miscellaneousdata;
+
+        public FullyObservableCollection<MiscellaneousDataModel> MiscellaneousData
+        {
+            get { return miscellaneousdata; }
+            set { SetField(ref miscellaneousdata, value); }
+        }
+
+        private void GetMiscellaneousDataMaster()
+        {
+            miscellaneousdatamaster = DatabaseQueries.GetMiscellaneousData();
+        }
+
+        private void FilterMiscellaneousData(int fkidvalue)
+        {
+            var subs = miscellaneousdatamaster.Where(x => x.FKID == fkidvalue);
+            FullyObservableCollection<MiscellaneousDataModel> newmiscdata = new FullyObservableCollection<MiscellaneousDataModel>();
+
+            int tempid = 0;
+            foreach (MiscellaneousDataModel ac in subs)
+            {
+                newmiscdata.Add(ac);
+                if (ac.ID == Project.MiscDataID)
+                    tempid = Project.MiscDataID;
+            }
+            Project.MiscDataID = 0;
+
+            MiscellaneousData = newmiscdata;
+            Project.MiscDataID = tempid;
+
+            MiscComboEnabled = MiscellaneousData.Count > 0;
+            
+        }
+
+
+        #endregion
+
         #region Commands
 
         private bool CanExecuteSave(object obj)
@@ -803,6 +1201,9 @@ namespace PTR.ViewModels
                 return false;
 
             if (InvalidField)
+                return false;          
+
+            if (!isdirty)
                 return false;
 
             return true;
@@ -821,41 +1222,37 @@ namespace PTR.ViewModels
 
         private void ExecuteSaveProject(object parameter)
         {
-            IMessageBoxService msgbox = new MessageBoxService();
-            if (parameter != null)
-            {
-                if ((parameter.GetType().Equals(typeof(ProjectModel))))
-                {
-                    SaveProjectFlag = true;
-                  
-                    if ((parameter as ProjectModel).GOM.ID != 0)
-                    {
-                        //update db
-                        try
-                        {                                
-                          //  BusyIndicator.ShowBusy("Updating Project...");
-                            UpdateProject(project);                            
-                        }
-                        catch (Exception e)
-                        {
-                            msgbox.ShowMessage("Unable to update project\n " + e.Message, "Error during updating project", GenericMessageBoxButton.OK, GenericMessageBoxIcon.Asterisk);
-                        }
-                        finally
-                        {
-                  //          BusyIndicator.CloseBusy();
-                            //close dialog
-                            CloseWindow();
-                        }                            
-                    }                    
-                }
-            }
-            msgbox = null;
+            SaveCurrentProject();            
+            //close dialog
+            CloseWindow();                                                                                   
         }
 
-              
+        private void SaveCurrentProject()
+        {
+            try
+            {
+
+                if (isdirty)
+                {
+                    UpdateProject(project);
+                    isdirty = false;
+                    SaveProjectFlag = true;
+                }
+                else                
+                    SaveProjectFlag = false;                
+            }
+            catch (Exception e)
+            {
+                IMessageBoxService msgbox = new MessageBoxService();
+                msgbox.ShowMessage("Unable to update project\n " + e.Message, "Error during updating project", GenericMessageBoxButton.OK, GenericMessageBoxIcon.Asterisk);
+                msgbox = null;
+            }
+        }
+                      
+
         private bool CanExecuteAddNewMilestone(object obj)
         {
-            return true;
+            return AddMilestoneIsEnabled;
         }
 
         ICommand addnewmilestone;
@@ -873,13 +1270,13 @@ namespace PTR.ViewModels
         {
             try
             {
-                Window owner;
-                owner = Application.Current.Windows[0];
+                //Window owner;
+                //owner = Application.Current.Windows[0];
                 IMessageBoxService msgbox = new MessageBoxService();
-                bool result = msgbox.MilestoneDialog(owner, 0, project.GOM.ID);
+                bool result = msgbox.MilestoneDialog(null, 0, project.ID);
                 //if return value is true then Refresh list
                 if (result == true)
-                    project.Milestones = GetProjectMilestones(project.GOM.ID);                            
+                    Project.Milestones = GetProjectMilestones(project.ID);                            
 
                 msgbox = null;               
             }
@@ -888,7 +1285,7 @@ namespace PTR.ViewModels
 
         private bool CanExecuteEditMilestone(object obj)
         {
-            return (Project.GOM.ID > 0);
+            return (Project.ID > 0);
         }
 
         ICommand editmilestone;
@@ -908,15 +1305,16 @@ namespace PTR.ViewModels
             {
                 if (parameter != null)
                 {
-                    if (parameter.GetType().Equals(typeof(MilestoneModel)))
+                    object[] values = new object[3];
+                    values = parameter as object[];
+                    int projectid = (int)values[0];
+                    int mid = (int)values[1];
+                    if (projectid > 0 && mid > 0)
                     {
-                        Window owner;
-                        owner = Application.Current.Windows[0];
                         IMessageBoxService msgbox = new MessageBoxService();
-                        bool result = msgbox.MilestoneDialog(owner,((MilestoneModel)parameter).GOM.ID, ((MilestoneModel)parameter).ProjectID);
                         //if return value is true then Refresh list
-                        if (result == true)
-                            project.Milestones = GetProjectMilestones(project.GOM.ID);
+                        if (msgbox.MilestoneDialog((Window)values[2], mid, projectid))
+                            Project.Milestones = GetProjectMilestones(projectid);
 
                         msgbox = null;
                     }
@@ -926,8 +1324,8 @@ namespace PTR.ViewModels
         }
 
         private bool CanExecuteDeleteMilestone(object obj)
-        {           
-           return (Project.Milestones.Count > 0);           
+        {
+            return (SelectedMilestone != null) && DeleteMilestoneIsEnabled;        
         }
 
         ICommand deletemilestone;
@@ -951,9 +1349,9 @@ namespace PTR.ViewModels
                 //if return value is Ok then Refresh list
                 if (result.Equals(GenericMessageBoxResult.OK))
                 {                    
-                    SelectedMilestone.GOM.Deleted = true;
-                    DatabaseQueries.UpdateMilestone(SelectedMilestone);
-                    project.Milestones = GetProjectMilestones(project.GOM.ID);
+                    SelectedMilestone.Deleted = true;
+                    UpdateMilestone(SelectedMilestone);
+                    project.Milestones = GetProjectMilestones(project.ID);
                 }
                 msgbox = null;
             }
@@ -961,7 +1359,7 @@ namespace PTR.ViewModels
 
         private bool CanExecuteAddNewEvaluationPlan(object obj)
         {
-            return true;
+            return AddEPIsEnabled;
         }
 
         ICommand addnewep;
@@ -979,13 +1377,13 @@ namespace PTR.ViewModels
         {
             try
             {
-                Window owner;
-                owner = Application.Current.Windows[0];
+                //Window owner;
+                //owner = Application.Current.Windows[0];
                 IMessageBoxService msgbox = new MessageBoxService();
-                bool result = msgbox.EvaluationPlanDialog(owner, 0, project.GOM.ID);
+                bool result = msgbox.EvaluationPlanDialog(null, 0, project.ID);
                 //if return value is true then Refresh list
                 if (result == true)
-                    project.EvaluationPlans = GetProjectEvaluationPlans(project.GOM.ID);
+                    Project.EvaluationPlans = GetProjectEvaluationPlans(project.ID);
 
                 msgbox = null;
             }
@@ -994,7 +1392,7 @@ namespace PTR.ViewModels
 
         private bool CanExecuteEditEvaluationPlan(object obj)
         {
-            return (Project.GOM.ID > 0);
+            return (Project.ID > 0) && DeleteEPIsEnabled;
         }
 
         ICommand editep;
@@ -1014,15 +1412,17 @@ namespace PTR.ViewModels
             {
                 if (parameter != null)
                 {
-                    if (parameter.GetType().Equals(typeof(EPModel)))
-                    {
-                        Window owner;
-                        owner = Application.Current.Windows[0];
-                        IMessageBoxService msgbox = new MessageBoxService();
-                        bool result = msgbox.EvaluationPlanDialog(owner, ((EPModel)parameter).GOM.ID, ((EPModel)parameter).ProjectID);
+                    object[] values = new object[3];
+                    values = parameter as object[];
+                    int projectid = (int)values[0];
+                    int epid = (int)values[1];
+
+                    if (projectid > 0 && epid > 0)
+                    {                        
+                        IMessageBoxService msgbox = new MessageBoxService();                       
                         //if return value is true then Refresh list
-                        if (result == true)
-                            project.EvaluationPlans = GetProjectEvaluationPlans(project.GOM.ID);
+                        if (msgbox.EvaluationPlanDialog((Window)values[2], epid, projectid))
+                            project.EvaluationPlans = GetProjectEvaluationPlans(projectid);
 
                         msgbox = null;
                     }
@@ -1033,7 +1433,7 @@ namespace PTR.ViewModels
 
         private bool CanExecuteDeleteEvaluationPlan(object obj)
         {
-            return (Project.EvaluationPlans.Count > 0);
+            return (SelectedEvaluationPlan != null);// (Project.EvaluationPlans.Count > 0);
         }
 
         ICommand deleteep;
@@ -1057,13 +1457,92 @@ namespace PTR.ViewModels
                 //if return value is Ok then Refresh list
                 if (result.Equals(GenericMessageBoxResult.OK))
                 {
-                    SelectedEvaluationPlan.GOM.Deleted = true;
-                    DatabaseQueries.UpdateEvaluationPlan(SelectedEvaluationPlan);
-                    project.EvaluationPlans = GetProjectEvaluationPlans(project.GOM.ID);
+                    SelectedEvaluationPlan.Deleted = true;
+                    UpdateEvaluationPlan(SelectedEvaluationPlan);
+                    project.EvaluationPlans = GetProjectEvaluationPlans(project.ID);
                 }
                 msgbox = null;
             }
         }
+
+
+        ICommand windowclosing;
+
+        private bool CanCloseWindow(object obj)
+        {
+            if (isdirty)
+            {
+                if (!InvalidField)
+                {
+                    IMessageBoxService msg = new MessageBoxService();
+                    var result = msg.ShowMessage("There are unsaved changes. Do you want to save these?", "Unsaved Changes", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
+                    msg = null;
+                    if (result.Equals(GenericMessageBoxResult.Yes))
+                    {
+                        SaveCurrentProject();                        
+                        return true;
+                    }
+                    else
+                    {
+                        SaveProjectFlag = false;
+                        return true;
+                    }
+                }
+                else
+                {
+                    IMessageBoxService msg = new MessageBoxService();
+                    var result = msg.ShowMessage("There are unsaved changes with errors. Do you want to correct and then save these?", "Unsaved Changes with Errors", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
+                    msg = null;
+                    if (result.Equals(GenericMessageBoxResult.Yes))                                            
+                        return false;                    
+                    else
+                    {
+                        SaveProjectFlag = false;
+                        return true;
+                    }
+                }
+            }
+            else
+                return true;
+        }
+
+        public ICommand WindowClosing
+        {
+            get
+            {
+                if (windowclosing == null)
+                    windowclosing = new DelegateCommand(CanCloseWindow, ExecuteClosing);
+                return windowclosing;
+            }
+        }
+
+        private void ExecuteClosing(object parameter)
+        {
+
+        }
+
+        //========================
+        private bool CanExecuteWindowLoaded(object obj)
+        {
+            return true;
+        }
+
+        ICommand windowloaded;
+        public ICommand WindowLoaded
+        {
+            get
+            {
+                if (windowloaded == null)
+                    windowloaded = new DelegateCommand(CanExecuteWindowLoaded, ExecuteWindowLoaded);
+                return windowloaded;
+            }
+        }
+
+        private void ExecuteWindowLoaded(object parameter)
+        {
+            isdirty = false;
+        }
+
         #endregion
 
     }

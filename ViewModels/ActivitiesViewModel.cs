@@ -1,179 +1,235 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Windows.Input;
 using static PTR.StaticCollections;
 using static PTR.DatabaseQueries;
 using PTR.Models;
-using System.Windows.Threading;
+using System.Data;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace PTR.ViewModels
 {
     public class ActivitiesViewModel : ViewModelBase
     {
-        int defaultcivalue = 1;
+        const int defaultstatusid = 1;
         bool isdirty = false;
-        ProjectReportSummary currentproject;
+        DataRowView currentproject;
 
-        //private readonly Window windowref;
+       // private readonly Window windowref;
 
         public ActivitiesViewModel()
         {            
             LoadActivityStatusCodes();
             LoadTrialStatuses();
-
-          //  windowref = winref;          
+            //StatusIDforTrials = Config.StatusIDforTrials;
+            //  windowref = winref;          
         }
+
+        //public Window ParentWindow { get; set; }
+        
 
         #region Event Handlers
 
-        public delegate void MyPersonalizedUCEventHandler(bool param);
+        public class CanSaveEventArgs : EventArgs { public bool CanSave { get; set; } }
+        public delegate void MyPersonalizedUCEventHandler(object sender, CanSaveEventArgs e);
         public event MyPersonalizedUCEventHandler CanSave;
 
-        public void RaiseMyEvent()
+        public void RaiseCanSaveEvent(bool cansave)
         {
-            CanSave?.Invoke(!hasdupcomment);
+            //CanSave?.Invoke(!hasdupcomment);
+            CanSaveEventArgs e = new CanSaveEventArgs
+            {
+                CanSave = cansave
+            };
+            CanSave?.Invoke(this, e);
         }
+
+        public class IsDirtyDataEventArgs : EventArgs { public bool IsDirtyData { get; set; } }
+        public delegate void DirtyDataUCEventHandler(object sender, IsDirtyDataEventArgs e);
+        public event DirtyDataUCEventHandler IsDirtyData;
+
+        public void RaiseDirtyDataEvent()
+        {
+            //IsDirtyData?.Invoke(isdirty);
+            IsDirtyDataEventArgs e = new IsDirtyDataEventArgs
+            {
+                IsDirtyData = isdirty
+            };
+            IsDirtyData?.Invoke(this, e);
+        }
+        
+
+        public class ProjectStatusEventArgs : EventArgs { public ProjectStatusType ProjectStatus { get; set; } }
+        public delegate void ProjectStatusEventHandler(object sender, ProjectStatusEventArgs e);
+        public event ProjectStatusEventHandler ProjectStatus;
+
+        public void RaiseProjectStatusEvent(ProjectStatusType status)
+        {
+            ProjectStatusEventArgs e = new ProjectStatusEventArgs
+            {
+                ProjectStatus = status
+            };
+            ProjectStatus?.Invoke(this, e);
+        }
+                
+        private int GetLastStatus10Row()
+        {
+            int ctr = -1;
+            for (int i = 0; i < MonthlyData.Count; i++)
+            {
+                if (MonthlyData[i].StatusID == 10)
+                {
+                    ctr = i;
+                    break;
+                }
+            }
+            return ctr;
+        }
+
+        private void SetStatus10Rows()
+        {
+            int stat10rowindex = GetLastStatus10Row();
+            bool foundnonstat = false;
+            for (int i = 0; i < MonthlyData.Count; i++)
+            {
+                if (!foundnonstat)
+                {
+                    if (MonthlyData[i].StatusID < 1)                    
+                        MonthlyData[i].ShowStatus10 = true;                    
+                    else
+                    {
+                       foundnonstat = true;
+                       MonthlyData[i].ShowStatus10 = true;                                                                          
+                    }
+                }
+                else                
+                    MonthlyData[i].ShowStatus10 = false;
+                
+                MonthlyData[i].IsEnabled = true;
+                if (i < stat10rowindex)                
+                    MonthlyData[i].IsEnabled = false;                
+                else                
+                    MonthlyData[i].IsEnabled = true;                
+            }                      
+        }
+
+        private void DisablePreviousMonthRows()
+        {
+            if (!CurrentUser.Administrator && Config.DisablePreviousMonths)
+            {
+                DateTime currentmonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                for (int i = 0; i < MonthlyData.Count; i++)
+                {                    
+                    if (MonthlyData[i].StatusMonth < currentmonth)
+                        MonthlyData[i].IsEnabled = false;                   
+                }
+            }
+        }
+
 
         private void MonthlyData_ItemPropertyChanged(object sender, ItemPropertyChangedEventArgs e)
         {
-            isdirty = true;
-
             MonthlyActivityStatusModel row = MonthlyData[e.CollectionIndex];
-            row.IsDirty = true;
 
-            CheckDupComments();
-
-            row.ShowTrial = RequiredTrialStatuses.Contains(row.StatusID);
-
-            //if StatusID = 10 and actualsalesforecast == null
-            //prompt for updated actual sales forecast            
-            if ((e.CollectionIndex == 0) && (e.PropertyName == "StatusID")) //only last row
+            //dont trigger isdirty on load
+            if (e.PropertyName == "StatusID" || e.PropertyName == "Comments" || e.PropertyName == "ExpectedDateFirstSales" || e.PropertyName == "TrialStatusID")
             {
+                isdirty = true;
+                RaiseDirtyDataEvent();
+                row.IsDirty = true;
+                CheckDupComments();
+            }
+                                           
+            //make changes based on selected status            
+            if (e.PropertyName == "StatusID")
+            {                
                 if (row.StatusID == 10) //only Status 10
                 {
-                    if (!SelectedProjectItem.SalesForecastConfirmed) //only change it if it is not confirmed
-                    {
-                        IMessageBoxService msg1 = new MessageBoxService();
-                        object[] values = new object[3];
-                        values[0] = SelectedProjectItem.EstimatedAnnualSales;
-                        values[1] = SelectedProjectItem.ExpectedDateNewSales;
-                        if (MonthlyData[e.CollectionIndex].ExpectedDateFirstSales != null)
-                            values[1] = (DateTime)MonthlyData[e.CollectionIndex].ExpectedDateFirstSales;
-
-                        values[2] = SelectedProjectItem.CultureCode;
-                        values = msg1.CompletedProjectDialog(null, values);
-                        msg1 = null;
-                        if (values != null)
-                        {
-                            SelectedProjectItem.EstimatedAnnualSales = ConvertObjToDecimal(values[0]);
-                            SelectedProjectItem.ExpectedDateNewSales = ConvertObjToDate(values[1]);
-                            UpdateActualForecastedSales(row.ProjectID, values, true);
-                            SelectedProjectItem.SalesForecastConfirmed = true;
-                            Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
-                            {
-                                MonthlyData[e.CollectionIndex].ExpectedDateFirstSales = (DateTime?)values[1];
-                            }), null);
-                        }
-                        else
-                        {
-                            Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
-                            {
-                                MonthlyData.ItemPropertyChanged -= MonthlyData_ItemPropertyChanged;
-                                MonthlyData[e.CollectionIndex].StatusID = defaultcivalue;
-                                MonthlyData[e.CollectionIndex].ExpectedDateFirstSales = null;
-                                MonthlyData.ItemPropertyChanged += MonthlyData_ItemPropertyChanged;
-                            }), null);
-                            SelectedProjectItem.SalesForecastConfirmed = false;
-                        }
-                    }
+                    IMessageBoxService msg1 = new MessageBoxService();
+                    object[] values = new object[2];                    
+                    values = msg1.CompletedProjectDialog(null, ConvertObjToDecimal(SelectedProjectItem["EstimatedAnnualSales"]), MonthlyData[e.CollectionIndex].ExpectedDateFirstSales, (DateTime)MonthlyData[e.CollectionIndex].StatusMonth);
+                    msg1 = null;
+                    if (values != null)
+                    {                                                                
+                        MonthlyData[e.CollectionIndex].EstimatedAnnualSales = ConvertObjToDecimal(values[0]);
+                        MonthlyData[e.CollectionIndex].ExpectedDateFirstSales = ConvertObjToDate(values[1]);                                        
+                        //raise event - Completed
+                        RaiseProjectStatusEvent(ProjectStatusType.Completed);
+                    }                               
                 }
-                else
-                {
-                    //if statusID is anything else then undo SalesForecastConfirmed if it was incorrectly set
-                    if (SelectedProjectItem.SalesForecastConfirmed)
-                    {
-                        object[] values = new object[2];
-                        values[0] = SelectedProjectItem.EstimatedAnnualSales;
-                        values[1] = SelectedProjectItem.ExpectedDateNewSales;
-                        UpdateActualForecastedSales(row.ProjectID, values, false);
-                        SelectedProjectItem.SalesForecastConfirmed = false;
-                    }
-
-                    IMessageBoxService msg = new MessageBoxService();
+                else  //all other statuses
+                {                                  
                     DateTime newdate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
 
                     if (MonthlyData[e.CollectionIndex].ExpectedDateFirstSales != null)
                         newdate = (DateTime)MonthlyData[e.CollectionIndex].ExpectedDateFirstSales;
 
-                    DateTime? retvalue = msg.ConfirmExpectedSalesDateDialog(null, newdate);
+                    IMessageBoxService msg = new MessageBoxService();
+                    DateTime? retvalue = msg.ConfirmExpectedSalesDateDialog(null, newdate, (DateTime)MonthlyData[e.CollectionIndex].StatusMonth);
                     msg = null;
                     if (retvalue == null)
-                    {
-                        Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
-                        {
-                            MonthlyData.ItemPropertyChanged -= MonthlyData_ItemPropertyChanged;
-                            MonthlyData[e.CollectionIndex].StatusID = defaultcivalue;
-                            MonthlyData.ItemPropertyChanged += MonthlyData_ItemPropertyChanged;
-                        }), null);
-                        Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
-                        {
-                            MonthlyData[e.CollectionIndex].ExpectedDateFirstSales = DateTime.Now;
-                        }), null);
-                    }
-                    else
-                    {
-                        Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
-                        {
-                            MonthlyData[e.CollectionIndex].ExpectedDateFirstSales = retvalue;
-                        }), null);
-                        UpdateForecastedSalesDate(row.ProjectID, (DateTime)retvalue);
-                    }
+                        retvalue = DateTime.Now.AddMonths(1);
+                                                                               
+                    MonthlyData[e.CollectionIndex].ExpectedDateFirstSales = retvalue;                                           
+                    //raise event - Active               
+                    RaiseProjectStatusEvent(ProjectStatusType.Active);
                 }
-            }
-
-            if ((e.CollectionIndex == 0) && (e.PropertyName == "ExpectedDateNewSales"))
-            {
-                DateTime newdate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-                if (row.ExpectedDateFirstSales >= newdate)
-                    UpdateForecastedSalesDate(row.ProjectID, (DateTime)row.ExpectedDateFirstSales);
+               
+                //set default trial status               
+                if (MonthlyData[e.CollectionIndex].StatusID != Config.StatusIDforTrials)                
+                    MonthlyData[e.CollectionIndex].TrialStatusID = 0;
                 else
-                    Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
-                    {
-                        MonthlyData[e.CollectionIndex].ExpectedDateFirstSales = DateTime.Now;
-                    }), null);
-            }
+                    MonthlyData[e.CollectionIndex].TrialStatusID = Config.DefaultTrialStatusID;
+                
+                //Set rows to disabled for later months if this row is status=10
+                SetStatus10Rows();
+                DisablePreviousMonthRows();
+            }                                   
         }
-
+               
         #endregion
 
         #region Properties
 
-
+        //int statusidfortrials = 9;
+        //public int StatusIDforTrials
+        //{
+        //    get { return statusidfortrials; }
+        //    set { SetField(ref statusidfortrials, value); }
+        //}
+               
         public void ClearActivities()
         {
             MonthlyData?.Clear();
         }
         
-        public ProjectReportSummary SelectedProjectItem
+        public DataRowView SelectedProjectItem
         {
             get { return currentproject; }
             set {
                 
                 UpdateMonthlyActivities();
-                
-                MonthlyData = GetMonthlyProjectData(value.ID);
-                MonthlyData.ItemPropertyChanged += MonthlyData_ItemPropertyChanged;               
-                if (MonthlyData?[0] != null)
-                    defaultcivalue = MonthlyData[0].StatusID;
 
-                UpdateAccess(value.CustomerID);
+                MonthlyData = GetMonthlyProjectData(ConvertObjToInt(value["ProjectID"]));
+                MonthlyData.ItemPropertyChanged += MonthlyData_ItemPropertyChanged;               
+
                 SetField(ref currentproject, value);
+
+                //FilterActivityStatusCodes();
 
                 CheckDupComments();
                 isdirty = false;
+                //new for version 3.2
+                SetActivityAccess(ConvertObjToInt(SelectedProjectItem["AccessID"]));
+                SetStatus10Rows();
+
+
+                DisablePreviousMonthRows();
+
+                RaiseDirtyDataEvent();
             }
         }
-               
+
         string commenterrorcolour = "Black";
         public string CommentErrorColour
         {
@@ -186,13 +242,6 @@ namespace PTR.ViewModels
         {
             get { return commentheading; }
             set { SetField(ref commentheading, value); }
-        }
-
-        bool showtrialstatus;
-        public bool ShowTrialStatus
-        {
-            get { return showtrialstatus; }
-            set { SetField(ref showtrialstatus, value); }
         }
 
         FullyObservableCollection<MonthlyActivityStatusModel> monthlydatatable = new FullyObservableCollection<MonthlyActivityStatusModel>();
@@ -209,14 +258,14 @@ namespace PTR.ViewModels
             set { SetField(ref statuscodes, value); }
         }
 
-        Collection<GenericObjModel> trialstatuses;
-        public Collection<GenericObjModel> TrialStatuses
+        Collection<TrialStatusModel> trialstatuses;
+        public Collection<TrialStatusModel> TrialStatuses
         {
             get { return trialstatuses; }
             set { SetField(ref trialstatuses, value); }
         }
 
-        bool enableactivities;
+        bool enableactivities = false;
         public bool EnableActivities
         {
             get { return enableactivities; }
@@ -227,34 +276,65 @@ namespace PTR.ViewModels
 
         #region Private functions
 
-        private void UpdateAccess(int customerid)
+        private void SetActivityAccess(int accessid)
         {
-            int accessid = StaticCollections.GetUserCustomerAccess(customerid);
-            if (accessid == (int)UserPermissionsType.FullAccess)
-                EnableActivities = true;
-            else            
-                if (accessid == (int)UserPermissionsType.ReadOnly)
+            if (SelectedProjectItem["ProjectStatus"].ToString() == EnumerationManager.GetEnumDescription(ProjectStatusType.Active))
+            {
+                if (accessid == (int)UserPermissionsType.FullAccess)
+                    EnableActivities = true;
+                else
+                    if (accessid == (int)UserPermissionsType.ReadOnly)
                     EnableActivities = false;
                 else
-                //EnableActivities = false;
                     if (accessid == (int)UserPermissionsType.EditAct)
-                        EnableActivities = true;
-                    else
-                        EnableActivities = false;
+                    EnableActivities = true;
+                else
+                    EnableActivities = false;
+            }
+            else
+                EnableActivities = false;
+
+            //prevent non-owners from editing
+            if (CurrentUser.ID != ConvertObjToInt(SelectedProjectItem["OwnerID"]) && ConvertObjToBool(SelectedProjectItem["AllowNonOwnerEdits"]) == false)            
+                EnableActivities = false;
+            
+            if (CurrentUser.Administrator)
+                EnableActivities = true;
+
             
         }
-
+        
         private void LoadActivityStatusCodes()
         {
             StatusCodes = ActivityStatusCodes;
+
+            //FilterActivityStatusCodes();
         }
+
+        //private void FilterActivityStatusCodes()
+        //{
+        //    if (SelectedProjectItem != null)
+        //    {
+        //        FullyObservableCollection<ActivityStatusCodesModel> ActivitiesColl = new FullyObservableCollection<ActivityStatusCodesModel>();
+        //        //get project type             
+        //        string q = ProjectTypes.Where(x => x.ID == ConvertObjToInt(SelectedProjectItem["ProjectTypeID"])).Select(x => x.ActivityCodes).FirstOrDefault();
+        //        List<string> activities = q.Split(',').ToList();
+        //        foreach (ActivityStatusCodesModel am in ActivityStatusCodes)
+        //        {
+        //            if (activities.Contains(am.ID.ToString()))
+        //                ActivitiesColl.Add(am);
+        //        }
+        //        StatusCodes = ActivitiesColl;
+        //    }
+        //}
+
 
         private void CommentError(bool iserror)
         {
             if (iserror)
             {
                 CommentErrorColour = "Red";
-                CommentHeading = "Duplicate Comments";
+                CommentHeading = "Repeated Comments for Last Two Months";
             }
             else
             {
@@ -265,18 +345,7 @@ namespace PTR.ViewModels
 
         private void LoadTrialStatuses()
         {
-            trialstatuses = new Collection<GenericObjModel>();
-            var c = EnumerationLists.TrialStatusTypesList;
-            foreach (EnumValue ag in c)
-            {
-                trialstatuses.Add(new GenericObjModel()
-                {
-                    ID = Convert.ToInt32(ag.Enumvalue),
-                    Name = ag.Description
-                }
-                );
-            }
-            TrialStatuses = trialstatuses;
+            TrialStatuses = StaticCollections.TrialStatuses;           
         }
 
         bool hasdupcomment = false;
@@ -301,62 +370,22 @@ namespace PTR.ViewModels
 
             CommentError(hasdupcomment);
             HasDupComments = hasdupcomment;
-            RaiseMyEvent();
+            RaiseCanSaveEvent(!HasDupComments);
             return hasdupcomment;
         }
 
         #endregion
 
         #region Commands
-
-        ICommand clearstatus;
-        public ICommand ClearStatus
-        {
-            get
-            {
-                if (clearstatus == null)
-                    clearstatus = new DelegateCommand(CanExecute, ExecuteClearStatus);
-                return clearstatus;
-            }
-        }
-
-        private void ExecuteClearStatus(object parameter)
-        {
-            if ((parameter as MonthlyActivityStatusModel).StatusID > 0)
-            {
-                MonthlyData.ItemPropertyChanged -= MonthlyData_ItemPropertyChanged;
-                (parameter as MonthlyActivityStatusModel).StatusID = 0;
-                MonthlyData.ItemPropertyChanged += MonthlyData_ItemPropertyChanged;
-                isdirty = true;
-            }
-        }
-
-        ICommand cleartrialstatus;
-        public ICommand ClearTrialStatus
-        {
-            get
-            {
-                if (cleartrialstatus == null)
-                    cleartrialstatus = new DelegateCommand(CanExecute, ExecuteClearTrialStatus);
-                return cleartrialstatus;
-            }
-        }
-
-        private void ExecuteClearTrialStatus(object parameter)
-        {
-            (parameter as MonthlyActivityStatusModel).TrialStatusID = (int)TrialStatusType.NoTrial;
-        }
-
+                
         public void UpdateMonthlyActivities()
         {
-            if (isdirty && !HasDupComments)
+            if (isdirty)
             {
                 try
                 {
-                    if (MonthlyData != null)
-                    {
-                        UpdateMonthlyActivityStatus(MonthlyData);
-                    }
+                    if (MonthlyData != null)                    
+                        MonthlyData = UpdateMonthlyActivityStatus(MonthlyData);                    
                 }
                 catch (Exception e)
                 {
@@ -368,7 +397,8 @@ namespace PTR.ViewModels
                 {
                     isdirty = false;
                     foreach (MonthlyActivityStatusModel m in MonthlyData)
-                        m.IsDirty = false;                 
+                        m.IsDirty = false;
+                    RaiseDirtyDataEvent();
                 }
             }
         }

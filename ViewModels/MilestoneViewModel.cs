@@ -2,26 +2,29 @@
 using System.Windows.Input;
 using PTR.Models;
 using System.Text;
+using static PTR.DatabaseQueries;
 
 namespace PTR.ViewModels
 {
-    public class MilestoneViewModel : ObjectCRUDViewModel
+    public class MilestoneViewModel : ViewModelBase
     {
         private const string title = "Milestone";
         public ICommand CopyMilestone { get; set; }
+        public bool canexecutesave = true;
+        public bool canexecuteadd = true;
+        public ICommand AddNew { get; set; }
+        public ICommand Cancel { get; set; }
+        public ICommand Save { get; set; }
+
         bool isdirty = false;
 
         public MilestoneViewModel(int id, int projectid)
         {
-            ExCloseWindow = ExecuteClosing;
             if (id == 0)
             {
                 Milestone = new MilestoneModel()
                 {
-                    GOM = new GenericObjModel()
-                    {
-                        Description = string.Empty
-                    },
+                    Description = string.Empty,
                     TargetDate = DateTime.Now.AddMonths(1),
                     ProjectID = projectid
                 };
@@ -29,26 +32,20 @@ namespace PTR.ViewModels
             }
             else
             {
-                Milestone = DatabaseQueries.GetMilestone(id);
-                SetUserAccessExistingEP(Milestone.CustomerID);
+                Milestone = GetMilestone(id);
+                SetUserAccessExistingMilestone(Milestone.CustomerID);
             }
-            Milestone.PropertyChanged += Milestone_PropertyChanged;
-            Milestone.GOM.PropertyChanged += Milestone_PropertyChanged;
+            Milestone.PropertyChanged += Milestone_PropertyChanged;                  
 
-            Save = new RelayCommand(ExecuteSave, CanExecuteSave);
-
-            FullyObservableCollection<UserModel> associatess = DatabaseQueries.GetUsers();
+            FullyObservableCollection<UserModel> associatess = GetUsers();
             foreach (UserModel ag in associatess)
             {
-                if (!ag.GOM.Deleted)
+                if (!ag.Deleted)
                 {
                     users.Add(new UserModel()
                     {
-                        GOM = new GenericObjModel()
-                        {
-                            ID = ag.GOM.ID,
-                            Name = ag.GOM.Name
-                        },
+                        ID = ag.ID,
+                        Name = ag.Name,
                         LoginName = ag.LoginName,
                         Administrator = ag.Administrator
                     });
@@ -61,7 +58,11 @@ namespace PTR.ViewModels
             else
                 WindowTitle = title + " (ID: " + id.ToString() + ", Project ID: " + projectid.ToString() + ")";
 
+            Save = new RelayCommand(ExecuteSave, CanExecuteSave);
             CopyMilestone = new RelayCommand(ExecuteCopyMilestone, CanExecuteCopyMilestone);
+            Cancel = new RelayCommand(ExecuteCancel, CanExecute);
+           
+                        
         }
 
         #region Event Handlers
@@ -69,23 +70,15 @@ namespace PTR.ViewModels
         private void Milestone_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             isdirty = true;
+
+            if(e.PropertyName == "CompletedDate")
+                canclearcompleteddate = true;
         }
 
         #endregion
 
         #region View Properties
-
-        string selectedcompleteddate;
-        public string SelectedCompletedDate
-        {
-            get { return selectedcompleteddate; }
-            set
-            {
-                canclearcompleteddate = !string.IsNullOrEmpty(value);
-                SetField(ref selectedcompleteddate, value);
-            }
-        }
-
+              
         string windowtitle;
         public string WindowTitle
         {
@@ -120,19 +113,12 @@ namespace PTR.ViewModels
             get { return returncode; }
             set { SetField(ref returncode, value); }
         }
-        
-        bool? blnsave;
-        public bool? SaveFlag
-        {
-            get { return blnsave; }
-            set { SetField(ref blnsave, value); }
-        }
 
         #endregion
 
         #region Private functions
 
-        private void SetUserAccessExistingEP(int customerid)
+        private void SetUserAccessExistingMilestone(int customerid)
         {
             int accessid = StaticCollections.GetUserCustomerAccess(customerid);
             if (accessid == (int)UserPermissionsType.FullAccess)
@@ -144,6 +130,11 @@ namespace PTR.ViewModels
                 IsEnabled = false;
 
             canexecutesave = IsEnabled;
+        }
+
+        private bool HasOwner()
+        {
+            return (Milestone.UserID != 0);
         }
 
         private void SetClipboard(MilestoneModel milestone)
@@ -158,7 +149,7 @@ namespace PTR.ViewModels
             sbhtml.Append("<p style='font-size:14px;font-family:Arial'><b>");
             sbhtml.Append("Description:</b></p>");
             sbhtml.Append("<p style='font-size:14px;font-family:Arial'>");
-            sbhtml.Append(milestone.GOM.Description);
+            sbhtml.Append(milestone.Description);
             sbhtml.Append("</p><br/>");
 
             sbhtml.Append("<p style='font-size:14px;font-family:Arial'><b>");
@@ -171,7 +162,7 @@ namespace PTR.ViewModels
             sbtext.Append(milestone.UserName);
             sbtext.Append("\n");
             sbtext.Append("Description:\n");
-            sbtext.Append(milestone.GOM.Description);
+            sbtext.Append(milestone.Description);
             sbtext.Append("\n\n");
             sbtext.Append("Due Date: ");
             sbtext.Append(milestone.TargetDate.Value.ToString("dd-MMM-yyyy"));
@@ -186,15 +177,19 @@ namespace PTR.ViewModels
 
         private bool CanExecuteSave(object obj)
         {
+            if (!isdirty)
+                return false;
+
+            if (!HasOwner())
+                return false;
+
             return canexecutesave;
         }
 
         private void ExecuteSave(object parameter)
         {
             SaveMilestone();
-
             ReturnObject = true;
-            SaveFlag = true;
             CloseWindow();
         }
 
@@ -202,32 +197,14 @@ namespace PTR.ViewModels
         {
             if (isdirty)
             { 
-                if (Milestone.GOM.ID > 0)
-                    DatabaseQueries.UpdateMilestone(Milestone);
+                if (Milestone.ID > 0)
+                    UpdateMilestone(Milestone);
                 else
-                    DatabaseQueries.AddMilestone(Milestone);
+                    Milestone.ID = AddMilestone(Milestone);
                 isdirty = false;
             }
         }
-
-        ICommand cancelandclose;
-        public ICommand CancelConfirmation
-        {
-            get
-            {
-                if (cancelandclose == null)
-                    cancelandclose = new DelegateCommand(CanExecute, ExecuteCancelAndClose);
-                return cancelandclose;
-            }
-        }
-
-        private void ExecuteCancelAndClose(object parameter)
-        {
-            ReturnObject = false;
-            SaveFlag = false;                                            
-            CloseWindow();
-        }
-        
+             
         ICommand clearcompleteddate;
         bool canclearcompleteddate = true;
         private bool CanClearCompletedDate(object obj)
@@ -262,21 +239,60 @@ namespace PTR.ViewModels
         {
             SetClipboard(Milestone);
         }
-                      
-        private void ExecuteClosing(object parameter)
+
+        private void ExecuteCancel(object parameter)
         {
-            if (canexecutesave)
-            {
-                IMessageBoxService msg = new MessageBoxService();
-                GenericMessageBoxResult result = msg.ShowMessage("There are unsaved changes. Do you want to save these?", "Unsaved Changes", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
-                msg = null;
-                if (result.Equals(GenericMessageBoxResult.Yes))
-                {
-                    SaveMilestone();
-                }
-            }
+            CloseWindow();
         }
 
+        private void ExecuteClosing(object parameter)
+        {
+        }
+
+        ICommand windowclosing;
+
+        private bool CanCloseWindow(object obj)
+        {
+            if (isdirty)
+            {
+                if (HasOwner())
+                {
+                    IMessageBoxService msg = new MessageBoxService();
+                    var result = msg.ShowMessage("There are unsaved changes. Do you want to save these?", "Unsaved Changes", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
+                    msg = null;
+                    if (result.Equals(GenericMessageBoxResult.Yes))
+                    {
+                        SaveMilestone();
+                        ReturnObject = true;
+                        return true;
+                    }
+                    else                    
+                        return true;                    
+                }
+                else
+                {
+                    IMessageBoxService msg = new MessageBoxService();
+                    var result = msg.ShowMessage("There are unsaved changes with errors. Do you want to correct and then save these?", "Unsaved Changes with Errors", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
+                    msg = null;
+                    if (result.Equals(GenericMessageBoxResult.Yes))
+                        return false;
+                    else
+                        return true;
+                }
+            }
+            else
+                return true;
+        }
+
+        public ICommand WindowClosing
+        {
+            get
+            {
+                if (windowclosing == null)
+                    windowclosing = new DelegateCommand(CanCloseWindow, ExecuteClosing);
+                return windowclosing;
+            }
+        }
 
         #endregion
     }

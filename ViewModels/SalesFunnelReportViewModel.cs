@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Windows.Input;
+using static PTR.DatabaseQueries;
 
 namespace PTR.ViewModels
 {
@@ -9,14 +10,12 @@ namespace PTR.ViewModels
         DateTime? firstmonth;
         DateTime? lastmonth;
 
-        Models.ProjectMonthRange projectdaterange;
-
         public SalesFunnelReportViewModel()
         {
             ExecuteApplyModuleFilter = ExecuteApplyFilter;
-            projectdaterange = DatabaseQueries.GetFirstLastMonths();
+            ExecuteRFExportToExcel = ExecuteExportToExcel;
             firstmonth = GetPreviousYearStartMonth();
-            lastmonth = projectdaterange.LastDate;
+            lastmonth =  new DateTime(DateTime.Now.Year, 12, 1);
             FilterData();           
         }
 
@@ -83,11 +82,26 @@ namespace PTR.ViewModels
             set { SetField(ref lastmonth, value); }
         }
                       
-        bool useUSD = false;
+        bool useUSD = true;
         public bool UseUSD
         {
             get { return useUSD; }
             set { SetField(ref useUSD, value); }
+        }
+
+
+        string tblcaption;
+        public string TblCaption
+        {
+            get { return tblcaption; }
+            set { SetField(ref tblcaption, value); }
+        }
+
+        string counttblcaption;
+        public string CountTblCaption
+        {
+            get { return counttblcaption; }
+            set { SetField(ref counttblcaption, value); }
         }
 
         #endregion
@@ -119,23 +133,12 @@ namespace PTR.ViewModels
 
         #region Filters
 
-        ICommand exporttoexcel;
-        public ICommand ExportToExcel
-        {
-            get
-            {
-                if (exporttoexcel == null)
-                    exporttoexcel = new DelegateCommand(CanExecute, ExecuteExportToExcel);
-                return exporttoexcel;
-            }
-        }
-
         private void ExecuteExportToExcel(object parameter)
         {
             try
             { 
                 ExcelLib xl = new ExcelLib();
-                xl.MakeSalesFunnelReport(datatable, projectcountdatatable);
+                xl.MakeSalesPipelineReport((System.Windows.Window)parameter, datatable, projectcountdatatable);
                 xl = null;
             }
             catch
@@ -148,16 +151,18 @@ namespace PTR.ViewModels
 
         private void ExecuteApplyFilter(object parameter)
         {
-              FilterData();
+            FilterData();
         }
         
         private void FilterData()
         {            
-            DataSet ds = DatabaseQueries.GetFilteredProjectsEstSales(CountriesSrchString, SalesDivisionSrchString, ProjectStatusTypesSrchString, ProjectTypesSrchString, UseUSD, (DateTime)firstmonth, (DateTime)lastmonth, ShowKPM(), ShowAllKPM(), GetCDPCCPList());
-                                    
-            Data = ds.Tables["TotalData"];
-            ProjectCount = ds.Tables["ProjectCountData"];            
-            ProjectSummary = DatabaseQueries.GetSummaryByStatusMonth(CountriesSrchString, SalesDivisionSrchString, ProjectStatusTypesSrchString, ProjectTypesSrchString, UseUSD, (DateTime)firstmonth, (DateTime)lastmonth, ShowKPM(), ShowAllKPM(), GetCDPCCPList());
+            DataSet ds = GetSalesPipelineReport(CountriesSrchString, BusinessUnitSrchString, ProjectStatusTypesSrchString, ProjectTypesSrchString, UseUSD, (DateTime)firstmonth, (DateTime)lastmonth, ShowKPM(), ShowAllKPM());
+            Data = ds.Tables[Constants.SalesPipeline];
+            ProjectCount = ds.Tables[Constants.SalesPipelineCount];            
+            ProjectSummary = GetSalesPipelineReportToolTip(CountriesSrchString, BusinessUnitSrchString, ProjectStatusTypesSrchString, ProjectTypesSrchString, UseUSD, (DateTime)firstmonth, (DateTime)lastmonth, ShowKPM(), ShowAllKPM());
+
+            TblCaption = Data.TableName;
+            CountTblCaption = ProjectCount.TableName;
 
         }
 
@@ -187,7 +192,7 @@ namespace PTR.ViewModels
                 int col = -1;
                 bool iscol = int.TryParse(c[1], out col);
 
-                if(iscol && isrow)
+                if(iscol && isrow && col > 0)
                 {
                     GetSummaryString(row, col);
                 }
@@ -199,16 +204,6 @@ namespace PTR.ViewModels
 
         #endregion
 
-    }
-
-
-    public class ProjectSummary
-    {
-        public string ProjectName
-        {
-            get;set;
-        }
-        public decimal TargetedSales  { get; set; }
     }
 
 

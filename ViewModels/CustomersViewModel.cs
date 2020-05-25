@@ -1,89 +1,60 @@
 ﻿using System.Linq;
 using static PTR.DatabaseQueries;
 using PTR.Models;
+using System.Windows.Input;
 
 namespace PTR.ViewModels
 {
-    public class CustomersViewModel : ObjectCRUDViewModel
+    public class CustomersViewModel : ViewModelBase
     {
+        bool canexecutesave = true;
+        bool canexecuteadd = true;
+        public ICommand AddNew { get; set; }
+        public ICommand Cancel { get; set; }
+        public ICommand Save { get; set; }
+
+        bool isdirty = false;
+
         FullyObservableCollection<CustomerModel> customers;
         FullyObservableCollection<CountryModel> countries;
         FullyObservableCollection<SalesRegionModel> salesregions;
-      
-        CustomerModel customer;
-        bool candeletecustomer;
+        TV.CustomerTreeViewViewModel TV;
+
+        FullyObservableCollection<SalesRegionModel> locsalesregions;
 
         public CustomersViewModel()
         {
-            customers = new FullyObservableCollection<CustomerModel>();
-            StaticCollections.Customers = GetCustomers();
-            foreach(CustomerModel cm in StaticCollections.Customers)
-            {
-                if (!cm.GOM.Deleted)
-                {
-                    CustomerModel newc = new CustomerModel()
-                    {
-                        GOM = new GenericObjModel() { ID = cm.GOM.ID, Name = cm.GOM.Name, Description = cm.GOM.Description },
-                        CorporateID = cm.CorporateID,
-                        CountryID = cm.CountryID,
-                        Location = cm.Location,
-                        Number = cm.Number,
-                        SalesRegionID = cm.SalesRegionID
-                    };
-                    newc.GOM.PropertyChanged += _customer_PropertyChanged;
-                    newc.PropertyChanged += _customer_PropertyChanged;
-                    customers.Add(newc);
-                }
-            }
-            
-            countries = StaticCollections.Countries;
-           
-
-            customer = new CustomerModel
-            {
-                GOM = new GenericObjModel() { ID = 0, Description = string.Empty, Name = string.Empty },
-                Location = string.Empty,
-                Number = string.Empty                 
-            };
-
-
             Save = new RelayCommand(ExecuteSave, CanExecuteSave);
-            Cancel = new RelayCommand(ExecuteCancel, CanExecute);
             AddNew = new RelayCommand(ExecuteAddNew, CanExecuteAddNew);
-            Delete = new RelayCommand(ExecuteDelete, CanExecuteDelete);
-            CustomerListEnabled = true;
+            Cancel = new RelayCommand(ExecuteCancel, CanExecute);
 
-            HasCustomers = (customers.Count > 0);            
+            IsEnabled = false;
+            GetCountries();
+            GetSalesRegions();
+            TV = new TV.CustomerTreeViewViewModel();
+            GetCustomers();
+
+            Customer = new CustomerModel();
+            
+            ClearCustomer();
+            ResetCustomer();
+            Customer.PropertyChanged += Customer_PropertyChanged;
         }
-    
-        #region Event handlers
-
-        private void _customer_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == "Name")
-                DuplicateName = IsDuplicateName();
-            CheckFieldValidation();
-        }
-        private void Customers_ItemPropertyChanged(object sender, ItemPropertyChangedEventArgs e)
-        {
-            CheckFieldValidation();
-        }
-
-        #endregion
-
+               
         #region Properties
 
-        public CustomerModel Customer
+        bool isenabled = true;
+        public bool IsEnabled
         {
-            get { return customer; }
-            set
-            {
-                if (value != null)
-                {
-                    SetField(ref customer, value);
-                    candeletecustomer = IsDeletableCustomer(value.GOM.ID);                    
-                }
-            }
+            get { return isenabled; }
+            set { SetField(ref isenabled, value); }
+        }
+
+        bool tvisenabled = true;
+        public bool TVIsEnabled
+        {
+            get { return tvisenabled; }
+            set { SetField(ref tvisenabled, value); }
         }
 
         public FullyObservableCollection<CustomerModel> Customers
@@ -98,195 +69,403 @@ namespace PTR.ViewModels
             set { SetField(ref countries, value); }
         }
 
-        CountryModel selectedcountry;
-        public CountryModel SelectedCountry
-        {
-            get { return selectedcountry; }
-            set {
-                FilterSalesRegions(value.GOM.ID);
-                SetField(ref selectedcountry, value);                    
-            }
-        }
-
-
         public FullyObservableCollection<SalesRegionModel> SalesRegions
         {
             get { return salesregions; }
             set { SetField(ref salesregions, value); }
         }
 
-        bool hascustomers = true;
-        public bool HasCustomers
+        //new
+        CustomerModel customer;
+        public CustomerModel Customer
         {
-            get { return hascustomers; }
-            set { SetField(ref hascustomers, value); }
+            get { return customer; }
+            set { SetField(ref customer, value); }
+        }
+                      
+        bool isdeletedenabled;
+        public bool IsDeletedEnabled
+        {
+            get { return isdeletedenabled; }
+            set { SetField(ref isdeletedenabled, value); }
+        }
+
+        FullyObservableCollection<TreeViewNodeModel> nodes;
+        public FullyObservableCollection<TreeViewNodeModel> Nodes
+        {
+            get { return nodes; }
+            set { SetField(ref nodes, value); }
+        }
+
+        bool showdatamessage = false;
+        public bool ShowDataMessage
+        {
+            get { return showdatamessage; }
+            set { SetField(ref showdatamessage, value); }
+        }
+
+        string dataerror;
+        public string DataMessageLabel
+        {
+            get { return dataerror; }
+            set { SetField(ref dataerror, value); }
+        }
+
+        bool isaddmode = false;
+        public bool IsAddMode
+        {
+            get { return isaddmode; }
+            set { SetField(ref isaddmode, value); }
+        }
+
+        bool invaliddata = false;
+        public bool InvalidData
+        {
+            get { return invaliddata; }
+            set { SetField(ref invaliddata, value); }
         }
 
         #endregion
 
-        private void FilterSalesRegions(int countryid)
-        {            
-            FullyObservableCollection<SalesRegionModel> tempsalesregions = new FullyObservableCollection<SalesRegionModel>();
-            SalesRegions?.Clear();
-            //tempsalesregions.Add(new SalesRegionModel() {ID=-1, CountryID = countryid, Name = "All" });
-            foreach (SalesRegionModel sd in StaticCollections.SalesRegions)
+        #region Private functions
+
+        private void UpdateCustomerTree()
+        {
+            TV.LoadCustomerTree();
+            Nodes = TV.Nodes;
+        }
+               
+        private void GetCountries()
+        {
+            FullyObservableCollection<CountryModel> tempcountries = new FullyObservableCollection<CountryModel>();
+            FullyObservableCollection<CountryModel> loccountries = DatabaseQueries.GetCountries();
+
+            foreach (CountryModel cm in loccountries)
             {
-                if (sd.CountryID == countryid)
-                    tempsalesregions.Add(sd);
+                if (!cm.Deleted)                
+                    tempcountries.Add(cm);                
             }
-            SalesRegions = tempsalesregions;
+            Countries = tempcountries;
         }
 
+        private void GetCustomers()
+        {            
+            Customers = DatabaseQueries.GetCustomers();
+            UpdateCustomerTree();
+        }
 
+        private void GetSalesRegions()
+        {
+            locsalesregions = DatabaseQueries.GetSalesRegions();
+        }
+
+        private void FilterSalesRegions(int countryid, int salesregionid)
+        {
+            FullyObservableCollection<SalesRegionModel> tempsalesregions = new FullyObservableCollection<SalesRegionModel>();
+            int tempid = 0;           
+            foreach (SalesRegionModel sd in locsalesregions)
+            {
+                if (sd.CountryID == countryid && !sd.Deleted)
+                {
+                    tempsalesregions.Add(sd);
+                    if (sd.ID == salesregionid)
+                        tempid = sd.ID;
+                }
+            }
+            Customer.SalesRegionID = 0;
+
+            SalesRegions = tempsalesregions;
+
+            Customer.SalesRegionID = tempid;            
+        }
+
+        private void LoadSelectedCustomer(int id)
+        {
+            bool found = false;
+            foreach(CustomerModel c in Customers)
+            {
+                if(c.ID == id)
+                {
+                    Customer.PropertyChanged-= Customer_PropertyChanged;
+                    Customer.ID = c.ID;
+                    Customer.Name = c.Name;
+                    Customer.Location = c.Location;
+                    Customer.SalesRegionID = c.SalesRegionID;
+                    Customer.CountryID = c.CountryID;
+                    Customer.Number = c.Number;
+                    Customer.Deleted = c.Deleted;
+                    Customer.IsEnabled = c.IsEnabled;
+                    Customer.PropertyChanged += Customer_PropertyChanged;
+                    found = true;
+                    break;
+                }
+            }
+            if (found)
+            {
+                FilterSalesRegions(Customer.CountryID, Customer.SalesRegionID);
+                IsEnabled = true;
+                IsDeletedEnabled = Customer.IsEnabled;
+
+                ShowDataMessage = false;
+                DataMessageLabel = string.Empty;
+
+                isdirty = false;
+                cancancelnewcustomer = false;
+            }
+        }
+
+        #endregion
 
         #region Validation
 
+        private void CheckValidation()
+        {
+            bool NameRequired = IsMissingName();
+            bool DuplicateName = IsDuplicateName();
+            bool CountryRequired= IsMissingCountry();
+            bool SalesRegionRequired = IsMissingSalesRegion();
+
+            InvalidData = NameRequired || DuplicateName || CountryRequired || SalesRegionRequired;
+            
+            if (NameRequired)            
+                DataMessageLabel = "Missing Name";            
+            else
+            if (DuplicateName)            
+                DataMessageLabel = "Duplicate Name";            
+            else
+            if (CountryRequired)            
+               DataMessageLabel = "Missing Country";            
+            else
+            if (SalesRegionRequired)                                    
+                DataMessageLabel = "Missing Sales Region";
+
+            ShowDataMessage = InvalidData;
+
+        }
+               
         private bool IsDuplicateName()
         {
-            var query = customers.GroupBy(x => x.GOM.Name.ToUpper())
-            .Where(g => g.Count() > 1)
-            .Select(y => y.Key)
-            .ToList();
-            return (query.Count > 0);                        
+            int duplicate = Customers.Where(x => x.Name.Trim().ToUpper() == Customer.Name.Trim().ToUpper() && (Customer.SalesRegionID == x.SalesRegionID) 
+            && (Customer.ID != x.ID || Customer.ID == 0)).Count();
+            return (duplicate > 0);
         }
+
+        private bool IsMissingName()
+        {         
+            return (string.IsNullOrEmpty(Customer.Name.Trim()));
+        }
+
+        private bool IsMissingCountry()
+        {           
+            return (Customer.CountryID == 0);
+        }
+
+        private bool IsMissingSalesRegion()
+        {     
+            return (Customer.SalesRegionID == 0);
+        }
+
         
-        private void CheckFieldValidation()
-        {
-            bool CountryRequired = !(Customer.CountryID > 0);
-            bool CustomerNameRequired = (string.IsNullOrEmpty(Customer.GOM.Name));
-            InvalidField = (DuplicateName || CountryRequired || CustomerNameRequired);
-
-            if (CustomerNameRequired)
-                DataMissingLabel = "Customer Name Missing";
-            else
-                if (DuplicateName)
-                DataMissingLabel = "Duplicate Customer Name";
-            else
-                if (CountryRequired)
-                    DataMissingLabel = "Country Missing";
- 
-            canexecuteadd = !InvalidField;
-            canexecutesave = !InvalidField;
-            CustomerListEnabled = !InvalidField;
-        }
-
-        bool invalidfield = false;
-        public bool InvalidField
-        {
-            get { return invalidfield; }
-            set { SetField(ref invalidfield, value); }
-        }
-        
-        string datamissing = string.Empty;
-        public string DataMissingLabel
-        {
-            get { return datamissing; }
-            set { SetField(ref datamissing, value); }
-        }
-
-        bool listenabled;
-        public bool CustomerListEnabled
-        {
-            get { return listenabled; }
-            set { SetField(ref listenabled, value); }
-        }       
-
         #endregion
 
         #region Commands
 
         private bool CanExecuteAddNew(object obj)
         {
-            return true;
+            return canexecuteadd;
         }
-
+               
         private void ExecuteAddNew(object parameter)
         {
-            CustomerModel newc = new CustomerModel() {
-                GOM = new GenericObjModel(),
-                CorporateID = 0,
-                CountryID = 0,
-                Location = string.Empty,
-                Number = string.Empty
-            };
-            newc.GOM.PropertyChanged += _customer_PropertyChanged;
-            newc.PropertyChanged += _customer_PropertyChanged;
-            
-            Customers.Add(newc);
-            Customer = Customers[Customers.Count - 1];
-                     
-            ScrollToSelectedItem = Customers.Count - 1;
+            SaveCustomer();            
+ 
+            IsAddMode = true;
 
-            canexecuteadd = false;
-            HasCustomers = true;
+            ClearCustomer();
+
+            ShowDataMessage = false;
+            DataMessageLabel = string.Empty;
+            cancancelnewcustomer = true;
+            IsEnabled = true;
+            isdirty = false;
         }
-        
-        private void ExecuteCancel(object parameter)
+
+        private void Customer_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            StaticCollections.Customers = GetCustomers();
-            CloseWindow();
+            if (e.PropertyName == "CountryID")
+                FilterSalesRegions(Customer.CountryID, Customer.SalesRegionID);
+           
+            if (IsAddMode || (!IsAddMode && Customer.ID > 0))
+            {
+                isdirty = true;
+                CheckValidation();
+            }
         }
 
         private bool CanExecuteSave(object obj)
         {
+            if (InvalidData)
+                return false;
+            if (!isdirty)
+                return false;
             return canexecutesave;
         }
-       
+
         private void ExecuteSave(object parameter)
         {            
-            canexecuteadd = true;
-            foreach (CustomerModel ms in Customers)
-            {
-                if (ms.GOM.ID == 0)
-                    AddCustomer(ms);
-                else
-                    UpdateCustomer(ms);
-            }            
+            SaveCustomer();
         }
 
+        private void SaveCustomer()
+        {
+            ShowDataMessage = false;
+            if (isdirty)
+            {
+                if (Customer.ID == 0)
+                    Customer.ID = AddCustomer(Customer);
+                else                
+                    UpdateCustomer(Customer);
+               
+                DataMessageLabel = "Saved";
+                ShowDataMessage = true;
+                ResetCustomer();
+                ClearCustomer();
+                
+                GetCustomers();
+            }
+            IsAddMode = false;
+        }
+
+        private void ClearCustomer()
+        {
+            Customer.ID = 0;
+            Customer.Name = string.Empty;
+            Customer.Location = string.Empty;            
+            Customer.SalesRegionID = 0;
+            Customer.CountryID = 0;
+            Customer.Number = string.Empty;
+            Customer.Deleted = false;
+            Customer.IsEnabled = true;
+        }
+
+        private void ResetCustomer()
+        {            
+            isdirty = false;
+            canexecuteadd = true;
+            cancancelnewcustomer = false;
+            IsAddMode = false;
+            IsEnabled = false;
+        }
+
+        ICommand cancelnewcustomer;
+        public ICommand CancelNewCustomer
+        {
+            get
+            {
+                if (cancelnewcustomer == null)
+                    cancelnewcustomer = new DelegateCommand(CanCancelNewCustomer, ExecuteCancelNewCustomer);
+                return cancelnewcustomer;
+            }
+        }
+
+        bool cancancelnewcustomer = false;
+        private bool CanCancelNewCustomer(object obj)
+        {
+            return cancancelnewcustomer;
+        }
+
+        private void ExecuteCancelNewCustomer(object parameter)
+        {
+            ClearCustomer();
+            ResetCustomer();
+        }
+
+        readonly bool canexecutedelete = true;
         private bool CanExecuteDelete(object obj)
         {
-            if (!candeletecustomer)
+            if (!isdeletedenabled)
                 return false;
-            if (!HasCustomers)
-                return false;
+
             return canexecutedelete;
         }
-        
-        private void ExecuteDelete(object parameter)
-        {
-            IMessageBoxService msg = new MessageBoxService();
-            if(msg.ShowMessage("Do you want to delete this customer?", "Deleting Customer",GenericMessageBoxButton.OKCancel, GenericMessageBoxIcon.Question).Equals(GenericMessageBoxResult.OK))
-            {
-                DeleteCustomer(Customer.GOM.ID);
-                Customers.Remove(Customer);
-                Customers.ItemPropertyChanged += Customers_ItemPropertyChanged;
-            }
 
-            if (customers.Count == 0)
+        ICommand selectcustomernode;
+        public ICommand SelectCustomerNode
+        {
+            get
             {
-                HasCustomers = false;
-                Customer.GOM.ID = 0;
-                Customer.CorporateID = 0;
-                Customer.GOM.Name = string.Empty;
-                Customer.Number = string.Empty;
-                Customer.Location = string.Empty;                
-                canexecutedelete = false;
+                if (selectcustomernode == null)
+                    selectcustomernode = new DelegateCommand(CanExecute, ExecuteSelectCustomerNode);
+                return selectcustomernode;
             }
-            msg = null;
         }
 
-        private bool IsDeletableCustomer(int id)
-        {           
-            if (id > 0)
+        private void ExecuteSelectCustomerNode(object parameter)
+        {
+            try
             {
-                if (GetCountCustomerProjects(id) > 0)                
-                    return false;                
+                if (parameter.GetType().Equals(typeof(TreeViewNodeModel)))
+                {
+                    if (((TreeViewNodeModel)parameter).NodeTypeID == 1)
+                    {
+                        int selectedcustomerid = ((TreeViewNodeModel)parameter).ID;                        
+                        SaveCustomer();
+                        //get customer
+                        LoadSelectedCustomer(selectedcustomerid);                                                                                       
+                    }
+                }
+            }
+            catch { }
+        }
+
+
+        private void ExecuteCancel(object parameter)
+        {
+            CloseWindow();
+        }
+
+
+        private void ExecuteClosing(object parameter)
+        {           
+        }
+
+        ICommand windowclosing;
+
+        private bool CanCloseWindow(object obj)
+        {
+            if (isdirty)
+            {
+                if (!InvalidData)
+                {
+                    IMessageBoxService msg = new MessageBoxService();
+                    var result = msg.ShowMessage("There are unsaved changes. Do you want to save these?", "Unsaved Changes", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
+                    msg = null;
+                    if (result.Equals(GenericMessageBoxResult.Yes))
+                    {
+                        SaveCustomer();
+                        return true;
+                    }
+                    else                    
+                        return true;                    
+                }
                 else
                     return true;
             }
-            return false;
+            else
+                return true;
         }
+
+        public ICommand WindowClosing
+        {
+            get
+            {
+                if (windowclosing == null)
+                    windowclosing = new DelegateCommand(CanCloseWindow, ExecuteClosing);
+                return windowclosing;
+            }
+        }
+
+
 
         #endregion
 

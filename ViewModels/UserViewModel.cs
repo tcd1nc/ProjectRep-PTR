@@ -9,36 +9,36 @@ using System.Windows.Input;
 
 namespace PTR.ViewModels
 {
-    public class UserViewModel : ObjectCRUDViewModel
+    public class UserViewModel : ViewModelBase
     {
+        public bool canexecutesave = true;
+        public bool canexecuteadd = true;
+        public ICommand AddNew { get; set; }
+        public ICommand Cancel { get; set; }
+        public ICommand Save { get; set; }
+
         bool isdirty = false;
         bool isloaded = false;
         private int ID = 0;
         UserModel User;
         TV.TreeViewViewModel TV; 
-        Collection<EnumValue> adminmenuoptionslist;
-        Collection<EnumValue> projectsmenuoptionslist;
-        Collection<EnumValue> reportsmenuoptionslist;
-        Collection<EnumValue> userpermissiontypelist;
-
         Collection<int> dirtycustomers = new Collection<int>();
+        FullyObservableCollection<ModelBaseVM> BusinessUnits;
 
         public UserViewModel()
         {
-            ExCloseWindow = ExecuteClosing;
             Save = new RelayCommand(ExecuteSave, CanExecuteSave);           
             Cancel = new RelayCommand(ExecuteCancel, CanExecute);
             AddNew = new RelayCommand(ExecuteAddNew, CanExecuteAddNew);
            
-            adminmenuoptionslist = EnumerationLists.AdministrationMenuOptionsList;
-            projectsmenuoptionslist = EnumerationLists.ProjectsOptionsList;
-            reportsmenuoptionslist = EnumerationLists.ReportsOptionsList;
-            userpermissiontypelist = EnumerationLists.UserPermissionTypeList;
             DomainName = Config.Domain;
-
+            BusinessUnits = GetBusinessUnits();
             TV = new TV.TreeViewViewModel();
             GetUsers();
+            SelectedUser = Users[0];
             IsEnabled = false;
+            canexecutesave = false;
+
         }
                
         #region Private functions
@@ -48,8 +48,7 @@ namespace PTR.ViewModels
             CleanUpTVEvents();
             TV.LoadTree(userid);
             Nodes = TV.Nodes;           
-            TV.NodeChangeEvent += TV_NodeChangeEvent;
-           
+            TV.NodeChangeEvent += TV_NodeChangeEvent;           
         }       
 
         private void CleanUpTVEvents()
@@ -61,67 +60,63 @@ namespace PTR.ViewModels
         {
             UserModel blank = new UserModel()
             {
-                GOM = new GenericObjModel()
-                {
-                    ID = -1,
-                    Name = "None Selected"
-                },
+                ID = 0,
+                Name = "None Selected",
                 LoginName = string.Empty,
                 Email = string.Empty,
                 ProjectsMnu = string.Empty,
                 AdministrationMnu = string.Empty,
                 ReportsMnu = string.Empty,
-                SalesDivisions=string.Empty,
+                BusinessUnits = string.Empty,
                 GIN = string.Empty,
-                Administrator=false,
-                ShowNagScreen=false,
-                ShowOthers=false                                   
+                Administrator = false,
+                ShowOthers = false,
+                AllowEditCompletedCancelled = false
             };            
             Users = DatabaseQueries.GetUsers();
             Users.Insert(0, blank);
          }
-             
-        private void LoadSalesDivisions(UserModel user)
+            
+      
+        private void LoadBusinessUnits(UserModel user)
         {
-            FullyObservableCollection <SelectedSalesDivisionModel> SalesDivisionsColl = new FullyObservableCollection<SelectedSalesDivisionModel>();
-            List<string> associatessaledivs = user.SalesDivisions.Split(',').ToList();
-            foreach (GenericObjModel sd in SalesDivisions)
+            FullyObservableCollection <SelectedItemModel> BusinessUnitsColl = new FullyObservableCollection<SelectedItemModel>();
+            List<string> associatessaledivs = user.BusinessUnits.Split(',').ToList();
+            foreach (ModelBaseVM sd in BusinessUnits)
             {
-                SalesDivisionsColl.Add(new SelectedSalesDivisionModel
+                BusinessUnitsColl.Add(new SelectedItemModel
                 {
                     ID = sd.ID,
                     IsChecked = associatessaledivs.Contains(sd.ID.ToString()),
                     Name = sd.Name,
-                    IsEnabled = !user.GOM.Deleted
+                    IsEnabled = !user.Deleted
                 });
             }
-            SalesDivisionsOptions = SalesDivisionsColl;
-            SalesDivisionsOptions.ItemPropertyChanged += SalesDivisionsOptions_ItemPropertyChanged;
+            BusinessUnitOptions = BusinessUnitsColl;
+            BusinessUnitOptions.ItemPropertyChanged += BusinessUnitOptions_ItemPropertyChanged;
         }
               
         private void LoadSelectedUser(UserModel user)
         {
             isloaded = false;
-            if (user.GOM.ID == -1)
-                IsEnabled = false;
-            else
-                IsEnabled = true;
-            ID = user.GOM.ID;
+            IsEnabled = user.ID > 0;
+
+            ID = user.ID;
             ShowDataMessage = false;
-            DataMessageLabel = "";
+            DataMessageLabel = string.Empty;
 
             LoadAdministrationMnuOptions(user);
             LoadProjectMnuOptions(user);
             LoadReportMnuOptions(user);
-            LoadSalesDivisions(user);
+            LoadBusinessUnits(user);
             UpdateAccessTree(ID);
 
             Administrator = user.Administrator;
             ShowOthers = user.ShowOthers;
-            ShowNag = user.ShowNagScreen;
+            AllowEditCompletedCancelled = user.AllowEditCompletedCancelled;
 
-            Name = user.GOM.Name;
-            Deleted = user.GOM.Deleted;
+            Name = user.Name;
+            Deleted = user.Deleted;
             LoginName = user.LoginName;
             Email = user.Email;
             GIN = user.GIN;
@@ -137,8 +132,7 @@ namespace PTR.ViewModels
         private void SetAdministrator()
         {
             ShowOthers = Administrator;
-            ShowNag = Administrator;
-            foreach (SelectedSalesDivisionModel sd in SalesDivisionsOptions)
+            foreach (SelectedItemModel sd in BusinessUnitOptions)
                 sd.IsChecked = Administrator;
             foreach (SelectedItemModel sd in AdministrationMnuOptions)
                 sd.IsChecked = Administrator;
@@ -153,14 +147,14 @@ namespace PTR.ViewModels
         {
             FullyObservableCollection<SelectedItemModel> AdministrationMnuColl = new FullyObservableCollection<SelectedItemModel>();
             List<string> adminoptions = user.AdministrationMnu.Split(',').ToList();
-            foreach (EnumValue ev in adminmenuoptionslist)
+            foreach (EnumValue ev in EnumerationLists.AdministrationMenuOptionsList)
             {
                 AdministrationMnuColl.Add(new SelectedItemModel
                 {
                     ID = ev.ID,
                     IsChecked = adminoptions.Contains(ev.ID.ToString()),
                     Name = ev.Description,
-                    IsEnabled = !user.GOM.Deleted
+                    IsEnabled = !user.Deleted
                 });               
             }
             AdministrationMnuOptions = AdministrationMnuColl;
@@ -171,14 +165,14 @@ namespace PTR.ViewModels
         {
             FullyObservableCollection<SelectedItemModel> ProjectsMnuColl = new FullyObservableCollection<SelectedItemModel>();
             List<string> projectoptions = user.ProjectsMnu.Split(',').ToList();
-            foreach (EnumValue ev in projectsmenuoptionslist)
+            foreach (EnumValue ev in EnumerationLists.ProjectsOptionsList)
             {
                 ProjectsMnuColl.Add(new SelectedItemModel
                 {
                     ID = ev.ID,
                     IsChecked = projectoptions.Contains(ev.ID.ToString()),
                     Name = ev.Description,
-                    IsEnabled = !user.GOM.Deleted
+                    IsEnabled = !user.Deleted
                 });               
             }
             ProjectMnuOptions = ProjectsMnuColl;
@@ -189,14 +183,14 @@ namespace PTR.ViewModels
         {
             FullyObservableCollection<SelectedItemModel> ReportsMnuColl = new FullyObservableCollection<SelectedItemModel>();
             List<string> reportoptions = user.ReportsMnu.Split(',').ToList();
-            foreach (EnumValue ev in reportsmenuoptionslist)
+            foreach (EnumValue ev in EnumerationLists.ReportsOptionsList)
             {
                 ReportsMnuColl.Add(new SelectedItemModel
                 {
                     ID = ev.ID,
                     IsChecked = reportoptions.Contains(ev.ID.ToString()),
                     Name = ev.Description,
-                    IsEnabled = !user.GOM.Deleted
+                    IsEnabled = !user.Deleted
                 });               
             }
             ReportMnuOptions = ReportsMnuColl;
@@ -263,7 +257,7 @@ namespace PTR.ViewModels
             }
         }
 
-        private void SalesDivisionsOptions_ItemPropertyChanged(object sender, ItemPropertyChangedEventArgs e)
+        private void BusinessUnitOptions_ItemPropertyChanged(object sender, ItemPropertyChangedEventArgs e)
         {
             if (isloaded)
             {
@@ -311,11 +305,11 @@ namespace PTR.ViewModels
             set { SetField(ref reportoptions, value); }
         }
     
-        FullyObservableCollection<SelectedSalesDivisionModel> salesdivisions;
-        public FullyObservableCollection<SelectedSalesDivisionModel> SalesDivisionsOptions
+        FullyObservableCollection<SelectedItemModel> businessunitoptions;
+        public FullyObservableCollection<SelectedItemModel> BusinessUnitOptions
         {
-            get { return salesdivisions; }
-            set { SetField(ref salesdivisions, value); }
+            get { return businessunitoptions; }
+            set { SetField(ref businessunitoptions, value); }
         }
 
         UserModel selecteduser;
@@ -371,11 +365,13 @@ namespace PTR.ViewModels
             }
         }
 
-        bool shownag;
-        public bool ShowNag
+        bool alloweditcompletedcancelled;
+        public bool AllowEditCompletedCancelled
         {
-            get { return shownag; }
-            set { SetField(ref shownag, value);
+            get { return alloweditcompletedcancelled; }
+            set
+            {
+                SetField(ref alloweditcompletedcancelled, value);
                 if (isloaded)
                 {
                     CheckAllValidation();
@@ -383,7 +379,7 @@ namespace PTR.ViewModels
                 }
             }
         }
-
+        
         bool deleted;
         public bool Deleted
         {
@@ -441,10 +437,7 @@ namespace PTR.ViewModels
         public string DomainName
         {
             get { return domainname; }
-            set
-            {
-                SetField(ref domainname, value);              
-            }
+            set { SetField(ref domainname, value); }
         }
         
         string gin;
@@ -466,7 +459,7 @@ namespace PTR.ViewModels
         
         private bool CheckAllValidation()
         {
-            if (!Validate("Name") || !Validate("LoginName") || !Validate("Email") || !Validate("GIN") || !Validate("SalesDivision"))
+            if (!Validate("Name") || !Validate("LoginName") || !Validate("Email") || !Validate("GIN") || !Validate("BU"))
             {
                 ShowDataMessage = true;
                 canexecutesave = false;
@@ -481,72 +474,71 @@ namespace PTR.ViewModels
         }
         
         private bool Validate(string test)
-        {
-            bool isvalid = true;
+        {            
             DataMessageLabel = string.Empty;
             switch (test)
             {
                 case "Name":
                     if (IsMissingName())
-                    {
-                        isvalid = false;
+                    {                        
                         DataMessageLabel = "Missing Name";
+                        return false;
                     }
                     else
                     if (IsDuplicateName())
-                    {
-                        isvalid = false;
+                    {                        
                         DataMessageLabel = "Duplicate Name";
+                        return false;
                     }
                     break;
 
                 case "LoginName":
                     if (IsMissingLoginName())
-                    {
-                        isvalid = false;
+                    {                        
                         DataMessageLabel = "Missing Login Name";
+                        return false;
                     }
                     else
                     if (IsDuplicateLoginName())
-                    {
-                        isvalid = false;
+                    {                       
                         DataMessageLabel = "Duplicate Login Name";
+                        return false;
                     }                       
                     break;
 
                 case "GIN":
                     if (IsDuplicateGIN())
-                    {
-                        isvalid = false;
+                    {                        
                         DataMessageLabel = "Duplicate GIN";
+                        return false;
                     }
                     break;
 
                 case "Email":
                     if (!IsValidEmail())
-                    {
-                        isvalid = false;
+                    {                        
                         DataMessageLabel = "Invalid email";
+                        return false;
                     }
                     else
                     if (IsDuplicateEmail())
-                    {
-                        isvalid = false;
+                    {                       
                         DataMessageLabel = "Duplicate email";
+                        return false;
                     }
                     break;
 
-                case "SalesDivision":
-                    int countq = SalesDivisionsOptions.Count(x => x.IsChecked == true);
+                case "BU":
+                    int countq = BusinessUnitOptions.Count(x => x.IsChecked == true);
                     if(countq == 0)
-                    {
-                        isvalid = false;
-                        DataMessageLabel = "No Sales Division Selected";
+                    {                        
+                        DataMessageLabel = "No Business Unit Selected";
+                        return false;
                     }
                     break;                            
 
             };                                        
-            return isvalid;
+            return true;
         }
 
         private bool IsValidEmail()
@@ -575,13 +567,13 @@ namespace PTR.ViewModels
 
         private bool IsDuplicateName()
         {
-            int duplicate = Users.Where(x => x.GOM.Name.ToUpper() == Name.ToUpper() && (ID != x.GOM.ID || ID==0 )).Count();                                     
+            int duplicate = Users.Where(x => x.Name.ToUpper() == Name.ToUpper() && (ID != x.ID || ID==0 )).Count();                                     
             return (duplicate > 0);
         }
 
         private bool IsDuplicateLoginName()
         {
-            int duplicate = Users.Where(x => x.LoginName.ToUpper() == LoginName.ToUpper() && (ID != x.GOM.ID || ID == 0)).Count();
+            int duplicate = Users.Where(x => x.LoginName.ToUpper() == LoginName.ToUpper() && (ID != x.ID || ID == 0)).Count();
             return (duplicate > 0);
         }
 
@@ -597,21 +589,23 @@ namespace PTR.ViewModels
 
         private bool IsDuplicateGIN()
         {
-            int duplicate = Users.Where(x => x.GIN.ToUpper() == GIN.ToUpper() && (ID != x.GOM.ID || ID == 0)).Count();
+            if (string.IsNullOrEmpty(GIN))
+                return false;
+            int duplicate = Users.Where(x => x.GIN.ToUpper() == GIN.ToUpper() && (ID != x.ID || ID == 0)).Count();
             return (duplicate > 0);
         }
 
         private bool IsDuplicateEmail()
         {
-            int duplicate = Users.Where(x => x.Email.ToUpper() == Email.ToUpper() && (ID != x.GOM.ID || ID == 0)).Count();
+            int duplicate = Users.Where(x => x.Email.ToUpper() == Email.ToUpper() && (ID != x.ID || ID == 0)).Count();
             return (duplicate > 0);
         }
         
-        bool invalidfield = false;
+        bool showdatamessage = false;
         public bool ShowDataMessage
         {
-            get { return invalidfield; }
-            set { SetField(ref invalidfield, value); }
+            get { return showdatamessage; }
+            set { SetField(ref showdatamessage, value); }
         }
 
         string dataerror;
@@ -633,17 +627,16 @@ namespace PTR.ViewModels
         private void ExecuteAddNew(object parameter)
         {
             //check for changes and save then add new user
-            if (isdirty)
-            {
+            if (isdirty)            
                 SaveUser();
-            }
+            
             canexecuteadd = false;
             cancancelnewuser = true;
             IsEnabled = true;
             UserListEnabled = false;
             UpdateAccessTree(0);
             ShowDataMessage = false;
-            DataMessageLabel = "";
+            DataMessageLabel = string.Empty;
 
             if (AdministrationMnuOptions!=null)
                 AdministrationMnuOptions.ItemPropertyChanged -= AdministrationMnuOptions_ItemPropertyChanged;
@@ -651,13 +644,13 @@ namespace PTR.ViewModels
                 ProjectMnuOptions.ItemPropertyChanged -= ProjectMnuOptions_ItemPropertyChanged;
             if (ReportMnuOptions != null)
                 ReportMnuOptions.ItemPropertyChanged -= ReportMnuOptions_ItemPropertyChanged;
-            if (SalesDivisionsOptions!=null)
-                SalesDivisionsOptions.ItemPropertyChanged -= SalesDivisionsOptions_ItemPropertyChanged;
+            if (BusinessUnitOptions!=null)
+                BusinessUnitOptions.ItemPropertyChanged -= BusinessUnitOptions_ItemPropertyChanged;
 
-            FullyObservableCollection<SelectedSalesDivisionModel> salesdivcoll = new FullyObservableCollection<SelectedSalesDivisionModel>();
-            foreach (GenericObjModel sd in SalesDivisions)
+            FullyObservableCollection<SelectedItemModel> bucoll = new FullyObservableCollection<SelectedItemModel>();
+            foreach (ModelBaseVM sd in BusinessUnits)
             {
-                salesdivcoll.Add(new SelectedSalesDivisionModel()
+                bucoll.Add(new SelectedItemModel()
                 {
                     ID = sd.ID,
                     IsChecked = false,
@@ -667,7 +660,7 @@ namespace PTR.ViewModels
             }
 
             FullyObservableCollection<SelectedItemModel> administrationmnucoll = new FullyObservableCollection<SelectedItemModel>();            
-            foreach (EnumValue ev in adminmenuoptionslist)
+            foreach (EnumValue ev in EnumerationLists.AdministrationMenuOptionsList)
             {               
                 administrationmnucoll.Add(new SelectedItemModel
                 {
@@ -679,7 +672,7 @@ namespace PTR.ViewModels
             }
 
             FullyObservableCollection<SelectedItemModel> projectsmnucoll = new FullyObservableCollection<SelectedItemModel>();           
-            foreach (EnumValue ev in projectsmenuoptionslist)
+            foreach (EnumValue ev in EnumerationLists.ProjectsOptionsList)
             {              
                 projectsmnucoll.Add(new SelectedItemModel
                 {
@@ -691,7 +684,7 @@ namespace PTR.ViewModels
             }
 
             FullyObservableCollection<SelectedItemModel> reportsmnucoll = new FullyObservableCollection<SelectedItemModel>();
-            foreach (EnumValue ev in reportsmenuoptionslist)
+            foreach (EnumValue ev in EnumerationLists.ReportsOptionsList)
             {
                 reportsmnucoll.Add(new SelectedItemModel
                 {
@@ -704,14 +697,13 @@ namespace PTR.ViewModels
 
             LoginName = string.Empty;
             GIN = string.Empty;
-            SalesDivisionsOptions = salesdivcoll;
+            BusinessUnitOptions = bucoll;
             Administrator = false;
             AdministrationMnuOptions = administrationmnucoll;
             ProjectMnuOptions = projectsmnucoll;
             ReportMnuOptions = reportsmnucoll;
             
             ShowOthers = false;
-            ShowNag = true;
             Email = string.Empty;
             Deleted = false;
             ID = 0;
@@ -719,7 +711,7 @@ namespace PTR.ViewModels
             AdministrationMnuOptions.ItemPropertyChanged += AdministrationMnuOptions_ItemPropertyChanged;
             ProjectMnuOptions.ItemPropertyChanged += ProjectMnuOptions_ItemPropertyChanged;
             ReportMnuOptions.ItemPropertyChanged += ReportMnuOptions_ItemPropertyChanged;
-            SalesDivisionsOptions.ItemPropertyChanged += SalesDivisionsOptions_ItemPropertyChanged;
+            BusinessUnitOptions.ItemPropertyChanged += BusinessUnitOptions_ItemPropertyChanged;
             isloaded = true;
         }
 
@@ -735,12 +727,19 @@ namespace PTR.ViewModels
                        
         private void ExecuteSave(object parameter)
         {
-            SaveUser();
+            try
+            {
+                SaveUser();
+            }
+            catch
+            {
+
+            }
         }
 
         private bool SaveUser()
         {
-            invalidfield = false;
+            ShowDataMessage = false;
             if (isdirty)
             {    
                 if(User == null)
@@ -751,23 +750,18 @@ namespace PTR.ViewModels
                 User.GIN = GIN;
                 User.Email = Email;
                 User.LoginName = LoginName;
-
-                User.GOM = new GenericObjModel()
-                {
-                    ID = ID,
-                    Name = Name,
-                    Deleted = Deleted
-                };
-
+                User.ID = ID;
+                User.Name = Name;
+                User.Deleted = Deleted;                
                 User.ShowOthers = ShowOthers;
-                User.ShowNagScreen = ShowNag;
                 User.Administrator = Administrator;
+                User.AllowEditCompletedCancelled = AllowEditCompletedCancelled;
 
                 //convert collections to strings
-                var q = from a in SalesDivisionsOptions
+                var q = from a in BusinessUnitOptions
                         where a.IsChecked == true
                         select a.ID;
-                User.SalesDivisions = string.Join(",", q.ToList());
+                User.BusinessUnits = string.Join(",", q.ToList());
 
                 var q2 = from a in AdministrationMnuOptions
                             where a.IsChecked == true
@@ -789,7 +783,7 @@ namespace PTR.ViewModels
                 else
                 {
                     UpdateUser(User);
-                    ID = User.GOM.ID;
+                    ID = User.ID;
                 }
                   
                 int accessid = 0;
@@ -805,37 +799,28 @@ namespace PTR.ViewModels
                                     accessid = (int)UserPermissionsType.ReadOnly;
                                 else                                
                                     if (n.IsFAChecked)
-                                        accessid = (int)UserPermissionsType.FullAccess;
-                                    //else
-                                    //    accessid = 0;                                
+                                        accessid = (int)UserPermissionsType.FullAccess;                                                     
                                     else                                
                                         if (n.IsEditActChecked)
                                             accessid = (int)UserPermissionsType.EditAct;
                                         else
                                             accessid = 0;                                
                             }
-                            else
-                            {
+                            else                            
                                 accessid = 0;
-                            }
+                            
 
                             if (accessid > 0)
                             {                                
-                                if(n.AccessID == 0)
-                                {
-                                    AddUserCustomerAccess(n.ID, ID, accessid);
-                                }
-                                else
-                                {
-                                    UpdateUserCustomerAccess(n.ID, ID, accessid);
-                                }                                                                        
+                                if(n.AccessID == 0)                                
+                                    AddUserCustomerAccess(n.ID, ID, accessid);                                
+                                else                                
+                                    UpdateUserCustomerAccess(n.ID, ID, accessid);                                                                                                        
                             }
                             else
                             {
-                                if (n.AccessID > 0)
-                                {
-                                    UpdateUserCustomerAccess(n.ID, ID, 0);
-                                }
+                                if (n.AccessID > 0)                                
+                                    UpdateUserCustomerAccess(n.ID, ID, 0);                                
                             }
                         }
                     }
@@ -843,8 +828,8 @@ namespace PTR.ViewModels
                 DeleteUserCustomerAccess();
                 ClearDirtyCustomers();
                 ClearCurrentUser();
-                ShowDataMessage = true;
-                DataMessageLabel = "Saved";                
+                DataMessageLabel = "Saved"; 
+                ShowDataMessage = true;                               
             }            
             return true;
         }
@@ -874,31 +859,76 @@ namespace PTR.ViewModels
                         
         private void ExecuteClosing(object parameter)
         {
-            if (TV != null)
+            //try
+            //{
+            //    if (TV != null)
+            //    {
+            //        CleanUpTVEvents();
+            //        if (AdministrationMnuOptions != null)
+            //            AdministrationMnuOptions.ItemPropertyChanged -= AdministrationMnuOptions_ItemPropertyChanged;
+            //        if (ProjectMnuOptions != null)
+            //            ProjectMnuOptions.ItemPropertyChanged -= ProjectMnuOptions_ItemPropertyChanged;
+            //        if (ReportMnuOptions != null)
+            //            ReportMnuOptions.ItemPropertyChanged -= ReportMnuOptions_ItemPropertyChanged;
+            //        if (BusinessUnitOptions != null)
+            //            BusinessUnitOptions.ItemPropertyChanged -= BusinessUnitOptions_ItemPropertyChanged;
+            //        TV.NodeChangeEvent -= TV_NodeChangeEvent;
+            //        TV.DestroyEventHandlers();
+            //    }
+            //}
+            //catch
+            //{
+
+            //}
+        }
+
+        ICommand windowclosing;
+
+        private bool CanCloseWindow(object obj)
+        {
+            if (isdirty)
             {
-                CleanUpTVEvents();
-                if (AdministrationMnuOptions != null)
-                    AdministrationMnuOptions.ItemPropertyChanged -= AdministrationMnuOptions_ItemPropertyChanged;
-                if (ProjectMnuOptions != null)
-                    ProjectMnuOptions.ItemPropertyChanged -= ProjectMnuOptions_ItemPropertyChanged;
-                if (ReportMnuOptions != null)
-                    ReportMnuOptions.ItemPropertyChanged -= ReportMnuOptions_ItemPropertyChanged;
-                if (SalesDivisionsOptions != null)
-                    SalesDivisionsOptions.ItemPropertyChanged -= SalesDivisionsOptions_ItemPropertyChanged;
-                TV.NodeChangeEvent -= TV_NodeChangeEvent;               
-                TV.DestroyEventHandlers();
-            }
-            if (canexecutesave)
-            {
-                IMessageBoxService msg = new MessageBoxService();
-                GenericMessageBoxResult result = msg.ShowMessage("There are unsaved changes. Do you want to save these?", "Unsaved Changes", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
-                msg = null;
-                if (result.Equals(GenericMessageBoxResult.Yes))
+                if (CheckAllValidation())
                 {
-                    SaveUser();
+                    IMessageBoxService msg = new MessageBoxService();
+                    var result = msg.ShowMessage("There are unsaved changes. Do you want to save these?", "Unsaved Changes", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
+                    msg = null;
+                    if (result.Equals(GenericMessageBoxResult.Yes))
+                    {
+                        SaveUser();
+                        return true;
+                    }
+                    else                    
+                        return true;                    
+                }
+                else
+                {
+                    IMessageBoxService msg = new MessageBoxService();
+                    var result = msg.ShowMessage("There are unsaved changes with errors. Do you want to correct and then save these?", "Unsaved Changes with Errors", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
+                    msg = null;
+                    if (result.Equals(GenericMessageBoxResult.Yes))
+                        return false;
+                    else
+                    {
+                        SaveUser();
+                        return true;
+                    }
                 }
             }
-        }   
+            else
+                return true;
+        }
+
+        public ICommand WindowClosing
+        {
+            get
+            {
+                if (windowclosing == null)
+                    windowclosing = new DelegateCommand(CanCloseWindow, ExecuteClosing);
+                return windowclosing;
+            }
+        }
+
 
         #endregion
 

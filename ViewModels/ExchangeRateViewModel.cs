@@ -1,35 +1,38 @@
-﻿using System;
-using System.Linq;
-using static PTR.DatabaseQueries;
+﻿using static PTR.DatabaseQueries;
 using PTR.Models;
+using System.Windows.Input;
 
 namespace PTR.ViewModels
 {
-    public class ExchangeRateViewModel : ObjectCRUDViewModel
+    public class ExchangeRateViewModel : ViewModelBase
     {
+        public bool canexecutesave = true;
+        public bool canexecuteadd = true;
+        public ICommand AddNew { get; set; }
+        public ICommand Cancel { get; set; }
+        public ICommand Save { get; set; }
+
         FullyObservableCollection<CountryModel> countries;
         FullyObservableCollection<ExchangeRateModel> exchangerates;
         bool isdirty = false;
 
         public ExchangeRateViewModel()
         {
-            ExCloseWindow = ExecuteClosing;
-            countries = StaticCollections.Countries;
+            countries = GetCountries();
             if (Countries.Count > 0)
             {
                 Country = Countries[0];
-                GetExchangeRates(Countries[0].GOM.ID);
+                GetExchangeRates(Countries[0].ID);
             }
-            Save = new RelayCommand(ExecuteSave, CanExecuteSave);
-            Cancel = new RelayCommand(ExecuteCancel, CanExecute);
-            AddNew = new RelayCommand(ExecuteAddNew, CanExecuteAddNew);            
+            Save = new RelayCommand(ExecuteSave, CanExecuteSave);     
         }
 
         #region Event handlers
 
         private void ExchangeRates_ItemPropertyChanged(object sender, ItemPropertyChangedEventArgs e)
         {
-            CheckFieldValidation();
+            ExchangeRates[e.CollectionIndex].IsDirty = true;
+            isdirty = true;
         }
 
         #endregion
@@ -46,9 +49,7 @@ namespace PTR.ViewModels
         public ExchangeRateModel SelectedMonth
         {
             get { return selectedMonth; }
-            set { SetField(ref selectedMonth, value);
-                  CheckFieldValidation();
-            }
+            set { SetField(ref selectedMonth, value); }
         }
                 
         CountryModel selectedCountry;
@@ -56,30 +57,21 @@ namespace PTR.ViewModels
         {
             get { return selectedCountry; }
             set {
-
-                if (selectedCountry != null)
-                {
-                    if (canexecutesave)                    
-                        SaveExchangeRates();
-                    
-                    InvalidField = false;
-                    canexecuteadd = true;
-                }
+                if (selectedCountry != null)                                            
+                    SaveExchangeRates();                                   
                                       
-                if (value != null)
-                {
-                    GetExchangeRates(value.GOM.ID);                  
-                }
+                if (value != null)                
+                    GetExchangeRates(value.ID);                  
+                
                 SetField(ref selectedCountry, value);
             }
         }
 
         private void GetExchangeRates(int countryid)
         {
-            if (ExchangeRates != null)
-            {
+            if (ExchangeRates != null)            
                 ExchangeRates.ItemPropertyChanged -= ExchangeRates_ItemPropertyChanged;
-            }
+            
             ExchangeRates = DatabaseQueries.GetExchangeRates(countryid);
             ExchangeRates.ItemPropertyChanged += ExchangeRates_ItemPropertyChanged;
         }
@@ -92,106 +84,18 @@ namespace PTR.ViewModels
 
         #endregion
 
-        #region Validation
-
-        bool MonthRequired;
-        bool ExchangeRateRequired;
-        bool DuplicateMonth;
-
-        private bool MonthMissing()
-        {
-            int nummissing = ExchangeRates.Where(x => x.ExRateMonth == null).Count();
-            return (nummissing > 0);
-        }
-
-        private bool ExchangeRateMissing()
-        {
-            int nummissing = ExchangeRates.Where(x => x.ExRate == 0).Count();
-            return (nummissing > 0);
-        }
-
-        private void CheckFieldValidation()
-        {          
-            MonthRequired = MonthMissing();
-            ExchangeRateRequired = ExchangeRateMissing();
-            DuplicateMonth = IsDuplicateMonth();
-            isdirty = true;
-
-            InvalidField = (DuplicateMonth || MonthRequired || ExchangeRateRequired);
-
-            if (MonthRequired)
-                DataMissingLabel = "Month Missing";
-            else
-                if (DuplicateMonth)
-                DataMissingLabel = "Duplicate Month";
-            else
-                if (ExchangeRateRequired)
-                DataMissingLabel = "Exchange Rate Missing";
-
-            canexecuteadd = !InvalidField;
-            canexecutesave = !InvalidField;            
-        }
-
-        private bool IsDuplicateMonth()
-        {
-            var query = exchangerates.GroupBy(x => x.ExRateMonth)
-            .Where(g => g.Count() > 1)
-            .Select(y => y.Key)
-            .ToList();
-            return (query.Count > 0);                
-        }
-
-        bool invalidfield;
-        public bool InvalidField
-        {
-            get { return invalidfield; }
-            set { SetField(ref invalidfield, value); }
-        }
-
-        string datamissing;
-        public string DataMissingLabel
-        {
-            get { return datamissing; }
-            set { SetField(ref datamissing, value); }
-        }
-
-        #endregion
-
         #region Commands
-
-        private bool CanExecuteAddNew(object obj)
-        {
-            return canexecuteadd;
-        }
-
-        private void ExecuteAddNew(object parameter)
-        {
-            canexecuteadd = false;
-            ExchangeRates.Add(new ExchangeRateModel()
-            {
-                ExRate = 1,
-                ExRateMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1),
-                ID = 0,
-                CountryID = Country.GOM.ID
-            });
-            CheckFieldValidation();
-        }
-                      
-        private void ExecuteCancel(object parameter)
-        {
-            CloseWindow();
-        }
        
         //save
         private bool CanExecuteSave(object obj)
-        {   
-            return canexecutesave;
+        {
+            return isdirty;
         }
         
         private void ExecuteSave(object parameter)
         {
             SaveExchangeRates();
-               
+            CloseWindow();
         }
 
         private void SaveExchangeRates()
@@ -199,33 +103,55 @@ namespace PTR.ViewModels
             if (isdirty)
             {
                 foreach (ExchangeRateModel em in ExchangeRates)
-                    if (em.ID == 0)
-                        em.ID = AddExchangeRate(em);
-                    else
-                        UpdateExchangeRate(em);
-            
-                canexecutesave = false;
+                    if (em.IsDirty)
+                    {
+                        if (em.ID > 0)
+                            UpdateExchangeRate(em);                           
+                        else
+                            em.ID = AddExchangeRate(em);
+                        em.IsDirty = false;
+                    }           
                 isdirty = false;
             }
         }
               
         private void ExecuteClosing(object parameter)
+        {           
+            
+        }
+
+        ICommand windowclosing;
+
+        private bool CanCloseWindow(object obj)
         {
-            if (ExchangeRates != null)
-            {
-                ExchangeRates.ItemPropertyChanged -= ExchangeRates_ItemPropertyChanged;
-            }
-            if (canexecutesave)
-            {
+            if (isdirty)
+            {            
                 IMessageBoxService msg = new MessageBoxService();
-                GenericMessageBoxResult result = msg.ShowMessage("There are unsaved changes. Do you want to save these?", "Unsaved Changes", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
+                var result = msg.ShowMessage("There are unsaved changes. Do you want to save these?", "Unsaved Changes", GenericMessageBoxButton.YesNo, GenericMessageBoxIcon.Question);
                 msg = null;
                 if (result.Equals(GenericMessageBoxResult.Yes))
                 {
                     SaveExchangeRates();
+                    return true;
                 }
+                else                    
+                    return true;                               
+            }
+            else
+                return true;
+        }
+
+        public ICommand WindowClosing
+        {
+            get
+            {
+                if (windowclosing == null)
+                    windowclosing = new DelegateCommand(CanCloseWindow, ExecuteClosing);
+                return windowclosing;
             }
         }
+
+
         #endregion
 
     }

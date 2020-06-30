@@ -3,11 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:loc="clr-namespace:PTR"
         mc:Ignorable="d" 
         Icon="/PTR;component/Images/about.ico"          
         WindowStartupLocation="CenterScreen" 
         ResizeMode="NoResize" WindowStyle="SingleBorderWindow"                      
-        Title="About" Height="300" Width="300">
+        Title="About" Height="300" Width="380">
 
     <Grid>
         <DockPanel LastChildFill="True">
@@ -29,19 +30,27 @@
                         <TextBlock Text="Version:" Width="60" Margin="4,10,0,0" FontSize="12" />
                         <TextBlock x:Name="version" Text="2.0" Margin="4,10,0,0" FontSize="12" />
                     </StackPanel>
-                         </StackPanel>
-                        <StackPanel Style="{StaticResource stkpanel}">
-                        <TextBlock Text="License:" Width="60" Margin="4,10,0,0" FontSize="12" />
-                        <TextBlock Text="Opensource GNU V3" Margin="4,10,0,0" FontSize="12" />
-                    </StackPanel>
                     <StackPanel Style="{StaticResource stkpanel}">
                         <TextBlock Text="Designer:" Width="60" Margin="4,10,0,0" FontSize="12" />
-                        <TextBlock Text="xxxxxxx" Margin="4,10,0,0" FontSize="12" />
+                        <TextBlock Text="Terry Deed" Margin="4,10,0,0" FontSize="12" />
                     </StackPanel>
                     <StackPanel Style="{StaticResource stkpanel}">
-                        <TextBlock Text="Built:" Width="60" Margin="4,10,0,0" FontSize="12" />
-                        <TextBlock x:Name="YearBuilt" Text="2020" Margin="4,10,0,0" FontSize="12" />
+                        <TextBlock Text="Copyright" Width="60" Margin="4,10,0,0" FontSize="12" />
+                        <TextBlock x:Name="YearBuilt" Text="2020 TC Deed" Margin="2,10,0,0" FontSize="12" />
                     </StackPanel>
+                    <StackPanel Style="{StaticResource stkpanel}">
+                        <TextBlock Text="License:" Width="60" Margin="4,10,0,0" FontSize="12" />
+                        <TextBlock Text="Open source MIT License" Width="280" TextWrapping="Wrap" Margin="4,10,0,0" FontSize="12" />
+                    </StackPanel>
+                    <StackPanel Style="{StaticResource stkpanel}">
+                        <TextBlock Text="Source code:" Width="70" Margin="4,10,0,0" FontSize="12" />
+                        <TextBlock Margin="4,10,0,0" FontSize="12" >
+                            <Hyperlink NavigateUri="https://github.com/tcd1nc" loc:HyperlinkExtensions.IsExternal="True">
+                                https://github.com/tcd1nc
+                            </Hyperlink>
+                        </TextBlock>
+                    </StackPanel>
+
                 </StackPanel>
             </Grid>
         </DockPanel>

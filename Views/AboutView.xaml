@@ -40,7 +40,12 @@
                     </StackPanel>
                     <StackPanel Style="{StaticResource stkpanel}">
                         <TextBlock Text="License:" Width="60" Margin="4,10,0,0" FontSize="12" />
-                        <TextBlock Text="Open source MIT License" Width="280" TextWrapping="Wrap" Margin="4,10,0,0" FontSize="12" />
+                        <TextBlock Text="Open source License" Width="110" TextWrapping="Wrap" Margin="4,10,0,0" FontSize="12" />
+                        <TextBlock Margin="4,10,0,0" FontSize="12" >
+                            <Hyperlink NavigateUri="https://github.com/tcd1nc/ProjectRep-PTR/blob/master/License" loc:HyperlinkExtensions.IsExternal="True">
+                                MIT
+                            </Hyperlink>
+                        </TextBlock>
                     </StackPanel>
                     <StackPanel Style="{StaticResource stkpanel}">
                         <TextBlock Text="Source code:" Width="70" Margin="4,10,0,0" FontSize="12" />
@@ -50,7 +55,6 @@
                             </Hyperlink>
                         </TextBlock>
                     </StackPanel>
-
                 </StackPanel>
             </Grid>
         </DockPanel>

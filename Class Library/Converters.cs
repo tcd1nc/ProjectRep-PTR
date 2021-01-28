@@ -225,7 +225,42 @@ namespace PTR
     //        throw new NotImplementedException();
     //    }
     //}
-      
+
+    public class CurCheckConverter : IValueConverter
+    {
+        private CultureInfo cultinfo;
+        private readonly string cult = "en-US";
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (!string.IsNullOrEmpty(value.ToString()))
+            {
+                cultinfo = new CultureInfo(cult);
+                bool blnInt = int.TryParse(value.ToString(), NumberStyles.Currency, cultinfo, out int enteredInt);
+                if (blnInt)
+                    return enteredInt;
+                else
+                    return 0;
+            }
+            else
+                return 0;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (!string.IsNullOrEmpty(value.ToString()))
+            {
+                cultinfo = new CultureInfo(cult);
+                bool blnInt = int.TryParse(value.ToString(), NumberStyles.Currency, cultinfo, out int enteredInt);
+                if (blnInt)
+                    return enteredInt;
+                else
+                    return 0;
+            }
+            else
+                return 0;
+        }
+    }
 
 }
 

@@ -39,7 +39,7 @@ namespace PTR
                 for (int i = 0; i < dtcolumncount; i++)
                 {
                     if (!excludedcols.Contains(i))
-                    {
+                    {                        
                         if (dt.Columns[i].ExtendedProperties.ContainsKey("Format"))
                             ws.Column(colctr).Style.Numberformat.Format = dt.Columns[i].ExtendedProperties["Format"].ToString();
 
@@ -122,19 +122,22 @@ namespace PTR
                 int dtcolumncount = dt.Columns.Count;
                 int dtrowcount = dt.Rows.Count;                
                 for (int i = 0; i < dtcolumncount; i++)
-                {                   
-                    if (dt.Columns[i].ExtendedProperties.ContainsKey("Format"))
-                        ws.Cells[firstrow + 1, i + 1, firstrow + dtrowcount, i + 1].Style.Numberformat.Format = dt.Columns[i].ExtendedProperties["Format"].ToString();
+                {
+                    if (dtrowcount > 0)
+                    {
 
-                    if (dt.Columns[i].ExtendedProperties.ContainsKey("Alignment"))
-                        if (dt.Columns[i].ExtendedProperties["Alignment"].ToString() == "Left")
-                            ws.Cells[firstrow + 1, i + 1, firstrow + dtrowcount, i + 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
-                        else
-                        if (dt.Columns[i].ExtendedProperties["Alignment"].ToString() == "Right")
-                            ws.Cells[firstrow + 1, i + 1, firstrow + dtrowcount, i + 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Right;
-                        else
-                            ws.Cells[firstrow + 1, i + 1, firstrow + dtrowcount, i + 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                        if (dt.Columns[i].ExtendedProperties.ContainsKey("Format"))
+                            ws.Cells[firstrow + 1, i + 1, firstrow + dtrowcount, i + 1].Style.Numberformat.Format = dt.Columns[i].ExtendedProperties["Format"].ToString();
 
+                        if (dt.Columns[i].ExtendedProperties.ContainsKey("Alignment"))
+                            if (dt.Columns[i].ExtendedProperties["Alignment"].ToString() == "Left")
+                                ws.Cells[firstrow + 1, i + 1, firstrow + dtrowcount, i + 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
+                            else
+                            if (dt.Columns[i].ExtendedProperties["Alignment"].ToString() == "Right")
+                                ws.Cells[firstrow + 1, i + 1, firstrow + dtrowcount, i + 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Right;
+                            else
+                                ws.Cells[firstrow + 1, i + 1, firstrow + dtrowcount, i + 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                    }
                     ws.Cells[firstrow, i + 1].Value = dt.Columns[i].Caption;
                     ws.Cells[firstrow, i + 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
                     ws.Cells[firstrow, i + 1].Style.Numberformat.Format = "";

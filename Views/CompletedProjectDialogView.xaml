@@ -12,7 +12,7 @@
         Title="Completed Project" Height="164" Width="300">
 
     <Window.Resources>
-        <loc:DecCheckConverter x:Key="DecCheckConv"/>
+        <loc:CurCheckConverter x:Key="CurCheckConv"/>
     </Window.Resources>
     
     <Grid>
@@ -45,9 +45,9 @@
 
                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Sales Value:" Style="{StaticResource gridtextlabel}" />
                     <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource gridtextlabel}" Text="{Binding CurrencySymbol}"/>
-                    <loc:NumericTextBox Grid.Row="1" Grid.Column="2" Style="{StaticResource gridtextbox}" ToolTip="Sales estimate for 12 months"  
+                    <loc:CurrencyTextBox Grid.Row="1" Grid.Column="2" Style="{StaticResource gridtextbox}" ToolTip="Sales estimate for 12 months"  
                         NumericalError="{Binding EstimatedSalesError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                        BackgroundErrorColor="Red" Text="{Binding ActualSalesForecast, StringFormat={}{0:N0}, Converter={StaticResource DecCheckConv}, UpdateSourceTrigger=PropertyChanged}" />
+                        BackgroundErrorColor="Red" Text="{Binding ActualSalesForecast, StringFormat={}{0:C0}, ConverterCulture=en-US, Converter={StaticResource CurCheckConv}, UpdateSourceTrigger=PropertyChanged}" />
  
                     <TextBlock Grid.Row="2" Text="Sales Start:" Style="{StaticResource gridtextlabel}" />
                 <DatePicker Grid.Row="2" Grid.Column="2" DisplayDateStart="{Binding StatusMonth}" 

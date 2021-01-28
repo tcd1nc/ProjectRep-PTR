@@ -375,11 +375,11 @@
 
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" >
                             <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Margin="6,2,0,0" Background="WhiteSmoke">
-                                <loc:FilterListControl x:Name="flCountries" Width="170" TTip="These are the countries of customers that you have been granted access to"
+                                <loc:FilterListControl x:Name="flCountries" Width="170"
 							        ListItems="{Binding CountriesFilter}" 
 							        SelectedItems="{Binding CountriesSrchString}" 
 							        Margin="4,4,0,0" 							                                            
-							        Heading="Your Countries" 
+							        Heading="Countries" 
 							        ToggleButtonVisibility="Visible"
                                     ShowAll="{Binding ShowAllCountries}"        
                                     VisibleCount="8"                   
@@ -470,7 +470,7 @@
                             </DataGrid>
 
                             <StackPanel Grid.Row="1" HorizontalAlignment="Left" Orientation="Horizontal">
-                                <TextBlock Margin="200,0,0,0" Text="{Binding SumSalesUSD, Mode=OneWay, StringFormat={}Total Sales Potential USD {0:N0}}" Foreground="Blue" TextAlignment="Right"/>
+                                <TextBlock Margin="200,0,0,0" Text="{Binding SumSalesUSD, Mode=OneWay, StringFormat={}Total Sales Potential USD {0:N0}, ConverterCulture=en-US}" Foreground="Blue" TextAlignment="Right"/>
                             </StackPanel>
                         </Grid>
                         <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch" ResizeDirection="Rows" Height="5" BorderBrush="DarkGray" BorderThickness="1"/>

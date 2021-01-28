@@ -17,7 +17,7 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <loc:DecCheckConverter x:Key="DecCheckConv"/>
-       
+        <loc:CurCheckConverter x:Key="CurCheckConv"/>
         <Style x:Key="ttStyle2" TargetType="ToolTip">
             <Setter Property="OverridesDefaultStyle" Value="True"/>
             <Setter Property="HasDropShadow" Value="False"/>
@@ -149,16 +149,17 @@
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
 
-                            <TextBlock Grid.Row="0" Grid.Column="3" Text="Priority:"
-                                       Visibility="{Binding SelectedItem.ShowPriority, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
+                            <TextBlock Grid.Row="0" Grid.Column="3" Text="Priority:"                                       
                                        Style="{StaticResource gridtextlabel}" />
-                            <ComboBox Grid.Row="0" Grid.Column="4" DisplayMemberPath="Name" 
-                                      Visibility="{Binding SelectedItem.ShowPriority, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
+                            <ComboBox Grid.Row="0" Grid.Column="4" DisplayMemberPath="Name"                                        
                                       Style="{StaticResource gridcombo}"
                                       ItemsSource="{Binding Priorities}"  
                                       SelectedValuePath="ID"  
                                       SelectedValue="{Binding Project.PriorityID, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{StaticResource ddstyle}"/>
-                            
+                            <TextBlock Grid.Column="5" 
+                                       Visibility="{Binding SelectedItem.PriorityRequired, ElementName=projecttype, Converter={StaticResource BoolToVis}}"
+                                       Style="{StaticResource requiredtt}"/>
+
                             <CheckBox Grid.Column="6" 
                                       Visibility="{Binding SelectedItem.ShowKPM, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
                                        HorizontalAlignment="Left" Margin="18,0,0,0" IsChecked="{Binding Project.KPM}" Style="{StaticResource chkbox}" >
@@ -448,10 +449,10 @@
                                 <ColumnDefinition Width="1*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Estimated Annual Sales:" Style="{StaticResource gridtextlabel}" />
-                            <TextBlock Grid.Column="1" Style="{StaticResource gridtextlabel}" Text="{Binding CurrencySymbol}"/>
-                            <loc:NumericTextBox Grid.Column="2" Style="{StaticResource gridtextbox}" ToolTip="Sales estimate for 12 months"  
-                                NumericalError="{Binding EstimatedSalesError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                BackgroundErrorColor="Red" Text="{Binding Project.EstimatedAnnualSales, StringFormat={}{0:N0}, Converter={StaticResource DecCheckConv}, UpdateSourceTrigger=PropertyChanged}" />
+                            <!--<TextBlock Grid.Column="1" Style="{StaticResource gridtextlabel}" Text="{Binding CurrencySymbol}"/>-->
+                            <loc:CurrencyTextBox Grid.Column="2" Style="{StaticResource gridtextbox}" ToolTip="Sales estimate for 12 months"  
+                                NumericalError="{Binding EstimatedSalesError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                                
+                                IsTabStop="True" BackgroundErrorColor="Red" Text="{Binding Project.EstimatedAnnualSales, StringFormat={}{0:C0}, ConverterCulture=en-US, Converter={StaticResource CurCheckConv}, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock Grid.Row="0" Grid.Column="3"
                                        Visibility="{Binding SelectedItem.SalesRequired, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
                                        Style="{StaticResource requiredtt}" />
@@ -467,20 +468,20 @@
 
 
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Gross Margin:" Style="{StaticResource gridtextlabel}" />
-                            <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource gridtextlabel}" Text="{Binding CurrencySymbol}"/>
-                            <loc:NumericTextBox Grid.Row="2" Grid.Column="2" Style="{StaticResource gridtextbox}" ToolTip="Gross Margin estimate for 12 months" 
+                            <!--<TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource gridtextlabel}" Text="{Binding CurrencySymbol}"/>-->
+                            <loc:CurrencyTextBox Grid.Row="2" Grid.Column="2" Style="{StaticResource gridtextbox}" ToolTip="Gross Margin estimate for 12 months" 
                                 NumericalError="{Binding EstimatedGMError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                                                 
-                                BackgroundErrorColor="Red" Text="{Binding Project.GM, StringFormat={}{0:N0}, Converter={StaticResource DecCheckConv}, UpdateSourceTrigger=PropertyChanged}" />
+                                BackgroundErrorColor="Red" Text="{Binding Project.GM, StringFormat={}{0:C0}, ConverterCulture=en-US,  Converter={StaticResource CurCheckConv}, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock Grid.Row="2" Grid.Column="3" 
                                        Visibility="{Binding SelectedItem.GMRequired, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
                                        Style="{StaticResource requiredtt}"/>
                             <TextBlock Grid.Row="2" Grid.Column="5" Text="{Binding PercentGM, StringFormat={}GM: {0:P0}}" Style="{StaticResource textlabel}" Margin="4,2,0,0"/>
 
                             <TextBlock Grid.Row="3" Grid.Column="0" Text="Estimated MPC:" Style="{StaticResource gridtextlabel}" />
-                            <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource gridtextlabel}" Text="{Binding CurrencySymbol}"/>
-                            <loc:NumericTextBox Grid.Row="3" Grid.Column="2" Style="{StaticResource gridtextbox}" ToolTip="MPC estimate for 12 months" 
+                            <!--<TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource gridtextlabel}" Text="{Binding CurrencySymbol}"/>-->
+                            <loc:CurrencyTextBox Grid.Row="3" Grid.Column="2" Style="{StaticResource gridtextbox}" ToolTip="MPC estimate for 12 months" 
                                 NumericalError="{Binding EstimatedMPCError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                BackgroundErrorColor="Red" Text="{Binding Project.EstimatedAnnualMPC, StringFormat={}{0:N0}, Converter={StaticResource DecCheckConv}, UpdateSourceTrigger=PropertyChanged}" />
+                                BackgroundErrorColor="Red" Text="{Binding Project.EstimatedAnnualMPC, StringFormat={}{0:C0}, ConverterCulture=en-US,  Converter={StaticResource CurCheckConv}, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock Grid.Row="3" Grid.Column="3" 
                                        Visibility="{Binding SelectedItem.MPCRequired, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 
                                        Style="{StaticResource requiredtt}"/>
@@ -488,7 +489,7 @@
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="Targeted Volume:" Style="{StaticResource gridtextlabel}"  />
                             <loc:NumericTextBox Grid.Row="4" Grid.Column="2" Style="{StaticResource gridtextbox}" ToolTip="Annual quantity of product(s)"  
                                 NumericalError="{Binding TargetedVolumeError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                BackgroundErrorColor="Red" Text="{Binding Project.TargetedVolume, StringFormat={}{0:N0}, Converter={StaticResource DecCheckConv}, UpdateSourceTrigger=PropertyChanged}" />                                         
+                                BackgroundErrorColor="Red" Text="{Binding Project.TargetedVolume, StringFormat={}{0:N0}, ConverterCulture=en-US, Converter={StaticResource DecCheckConv}, UpdateSourceTrigger=PropertyChanged}" />                                         
                             <TextBlock Grid.Row="4" Grid.Column="3" Text="kg/yr" TextAlignment="Left" Style="{StaticResource gridtextlabel}" Margin="2,2,0,0"/>
 
                             <TextBlock Grid.Row="4" Grid.Column="4" 
@@ -498,7 +499,7 @@
                             <TextBlock Grid.Row="5" Grid.Column="0" Text="Probability Of Success:" Style="{StaticResource gridtextlabel}" />
                             <loc:NumericTextBox Grid.Row="5" Grid.Column="2" Style="{StaticResource gridtextbox}"
                                 NumericalError="{Binding ProbOfSuccessError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                BackgroundErrorColor="Red" Text="{Binding Project.ProbabilityOfSuccess, StringFormat={}{0:N0}, Converter={StaticResource DecCheckConv}, UpdateSourceTrigger=PropertyChanged}" />
+                                BackgroundErrorColor="Red" Text="{Binding Project.ProbabilityOfSuccess, StringFormat={}{0:N0}, ConverterCulture=en-US, Converter={StaticResource DecCheckConv}, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock Grid.Row="5" Grid.Column="3" Text="%" TextAlignment="Left" Style="{StaticResource gridtextlabel}"/>
                             <TextBlock Grid.Row="5" Grid.Column="4" 
                                        Visibility="{Binding SelectedItem.ProbabilityRequired, ElementName=projecttype, Converter={StaticResource BoolToVis}}" 

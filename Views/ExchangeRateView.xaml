@@ -75,7 +75,7 @@
 
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <ctrls:DecimalUpDown Minimum="0" Step="0.0001"  AllowDrop="False"
+                                    <ctrls:DecimalUpDown Minimum="0" Step="0.0001"  AllowDrop="False" Format="0.0000"
                                                          IsTabStop="False" Value="{Binding ExRate, UpdateSourceTrigger=PropertyChanged}"
                                                          />
                                 </DataTemplate>
